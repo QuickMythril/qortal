@@ -42,12 +42,11 @@ public class BitcoinCash extends Bitcoiny {
 			public Collection<ElectrumX.Server> getServers() {
 				return Arrays.asList(
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
-						//new Server("crypto.mldlabs.com", Server.ConnectionType.SSL, 50002));
-						//new Server("electrumx-bch.cryptonermal.net", Server.ConnectionType.SSL, 50002));
-						//new Server("electrumx-cash.1209k.com", Server.ConnectionType.SSL, 50002));
-						//new Server("167.99.91.237", Server.ConnectionType.SSL, 50002));
-						//new Server("electron-server.ninja", Server.ConnectionType.SSL, 50012));
-						//new Server("bch.rossbennetts.com", Server.ConnectionType.SSL, 50012));
+						new Server("crypto.mldlabs.com", Server.ConnectionType.SSL, 50002),
+						new Server("electrumx-bch.cryptonermal.net", Server.ConnectionType.SSL, 50002),
+						new Server("167.99.91.237", Server.ConnectionType.SSL, 50002),
+						new Server("electron-server.ninja", Server.ConnectionType.SSL, 50012),
+						new Server("bch.rossbennetts.com", Server.ConnectionType.SSL, 50012),
 						new Server("electrumx-bch.cryptonermal.net", Server.ConnectionType.TCP, 50001));
 			}
 

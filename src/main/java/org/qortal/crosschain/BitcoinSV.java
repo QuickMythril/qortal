@@ -42,7 +42,8 @@ public class BitcoinSV extends Bitcoiny {
 			public Collection<ElectrumX.Server> getServers() {
 				return Arrays.asList(
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
-						new Server("electron-server.ninja", Server.ConnectionType.SSL, 50012));
+						new Server("localhost", Server.ConnectionType.TCP, 50001),
+						new Server("localhost", Server.ConnectionType.SSL, 50002));
 			}
 
 			@Override
