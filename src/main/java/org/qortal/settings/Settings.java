@@ -22,6 +22,9 @@ import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 import org.qortal.block.BlockChain;
 import org.qortal.crosschain.Bitcoin.BitcoinNet;
+import org.qortal.crosschain.BitcoinCash.BitcoinCashNet;
+import org.qortal.crosschain.BitcoinGold.BitcoinGoldNet;
+import org.qortal.crosschain.BitcoinSV.BitcoinSVNet;
 import org.qortal.crosschain.Litecoin.LitecoinNet;
 
 // All properties to be converted to JSON via JAXB
@@ -133,13 +136,16 @@ public class Settings {
 	private boolean allowConnectionsWithOlderPeerVersions = true;
 
 	/** Minimum time (in seconds) that we should attempt to remain connected to a peer for */
-	private int minPeerConnectionTime = 2 * 60; // seconds
+	private int minPeerConnectionTime = 2 * 60;
 	/** Maximum time (in seconds) that we should attempt to remain connected to a peer for */
-	private int maxPeerConnectionTime = 20 * 60; // seconds
+	private int maxPeerConnectionTime = 60 * 60;
 
 	// Which blockchains this node is running
 	private String blockchainConfig = null; // use default from resources
 	private BitcoinNet bitcoinNet = BitcoinNet.MAIN;
+	private BitcoinCashNet bitcoinCashNet = BitcoinCashNet.MAIN;
+	private BitcoinGoldNet bitcoinGoldNet = BitcoinGoldNet.MAIN;
+	private BitcoinSVNet bitcoinSVNet = BitcoinSVNet.MAIN;
 	private LitecoinNet litecoinNet = LitecoinNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
@@ -438,6 +444,18 @@ public class Settings {
 
 	public BitcoinNet getBitcoinNet() {
 		return this.bitcoinNet;
+	}
+
+	public BitcoinCashNet getBitcoinCashNet() {
+		return this.bitcoinCashNet;
+	}
+
+	public BitcoinGoldNet getBitcoinGoldNet() {
+		return this.bitcoinGoldNet;
+	}
+
+	public BitcoinSVNet getBitcoinSVNet() {
+		return this.bitcoinSVNet;
 	}
 
 	public LitecoinNet getLitecoinNet() {

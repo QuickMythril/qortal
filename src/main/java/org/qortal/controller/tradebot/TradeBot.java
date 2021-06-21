@@ -19,6 +19,9 @@ import org.qortal.controller.Controller;
 import org.qortal.controller.tradebot.AcctTradeBot.ResponseResult;
 import org.qortal.crosschain.ACCT;
 import org.qortal.crosschain.BitcoinACCTv1;
+import org.qortal.crosschain.BitcoinCashACCTv1;
+import org.qortal.crosschain.BitcoinGoldACCTv1;
+import org.qortal.crosschain.BitcoinSVACCTv1;
 import org.qortal.crosschain.ForeignBlockchainException;
 import org.qortal.crosschain.LitecoinACCTv1;
 import org.qortal.crosschain.SupportedBlockchain;
@@ -79,6 +82,9 @@ public class TradeBot implements Listener {
 	private static final Map<Class<? extends ACCT>, Supplier<AcctTradeBot>> acctTradeBotSuppliers = new HashMap<>();
 	static {
 		acctTradeBotSuppliers.put(BitcoinACCTv1.class, BitcoinACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(BitcoinCashACCTv1.class, BitcoinCashACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(BitcoinGoldACCTv1.class, BitcoinGoldACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(BitcoinSVACCTv1.class, BitcoinSVACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(LitecoinACCTv1.class, LitecoinACCTv1TradeBot::getInstance);
 	}
 

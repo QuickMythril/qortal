@@ -27,6 +27,51 @@ public enum SupportedBlockchain {
 		}
 	},
 
+	BITCOINCASH(Arrays.asList(
+				Triple.valueOf(BitcoinCashACCTv1.NAME, BitcoinCashACCTv1.CODE_BYTES_HASH, BitcoinCashACCTv1::getInstance)
+				// Could add improved BitcoinACCTv2 here in the future
+			)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return BitcoinCash.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return BitcoinCashACCTv1.getInstance();
+		}
+	},
+
+	BITCOINGOLD(Arrays.asList(
+				Triple.valueOf(BitcoinGoldACCTv1.NAME, BitcoinGoldACCTv1.CODE_BYTES_HASH, BitcoinGoldACCTv1::getInstance)
+				// Could add improved BitcoinACCTv2 here in the future
+			)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return BitcoinGold.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return BitcoinGoldACCTv1.getInstance();
+		}
+	},
+
+	BITCOINSV(Arrays.asList(
+				Triple.valueOf(BitcoinSVACCTv1.NAME, BitcoinSVACCTv1.CODE_BYTES_HASH, BitcoinSVACCTv1::getInstance)
+				// Could add improved BitcoinACCTv2 here in the future
+			)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return BitcoinSV.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return BitcoinSVACCTv1.getInstance();
+		}
+	},
+
 	LITECOIN(Arrays.asList(
 			Triple.valueOf(LitecoinACCTv1.NAME, LitecoinACCTv1.CODE_BYTES_HASH, LitecoinACCTv1::getInstance)
 		)) {
