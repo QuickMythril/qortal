@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<properties>
 		<skipTests>true</skipTests>
-		<altcoinj.version>bf9fb80</altcoinj.version>
+		<altcoinj.version>7d9d5b3</altcoinj.version>  <!-- UPDATED FOR RAVENCOIN -->
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<bouncycastle.version>1.64</bouncycastle.version>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
@@ -427,9 +427,9 @@
 			<artifactId>bitcoinj-core</artifactId>
 			<version>${bitcoinj.version}</version>
 		</dependency>
-		<!-- For Litecoin, etc. support, requires bitcoinj -->
+		<!-- For Litecoin, Ravencoin, etc. support, requires bitcoinj -->
 		<dependency>
-			<groupId>com.github.jjos2372</groupId>
+			<groupId>com.github.QuickMythril</groupId> <!-- UPDATED FOR RAVENCOIN -->
 			<artifactId>altcoinj</artifactId>
 			<version>${altcoinj.version}</version>
 		</dependency>
