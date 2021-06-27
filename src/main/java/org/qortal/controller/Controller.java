@@ -137,7 +137,7 @@ public class Controller extends Thread {
 	private static volatile boolean requestSysTrayUpdate = true;
 	private static Controller instance;
 
-	private final String buildVersion;
+	public static String buildVersion;
 	private final long buildTimestamp; // seconds
 	private final String[] savedArgs;
 
