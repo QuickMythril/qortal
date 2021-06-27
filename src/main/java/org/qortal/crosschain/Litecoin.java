@@ -42,7 +42,6 @@ public class Litecoin extends Bitcoiny {
 			public Collection<ElectrumX.Server> getServers() {
 				return Arrays.asList(
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
-						new Server("electrum-ltc.someguy123.net", Server.ConnectionType.SSL, 50002),
 						new Server("backup.electrum-ltc.org", Server.ConnectionType.TCP, 50001),
 						new Server("backup.electrum-ltc.org", Server.ConnectionType.SSL, 443),
 						new Server("electrum.ltc.xurious.com", Server.ConnectionType.TCP, 50001),
@@ -50,11 +49,7 @@ public class Litecoin extends Bitcoiny {
 						new Server("electrum-ltc.bysh.me", Server.ConnectionType.SSL, 50002),
 						new Server("ltc.rentonisk.com", Server.ConnectionType.TCP, 50001),
 						new Server("ltc.rentonisk.com", Server.ConnectionType.SSL, 50002),
-						new Server("electrum-ltc.petrkr.net", Server.ConnectionType.SSL, 60002),
-						new Server("ltc.litepay.ch", Server.ConnectionType.SSL, 50022),
-						new Server("electrum-ltc-bysh.me", Server.ConnectionType.TCP, 50002),
-						new Server("electrum.jochen-hoenicke.de", Server.ConnectionType.TCP, 50005),
-						new Server("node.ispol.sk", Server.ConnectionType.TCP, 50004));
+						new Server("ltc.litepay.ch", Server.ConnectionType.SSL, 50022));
 			}
 
 			@Override
