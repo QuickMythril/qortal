@@ -178,7 +178,7 @@ public class SysTray {
 			menu.add(syncTime);
 		}
 
-		JMenuItem exit = new JMenuItem(Translator.INSTANCE.translate("SysTray", "EXIT"));
+		JMenuItem exit = new JMenuItem(Translator.INSTANCE.translate("SysTray", "EXIT") + " " + Controller.buildVersion);
 		exit.addActionListener(actionEvent -> {
 			destroyHiddenDialog();
 
