@@ -21,8 +21,6 @@ public class Ravencoin extends Bitcoiny {
 
 	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1025000); // 0.01025 RVN per 1000 bytes
 
-	// private static final long MINIMUM_ORDER_AMOUNT = 300000000L; // 3 DOGE minimum order. The RPC dust threshold is around 2 DOGE
-
 	// Temporary values until a dynamic fee system is written.
 	private static final long MAINNET_FEE = 1000L;
 	private static final long NON_MAINNET_FEE = 1000L; // TODO: calibrate this
@@ -150,11 +148,6 @@ public class Ravencoin extends Bitcoiny {
 	@Override
 	public Coin getFeePerKb() {
 		return DEFAULT_FEE_PER_KB;
-	}
-
-	@Override
-	public long getMinimumOrderAmount() {
-		return MINIMUM_ORDER_AMOUNT;
 	}
 
 	/**
