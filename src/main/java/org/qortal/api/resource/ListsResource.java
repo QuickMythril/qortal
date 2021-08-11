@@ -1,6 +1,7 @@
 package org.qortal.api.resource;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -244,7 +245,7 @@ public class ListsResource {
 			responses = {
 					@ApiResponse(
 							description = "A JSON array of addresses",
-							content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = "boolean"))
+							content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = String.class)))
 					)
 			}
 	)

@@ -46,13 +46,7 @@ public class ResourceList {
     private Path getFilePath() {
         String pathString = String.format("%s%s%s_%s.json", Settings.getInstance().getListsPath(),
                 File.separator, this.resourceName, this.category);
-        Path outputFilePath = Paths.get(pathString);
-        try {
-            Files.createDirectories(outputFilePath.getParent());
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to create lists directory");
-        }
-        return outputFilePath;
+        return Paths.get(pathString);
     }
 
     public void save() throws IOException {
@@ -63,8 +57,15 @@ public class ResourceList {
             throw new IllegalStateException("Can't save list with missing category");
         }
         String jsonString = ResourceList.listToJSONString(this.list);
-
         Path filePath = this.getFilePath();
+
+        // Create parent directory if needed
+        try {
+            Files.createDirectories(filePath.getParent());
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to create lists directory");
+        }
+
         BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()));
         writer.write(jsonString);
         writer.close();

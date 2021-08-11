@@ -653,18 +653,27 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 
 		Object errorObj = responseJson.get("error");
 		if (errorObj != null) {
-			if (errorObj instanceof String)
-				throw new ForeignBlockchainException.NetworkException(String.format("Unexpected error message from ElectrumX RPC %s: %s", method, (String) errorObj), this.currentServer);
+			if (errorObj instanceof String) {
+				LOGGER.debug(String.format("Unexpected error message from ElectrumX RPC %s: %s", method, (String) errorObj), this.currentServer);
+				// Try another server
+				return null;
+			}
 
-			if (!(errorObj instanceof JSONObject))
-				throw new ForeignBlockchainException.NetworkException(String.format("Unexpected error response from ElectrumX RPC %s", method), this.currentServer);
+			if (!(errorObj instanceof JSONObject)) {
+				LOGGER.debug(String.format("Unexpected error response from ElectrumX RPC %s", method), this.currentServer);
+				// Try another server
+				return null;
+			}
 
 			JSONObject errorJson = (JSONObject) errorObj;
 
 			Object messageObj = errorJson.get("message");
 
-			if (!(messageObj instanceof String))
-				throw new ForeignBlockchainException.NetworkException(String.format("Missing/invalid message in error response from ElectrumX RPC %s", method), this.currentServer);
+			if (!(messageObj instanceof String)) {
+				LOGGER.debug(String.format("Missing/invalid message in error response from ElectrumX RPC %s", method), this.currentServer);
+				// Try another server
+				return null;
+			}
 
 			String message = (String) messageObj;
 
