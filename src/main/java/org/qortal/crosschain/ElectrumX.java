@@ -654,13 +654,13 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 		Object errorObj = responseJson.get("error");
 		if (errorObj != null) {
 			if (errorObj instanceof String) {
-				LOGGER.debug(String.format("Unexpected error message from ElectrumX RPC %s: %s", method, (String) errorObj), this.currentServer);
+				LOGGER.debug(String.format("Unexpected error message from ElectrumX server %s for RPC method %s: %s", this.currentServer, method, (String) errorObj));
 				// Try another server
 				return null;
 			}
 
 			if (!(errorObj instanceof JSONObject)) {
-				LOGGER.debug(String.format("Unexpected error response from ElectrumX RPC %s", method), this.currentServer);
+				LOGGER.debug(String.format("Unexpected error response from ElectrumX server %s for RPC method %s", this.currentServer, method));
 				// Try another server
 				return null;
 			}
@@ -670,7 +670,7 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 			Object messageObj = errorJson.get("message");
 
 			if (!(messageObj instanceof String)) {
-				LOGGER.debug(String.format("Missing/invalid message in error response from ElectrumX RPC %s", method), this.currentServer);
+				LOGGER.debug(String.format("Missing/invalid message in error response from ElectrumX server %s for RPC method %s", this.currentServer, method));
 				// Try another server
 				return null;
 			}
