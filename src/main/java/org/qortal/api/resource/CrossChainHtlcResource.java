@@ -561,6 +561,11 @@ public class CrossChainHtlcResource {
 			if (atData == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.ADDRESS_UNKNOWN);
 
+			if (atData.getIsFinished()) {
+				LOGGER.info(String.format("Skipping finished AT %s", atAddress));
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
+			}
+
 			ACCT acct = SupportedBlockchain.getAcctByCodeHash(atData.getCodeHash());
 			if (acct == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
