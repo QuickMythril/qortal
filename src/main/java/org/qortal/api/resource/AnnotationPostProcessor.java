@@ -13,6 +13,7 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.integration.api.OpenApiReader;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
@@ -32,11 +33,11 @@ public class AnnotationPostProcessor implements ReaderListener {
 	private static final Logger LOGGER = LogManager.getLogger(AnnotationPostProcessor.class);
 
 	@Override
-	public void beforeScan(Reader reader, OpenAPI openAPI) {
+	public void beforeScan(OpenApiReader reader, OpenAPI openAPI) {
 	}
 
 	@Override
-	public void afterScan(Reader reader, OpenAPI openAPI) {
+	public void afterScan(OpenApiReader reader, OpenAPI openAPI) {
 		// Populate Components section with reusable parameters, like "limit" and "offset"
 		// We take the reusable parameters from AdminResource.globalParameters path "/admin/unused"
 		Components components = openAPI.getComponents();
