@@ -8,7 +8,7 @@
 	<properties>
 		<skipTests>true</skipTests>
 		<altcoinj.version>bf9fb80</altcoinj.version>
-		<bitcoinj.version>0.15.10</bitcoinj.version>
+		<bitcoinj.version>0.16</bitcoinj.version>
 		<bouncycastle.version>1.64</bouncycastle.version>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
 		<ciyam-at.version>1.3.8</ciyam-at.version>
@@ -161,7 +161,7 @@
 							<replacements>
 								<replacement>
 									<token>^(#.*$[\n\r]*)</token>
-									<value></value>
+									<value/>
 								</replacement>
 							</replacements>
 						</configuration>
@@ -293,10 +293,8 @@
 						</goals>
 						<configuration>
 							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>org.qortal.controller.Controller</mainClass>
 									<manifestEntries>
 										<Class-Path>. ..</Class-Path>
@@ -359,7 +357,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -378,7 +376,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
