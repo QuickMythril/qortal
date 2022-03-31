@@ -25,7 +25,7 @@
 		<icu4j.version>70.1</icu4j.version>
 		<upnp.version>1.1</upnp.version>
 		<jersey.version>2.29.1</jersey.version>
-		<jetty.version>9.4.29.v20200521</jetty.version>
+		<jetty.version>9.4.45.v20220203</jetty.version>
 		<log4j.version>2.17.1</log4j.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j.version>1.7.12</slf4j.version>
@@ -164,7 +164,7 @@
 							<replacements>
 								<replacement>
 									<token>^(#.*$[\n\r]*)</token>
-									<value></value>
+									<value/>
 								</replacement>
 							</replacements>
 						</configuration>
@@ -296,10 +296,8 @@
 						</goals>
 						<configuration>
 							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>org.qortal.controller.Controller</mainClass>
 									<manifestEntries>
 										<Class-Path>. ..</Class-Path>
@@ -362,7 +360,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -381,7 +379,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
