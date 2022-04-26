@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<properties>
 		<skipTests>true</skipTests>
-		<altcoinj.version>02e0d3d</altcoinj.version>
+		<altcoinj.version>6628cfd</altcoinj.version>
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<bouncycastle.version>1.64</bouncycastle.version>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
