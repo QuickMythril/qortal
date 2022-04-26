@@ -100,6 +100,9 @@ public class TradeBot implements Listener {
 		acctTradeBotSuppliers.put(DogecoinACCTv1.class, DogecoinACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DogecoinACCTv2.class, DogecoinACCTv2TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DogecoinACCTv3.class, DogecoinACCTv3TradeBot::getInstance);
+		acctTradeBotSuppliers.put(DigibyteACCTv1.class, DigibyteACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(DigibyteACCTv2.class, DigibyteACCTv2TradeBot::getInstance);
+		acctTradeBotSuppliers.put(DigibyteACCTv3.class, DigibyteACCTv3TradeBot::getInstance);
 	}
 
 	private static TradeBot instance;
