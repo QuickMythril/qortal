@@ -235,9 +235,6 @@ public class Synchronizer extends Thread {
 		// Disregard peers that are on the same block as last sync attempt and we didn't like their chain
 		peers.removeIf(Controller.hasInferiorChainTip);
 
-		// Remove peers with unknown height, lower height or same height and same block signature (unless we don't have their block signature)
-		peers.removeIf(Controller.hasShorterBlockchain);
-
 		final int peersBeforeComparison = peers.size();
 
 		// Request recent block summaries from the remaining peers, and locate our common block with each
