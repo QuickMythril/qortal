@@ -75,6 +75,21 @@ public enum SupportedBlockchain {
 		}
 	},
 
+	VERGE(Arrays.asList(
+			Triple.valueOf(VergeACCTv1.NAME, VergeACCTv1.CODE_BYTES_HASH, VergeACCTv1::getInstance),
+			Triple.valueOf(VergeACCTv3.NAME, VergeACCTv3.CODE_BYTES_HASH, VergeACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Verge.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return VergeACCTv3.getInstance();
+		}
+	},
+
 	RAVENCOIN(Arrays.asList(
 			Triple.valueOf(RavencoinACCTv1.NAME, RavencoinACCTv1.CODE_BYTES_HASH, RavencoinACCTv1::getInstance),
 			Triple.valueOf(RavencoinACCTv3.NAME, RavencoinACCTv3.CODE_BYTES_HASH, RavencoinACCTv3::getInstance)

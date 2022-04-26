@@ -27,6 +27,7 @@ import org.qortal.crosschain.Bitcoin.BitcoinNet;
 import org.qortal.crosschain.Litecoin.LitecoinNet;
 import org.qortal.crosschain.Dogecoin.DogecoinNet;
 import org.qortal.crosschain.Digibyte.DigibyteNet;
+import org.qortal.crosschain.Verge.VergeNet;
 import org.qortal.crosschain.Ravencoin.RavencoinNet;
 import org.qortal.utils.EnumUtils;
 
@@ -225,6 +226,7 @@ public class Settings {
 	private LitecoinNet litecoinNet = LitecoinNet.MAIN;
 	private DogecoinNet dogecoinNet = DogecoinNet.MAIN;
 	private DigibyteNet digibyteNet = DigibyteNet.MAIN;
+	private VergeNet vergeNet = VergeNet.MAIN;
   private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
@@ -686,6 +688,10 @@ public class Settings {
 
 	public DigibyteNet getDigibyteNet() {
 		return this.digibyteNet;
+	}
+
+	public VergeNet getVergeNet() {
+		return this.vergeNet;
 	}
 
   public RavencoinNet getRavencoinNet() {
