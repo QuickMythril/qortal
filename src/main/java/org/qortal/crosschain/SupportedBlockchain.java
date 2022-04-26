@@ -59,6 +59,22 @@ public enum SupportedBlockchain {
 		}
 	},
 
+	DIGIBYTE(Arrays.asList(
+			Triple.valueOf(DigibyteACCTv1.NAME, DigibyteACCTv1.CODE_BYTES_HASH, DigibyteACCTv1::getInstance),
+			Triple.valueOf(DigibyteACCTv2.NAME, DigibyteACCTv2.CODE_BYTES_HASH, DigibyteACCTv2::getInstance),
+			Triple.valueOf(DigibyteACCTv3.NAME, DigibyteACCTv3.CODE_BYTES_HASH, DigibyteACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Digibyte.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return DigibyteACCTv3.getInstance();
+		}
+	},
+
 	RAVENCOIN(Arrays.asList(
 			Triple.valueOf(RavencoinACCTv1.NAME, RavencoinACCTv1.CODE_BYTES_HASH, RavencoinACCTv1::getInstance),
 			Triple.valueOf(RavencoinACCTv3.NAME, RavencoinACCTv3.CODE_BYTES_HASH, RavencoinACCTv3::getInstance)
