@@ -19,13 +19,13 @@ public class Verge extends Bitcoiny {
 
 	public static final String CURRENCY_CODE = "XVG";
 
-	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1125000); // 0.01125 XVG per 1000 bytes
+	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(52000000); // 0.52 XVG per 1000 bytes
 
-	private static final long MINIMUM_ORDER_AMOUNT = 1000000; // 0.01 XVG minimum order, to avoid dust errors
+	private static final long MINIMUM_ORDER_AMOUNT = 10000000; // 0.1 XVG minimum order, to avoid dust errors
 
 	// Temporary values until a dynamic fee system is written.
-	private static final long MAINNET_FEE = 1000000L;
-	private static final long NON_MAINNET_FEE = 1000000L; // enough for TESTNET3 and should be OK for REGTEST
+	private static final long MAINNET_FEE = 10000000L;
+	private static final long NON_MAINNET_FEE = 10000000L; // enough for TESTNET3 and should be OK for REGTEST
 
 	private static final Map<ConnectionType, Integer> DEFAULT_ELECTRUMX_PORTS = new EnumMap<>(ConnectionType.class);
 	static {
