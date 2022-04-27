@@ -13,8 +13,8 @@ import org.qortal.utils.Triple;
 public enum SupportedBlockchain {
 
 	BITCOIN(Arrays.asList(
-				Triple.valueOf(BitcoinACCTv1.NAME, BitcoinACCTv1.CODE_BYTES_HASH, BitcoinACCTv1::getInstance)
-				// Could add improved BitcoinACCTv2 here in the future
+				Triple.valueOf(BitcoinACCTv1.NAME, BitcoinACCTv1.CODE_BYTES_HASH, BitcoinACCTv1::getInstance),
+				Triple.valueOf(BitcoinACCTv3.NAME, BitcoinACCTv3.CODE_BYTES_HASH, BitcoinACCTv3::getInstance)
 			)) {
 		@Override
 		public ForeignBlockchain getInstance() {
@@ -23,7 +23,7 @@ public enum SupportedBlockchain {
 
 		@Override
 		public ACCT getLatestAcct() {
-			return BitcoinACCTv1.getInstance();
+			return BitcoinACCTv3.getInstance();
 		}
 	},
 
@@ -40,6 +40,21 @@ public enum SupportedBlockchain {
 		@Override
 		public ACCT getLatestAcct() {
 			return LitecoinACCTv3.getInstance();
+		}
+	},
+
+	PEERCOIN(Arrays.asList(
+			Triple.valueOf(PeercoinACCTv1.NAME, PeercoinACCTv1.CODE_BYTES_HASH, PeercoinACCTv1::getInstance),
+			Triple.valueOf(PeercoinACCTv3.NAME, PeercoinACCTv3.CODE_BYTES_HASH, PeercoinACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Peercoin.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return PeercoinACCTv3.getInstance();
 		}
 	},
 
@@ -75,6 +90,21 @@ public enum SupportedBlockchain {
 		}
 	},
 
+	DASH(Arrays.asList(
+			Triple.valueOf(DashACCTv1.NAME, DashACCTv1.CODE_BYTES_HASH, DashACCTv1::getInstance),
+			Triple.valueOf(DashACCTv3.NAME, DashACCTv3.CODE_BYTES_HASH, DashACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Dash.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return DashACCTv3.getInstance();
+		}
+	},
+
 	VERGE(Arrays.asList(
 			Triple.valueOf(VergeACCTv1.NAME, VergeACCTv1.CODE_BYTES_HASH, VergeACCTv1::getInstance),
 			Triple.valueOf(VergeACCTv3.NAME, VergeACCTv3.CODE_BYTES_HASH, VergeACCTv3::getInstance)
@@ -87,6 +117,21 @@ public enum SupportedBlockchain {
 		@Override
 		public ACCT getLatestAcct() {
 			return VergeACCTv3.getInstance();
+		}
+	},
+
+	KOMODO(Arrays.asList(
+			Triple.valueOf(KomodoACCTv1.NAME, KomodoACCTv1.CODE_BYTES_HASH, KomodoACCTv1::getInstance),
+			Triple.valueOf(KomodoACCTv3.NAME, KomodoACCTv3.CODE_BYTES_HASH, KomodoACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Komodo.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return KomodoACCTv3.getInstance();
 		}
 	},
 

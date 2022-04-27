@@ -25,9 +25,12 @@ import org.qortal.block.BlockChain;
 import org.qortal.controller.arbitrary.ArbitraryDataStorageManager.*;
 import org.qortal.crosschain.Bitcoin.BitcoinNet;
 import org.qortal.crosschain.Litecoin.LitecoinNet;
+import org.qortal.crosschain.Peercoin.PeercoinNet;
 import org.qortal.crosschain.Dogecoin.DogecoinNet;
 import org.qortal.crosschain.Digibyte.DigibyteNet;
+import org.qortal.crosschain.Dash.DashNet;
 import org.qortal.crosschain.Verge.VergeNet;
+import org.qortal.crosschain.Komodo.KomodoNet;
 import org.qortal.crosschain.Ravencoin.RavencoinNet;
 import org.qortal.utils.EnumUtils;
 
@@ -224,10 +227,13 @@ public class Settings {
 	private String blockchainConfig = null; // use default from resources
 	private BitcoinNet bitcoinNet = BitcoinNet.MAIN;
 	private LitecoinNet litecoinNet = LitecoinNet.MAIN;
+	private PeercoinNet peercoinNet = PeercoinNet.MAIN;
 	private DogecoinNet dogecoinNet = DogecoinNet.MAIN;
 	private DigibyteNet digibyteNet = DigibyteNet.MAIN;
+	private DashNet dashNet = DashNet.MAIN;
 	private VergeNet vergeNet = VergeNet.MAIN;
-  private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
+	private KomodoNet komodoNet = KomodoNet.MAIN;
+	private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
 	private boolean tradebotSystrayEnabled = false;
@@ -682,6 +688,10 @@ public class Settings {
 		return this.litecoinNet;
 	}
 
+	public PeercoinNet getPeercoinNet() {
+		return this.peercoinNet;
+	}
+
 	public DogecoinNet getDogecoinNet() {
 		return this.dogecoinNet;
 	}
@@ -690,11 +700,19 @@ public class Settings {
 		return this.digibyteNet;
 	}
 
+	public DashNet getDashNet() {
+		return this.dashNet;
+	}
+
 	public VergeNet getVergeNet() {
 		return this.vergeNet;
 	}
 
-  public RavencoinNet getRavencoinNet() {
+	public KomodoNet getKomodoNet() {
+		return this.komodoNet;
+	}
+
+	public RavencoinNet getRavencoinNet() {
 		return this.ravencoinNet;
 	}
 

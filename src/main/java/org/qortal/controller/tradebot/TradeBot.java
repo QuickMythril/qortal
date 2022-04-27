@@ -94,17 +94,24 @@ public class TradeBot implements Listener {
 	private static final Map<Class<? extends ACCT>, Supplier<AcctTradeBot>> acctTradeBotSuppliers = new HashMap<>();
 	static {
 		acctTradeBotSuppliers.put(BitcoinACCTv1.class, BitcoinACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(BitcoinACCTv3.class, BitcoinACCTv3TradeBot::getInstance);
 		acctTradeBotSuppliers.put(LitecoinACCTv1.class, LitecoinACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(LitecoinACCTv2.class, LitecoinACCTv2TradeBot::getInstance);
 		acctTradeBotSuppliers.put(LitecoinACCTv3.class, LitecoinACCTv3TradeBot::getInstance);
+		acctTradeBotSuppliers.put(PeercoinACCTv1.class, PeercoinACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(PeercoinACCTv3.class, PeercoinACCTv3TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DogecoinACCTv1.class, DogecoinACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DogecoinACCTv2.class, DogecoinACCTv2TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DogecoinACCTv3.class, DogecoinACCTv3TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DigibyteACCTv1.class, DigibyteACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DigibyteACCTv2.class, DigibyteACCTv2TradeBot::getInstance);
 		acctTradeBotSuppliers.put(DigibyteACCTv3.class, DigibyteACCTv3TradeBot::getInstance);
+		acctTradeBotSuppliers.put(DashACCTv1.class, DashACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(DashACCTv3.class, DashACCTv3TradeBot::getInstance);
 		acctTradeBotSuppliers.put(VergeACCTv1.class, VergeACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(VergeACCTv3.class, VergeACCTv3TradeBot::getInstance);
+		acctTradeBotSuppliers.put(KomodoACCTv1.class, KomodoACCTv1TradeBot::getInstance);
+		acctTradeBotSuppliers.put(KomodoACCTv3.class, KomodoACCTv3TradeBot::getInstance);
 		acctTradeBotSuppliers.put(RavencoinACCTv1.class, RavencoinACCTv1TradeBot::getInstance);
 		acctTradeBotSuppliers.put(RavencoinACCTv3.class, RavencoinACCTv3TradeBot::getInstance);
 	}
