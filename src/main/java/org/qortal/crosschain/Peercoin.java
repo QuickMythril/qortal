@@ -19,7 +19,7 @@ public class Peercoin extends Bitcoiny {
 
 	public static final String CURRENCY_CODE = "PPC";
 
-	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1125000); // 0.01125 PPC per 1000 bytes
+	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1000000); // 0.01 PPC per 1000 bytes
 
 	private static final long MINIMUM_ORDER_AMOUNT = 1000000; // 0.01 PPC minimum order, to avoid dust errors
 

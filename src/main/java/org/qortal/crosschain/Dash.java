@@ -19,13 +19,13 @@ public class Dash extends Bitcoiny {
 
 	public static final String CURRENCY_CODE = "DASH";
 
-	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1125000); // 0.01125 DASH per 1000 bytes
+	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1100); // 0.00001100 DASH per 1000 bytes
 
 	private static final long MINIMUM_ORDER_AMOUNT = 1000000; // 0.01 DASH minimum order, to avoid dust errors
 
 	// Temporary values until a dynamic fee system is written.
-	private static final long MAINNET_FEE = 1000000L;
-	private static final long NON_MAINNET_FEE = 1000000L; // enough for TESTNET3 and should be OK for REGTEST
+	private static final long MAINNET_FEE = 1000L;
+	private static final long NON_MAINNET_FEE = 1000L; // enough for TESTNET3 and should be OK for REGTEST
 
 	private static final Map<ConnectionType, Integer> DEFAULT_ELECTRUMX_PORTS = new EnumMap<>(ConnectionType.class);
 	static {
