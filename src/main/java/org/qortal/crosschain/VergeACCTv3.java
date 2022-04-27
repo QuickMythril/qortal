@@ -88,7 +88,7 @@ public class VergeACCTv3 implements ACCT {
 	private static final Logger LOGGER = LogManager.getLogger(VergeACCTv3.class);
 
 	public static final String NAME = VergeACCTv3.class.getSimpleName();
-	public static final byte[] CODE_BYTES_HASH = HashCode.fromString("03").asBytes(); // SHA256 of AT code bytes
+	public static final byte[] CODE_BYTES_HASH = HashCode.fromString("4f94fb38661c4d73593eeea384cb485e45a4fd7f0cfe18b8906dd535a9ee28f5").asBytes(); // SHA256 of AT code bytes
 
 	public static final int SECRET_LENGTH = 32;
 
