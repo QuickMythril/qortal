@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<properties>
 		<skipTests>true</skipTests>
-		<altcoinj.version>6628cfd</altcoinj.version>
+		<altcoinj.version>1184a86</altcoinj.version>
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<bouncycastle.version>1.64</bouncycastle.version>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
@@ -444,7 +444,7 @@
 		</dependency>
 		<!-- For Litecoin, etc. support, requires bitcoinj -->
 		<dependency>
-			<groupId>com.github.qortal</groupId>
+			<groupId>com.github.QuickMythril</groupId>
 			<artifactId>altcoinj</artifactId>
 			<version>${altcoinj.version}</version>
 		</dependency>
