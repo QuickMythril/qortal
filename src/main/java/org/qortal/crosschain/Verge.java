@@ -45,7 +45,8 @@ public class Verge extends Bitcoiny {
 				return Arrays.asList(
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
 						// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=xvg
-						new Server("xvg-qortal-01.vergecurrency.network", ConnectionType.SSL, 50002));
+						// new Server("xvg-qortal-01.vergecurrency.network", ConnectionType.SSL, 50002));
+						new Server("49.12.231.33", ConnectionType.SSL, 50002));
 			}
 
 			@Override
