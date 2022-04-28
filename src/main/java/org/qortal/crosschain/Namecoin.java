@@ -10,22 +10,22 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.libdohj.params.PeercoinMainNetParams;
+import org.libdohj.params.NamecoinMainNetParams;
 import org.qortal.crosschain.ElectrumX.Server;
 import org.qortal.crosschain.ElectrumX.Server.ConnectionType;
 import org.qortal.settings.Settings;
 
-public class Peercoin extends Bitcoiny {
+public class Namecoin extends Bitcoiny {
 
-	public static final String CURRENCY_CODE = "PPC";
+	public static final String CURRENCY_CODE = "NMC";
 
-	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(500000000); // 5 PPC per 1000 bytes
+	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(600000); // 0.006 NMC per 1000 bytes
 
-	private static final long MINIMUM_ORDER_AMOUNT = 300000000L; // 3 PPC minimum order. The RPC dust threshold is around 2 PPC
+	private static final long MINIMUM_ORDER_AMOUNT = 10000000L; // 0.1 NMC minimum order, to avoid dust errors
 
 	// Temporary values until a dynamic fee system is written.
-	private static final long MAINNET_FEE = 110000000L;
-	private static final long NON_MAINNET_FEE = 10000L; // TODO: calibrate this
+	private static final long MAINNET_FEE = 200000L;
+	private static final long NON_MAINNET_FEE = 1000L; // enough for TESTNET3 and should be OK for REGTEST
 
 	private static final Map<ConnectionType, Integer> DEFAULT_ELECTRUMX_PORTS = new EnumMap<>(ConnectionType.class);
 	static {
@@ -33,25 +33,27 @@ public class Peercoin extends Bitcoiny {
 		DEFAULT_ELECTRUMX_PORTS.put(ConnectionType.SSL, 50002);
 	}
 
-	public enum PeercoinNet {
+	public enum NamecoinNet {
 		MAIN {
 			@Override
 			public NetworkParameters getParams() {
-				return PeercoinMainNetParams.get();
+				return NamecoinMainNetParams.get();
 			}
 
 			@Override
 			public Collection<Server> getServers() {
 				return Arrays.asList(
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
-						// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=ppc
-						new Server("allingas.peercoinexplorer.net", ConnectionType.SSL, 50002),
-						new Server("electrum.peercoinexplorer.net", ConnectionType.SSL, 50002));
+						// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=nmc
+						new Server("46.229.238.187", ConnectionType.SSL, 57002),
+						new Server("electrum.namebrow.se", ConnectionType.SSL, 50002),
+						new Server("nmc.bitcoins.sk", ConnectionType.SSL, 50002),
+						new Server("nmc2.bitcoins.sk", ConnectionType.SSL, 57002));
 			}
 
 			@Override
 			public String getGenesisHash() {
-				return "0000000032fe677166d54963b62a4677d8957e87c508eaa4fd7eb1c880cd27e3";
+				return "000000000062b72c5e2ceb45fbc8587e807c155b0da735e6483dfba2f0a9c770";
 			}
 
 			@Override
@@ -73,7 +75,7 @@ public class Peercoin extends Bitcoiny {
 
 			@Override
 			public String getGenesisHash() {
-				return "00000001f757bb737f6596503e17cd17b0658ce630cc727c0cca81aec47c9f06";
+				return "00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008";
 			}
 
 			@Override
@@ -112,27 +114,27 @@ public class Peercoin extends Bitcoiny {
 		public abstract long getP2shFee(Long timestamp) throws ForeignBlockchainException;
 	}
 
-	private static Peercoin instance;
+	private static Namecoin instance;
 
-	private final PeercoinNet peercoinNet;
+	private final NamecoinNet namecoinNet;
 
 	// Constructors and instance
 
-	private Peercoin(PeercoinNet peercoinNet, BitcoinyBlockchainProvider blockchain, Context bitcoinjContext, String currencyCode) {
+	private Namecoin(NamecoinNet namecoinNet, BitcoinyBlockchainProvider blockchain, Context bitcoinjContext, String currencyCode) {
 		super(blockchain, bitcoinjContext, currencyCode);
-		this.peercoinNet = peercoinNet;
+		this.namecoinNet = namecoinNet;
 
-		LOGGER.info(() -> String.format("Starting Peercoin support using %s", this.peercoinNet.name()));
+		LOGGER.info(() -> String.format("Starting Namecoin support using %s", this.namecoinNet.name()));
 	}
 
-	public static synchronized Peercoin getInstance() {
+	public static synchronized Namecoin getInstance() {
 		if (instance == null) {
-			PeercoinNet peercoinNet = Settings.getInstance().getPeercoinNet();
+			NamecoinNet namecoinNet = Settings.getInstance().getNamecoinNet();
 
-			BitcoinyBlockchainProvider electrumX = new ElectrumX("Peercoin-" + peercoinNet.name(), peercoinNet.getGenesisHash(), peercoinNet.getServers(), DEFAULT_ELECTRUMX_PORTS);
-			Context bitcoinjContext = new Context(peercoinNet.getParams());
+			BitcoinyBlockchainProvider electrumX = new ElectrumX("Namecoin-" + namecoinNet.name(), namecoinNet.getGenesisHash(), namecoinNet.getServers(), DEFAULT_ELECTRUMX_PORTS);
+			Context bitcoinjContext = new Context(namecoinNet.getParams());
 
-			instance = new Peercoin(peercoinNet, electrumX, bitcoinjContext, CURRENCY_CODE);
+			instance = new Namecoin(namecoinNet, electrumX, bitcoinjContext, CURRENCY_CODE);
 		}
 
 		return instance;
@@ -157,14 +159,14 @@ public class Peercoin extends Bitcoiny {
 	}
 
 	/**
-	 * Returns estimated PPC fee, in sats per 1000bytes, optionally for historic timestamp.
+	 * Returns estimated NMC fee, in sats per 1000bytes, optionally for historic timestamp.
 	 * 
 	 * @param timestamp optional milliseconds since epoch, or null for 'now'
 	 * @return sats per 1000bytes, or throws ForeignBlockchainException if something went wrong
 	 */
 	@Override
 	public long getP2shFee(Long timestamp) throws ForeignBlockchainException {
-		return this.peercoinNet.getP2shFee(timestamp);
+		return this.namecoinNet.getP2shFee(timestamp);
 	}
 
 }

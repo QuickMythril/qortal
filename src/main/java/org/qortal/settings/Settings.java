@@ -24,6 +24,7 @@ import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 import org.qortal.block.BlockChain;
 import org.qortal.controller.arbitrary.ArbitraryDataStorageManager.*;
 import org.qortal.crosschain.Bitcoin.BitcoinNet;
+import org.qortal.crosschain.Namecoin.NamecoinNet;
 import org.qortal.crosschain.Litecoin.LitecoinNet;
 import org.qortal.crosschain.Peercoin.PeercoinNet;
 import org.qortal.crosschain.Dogecoin.DogecoinNet;
@@ -229,6 +230,7 @@ public class Settings {
 	// Which blockchains this node is running
 	private String blockchainConfig = null; // use default from resources
 	private BitcoinNet bitcoinNet = BitcoinNet.MAIN;
+	private NamecoinNet namecoinNet = NamecoinNet.MAIN;
 	private LitecoinNet litecoinNet = LitecoinNet.MAIN;
 	private PeercoinNet peercoinNet = PeercoinNet.MAIN;
 	private DogecoinNet dogecoinNet = DogecoinNet.MAIN;
@@ -688,6 +690,10 @@ public class Settings {
 
 	public BitcoinNet getBitcoinNet() {
 		return this.bitcoinNet;
+	}
+
+	public NamecoinNet getNamecoinNet() {
+		return this.namecoinNet;
 	}
 
 	public LitecoinNet getLitecoinNet() {
