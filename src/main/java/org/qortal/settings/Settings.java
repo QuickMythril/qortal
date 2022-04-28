@@ -31,7 +31,10 @@ import org.qortal.crosschain.Digibyte.DigibyteNet;
 import org.qortal.crosschain.Dash.DashNet;
 import org.qortal.crosschain.Verge.VergeNet;
 import org.qortal.crosschain.Komodo.KomodoNet;
+import org.qortal.crosschain.Zcash.ZcashNet;
+import org.qortal.crosschain.BitcoinCash.BitcoinCashNet;
 import org.qortal.crosschain.Ravencoin.RavencoinNet;
+import org.qortal.crosschain.VerusCoin.VerusCoinNet;
 import org.qortal.utils.EnumUtils;
 
 // All properties to be converted to JSON via JAXB
@@ -233,7 +236,10 @@ public class Settings {
 	private DashNet dashNet = DashNet.MAIN;
 	private VergeNet vergeNet = VergeNet.MAIN;
 	private KomodoNet komodoNet = KomodoNet.MAIN;
+	private ZcashNet zcashNet = ZcashNet.MAIN;
+	private BitcoinCashNet bitcoinCashNet = BitcoinCashNet.MAIN;
 	private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
+	private VerusCoinNet verusCoinNet = VerusCoinNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
 	private boolean tradebotSystrayEnabled = false;
@@ -712,8 +718,20 @@ public class Settings {
 		return this.komodoNet;
 	}
 
+	public ZcashNet getZcashNet() {
+		return this.zcashNet;
+	}
+
+	public BitcoinCashNet getBitcoinCashNet() {
+		return this.bitcoinCashNet;
+	}
+
 	public RavencoinNet getRavencoinNet() {
 		return this.ravencoinNet;
+	}
+
+	public VerusCoinNet getVerusCoinNet() {
+		return this.verusCoinNet;
 	}
 
 	public boolean isTradebotSystrayEnabled() {
