@@ -32,6 +32,7 @@ import org.qortal.crosschain.Digibyte.DigibyteNet;
 import org.qortal.crosschain.Dash.DashNet;
 import org.qortal.crosschain.Verge.VergeNet;
 import org.qortal.crosschain.Komodo.KomodoNet;
+import org.qortal.crosschain.Firo.FiroNet;
 import org.qortal.crosschain.Zcash.ZcashNet;
 import org.qortal.crosschain.BitcoinCash.BitcoinCashNet;
 import org.qortal.crosschain.Ravencoin.RavencoinNet;
@@ -238,6 +239,7 @@ public class Settings {
 	private DashNet dashNet = DashNet.MAIN;
 	private VergeNet vergeNet = VergeNet.MAIN;
 	private KomodoNet komodoNet = KomodoNet.MAIN;
+	private FiroNet firoNet = FiroNet.MAIN;
 	private ZcashNet zcashNet = ZcashNet.MAIN;
 	private BitcoinCashNet bitcoinCashNet = BitcoinCashNet.MAIN;
 	private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
@@ -722,6 +724,10 @@ public class Settings {
 
 	public KomodoNet getKomodoNet() {
 		return this.komodoNet;
+	}
+
+	public FiroNet getFiroNet() {
+		return this.firoNet;
 	}
 
 	public ZcashNet getZcashNet() {
