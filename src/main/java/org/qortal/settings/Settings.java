@@ -24,8 +24,13 @@ import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 import org.qortal.block.BlockChain;
 import org.qortal.controller.arbitrary.ArbitraryDataStorageManager.*;
 import org.qortal.crosschain.Bitcoin.BitcoinNet;
+import org.qortal.crosschain.Namecoin.NamecoinNet;
 import org.qortal.crosschain.Litecoin.LitecoinNet;
 import org.qortal.crosschain.Dogecoin.DogecoinNet;
+import org.qortal.crosschain.Digibyte.DigibyteNet;
+import org.qortal.crosschain.Dash.DashNet;
+import org.qortal.crosschain.Firo.FiroNet;
+import org.qortal.crosschain.Ravencoin.RavencoinNet;
 import org.qortal.utils.EnumUtils;
 
 // All properties to be converted to JSON via JAXB
@@ -220,8 +225,13 @@ public class Settings {
 	// Which blockchains this node is running
 	private String blockchainConfig = null; // use default from resources
 	private BitcoinNet bitcoinNet = BitcoinNet.MAIN;
+	private NamecoinNet namecoinNet = NamecoinNet.MAIN;
 	private LitecoinNet litecoinNet = LitecoinNet.MAIN;
 	private DogecoinNet dogecoinNet = DogecoinNet.MAIN;
+	private DigibyteNet digibyteNet = DigibyteNet.MAIN;
+	private DashNet dashNet = DashNet.MAIN;
+	private FiroNet firoNet = FiroNet.MAIN;
+	private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
 	private boolean tradebotSystrayEnabled = false;
@@ -672,12 +682,32 @@ public class Settings {
 		return this.bitcoinNet;
 	}
 
+	public NamecoinNet getNamecoinNet() {
+		return this.namecoinNet;
+	}
+
 	public LitecoinNet getLitecoinNet() {
 		return this.litecoinNet;
 	}
 
 	public DogecoinNet getDogecoinNet() {
 		return this.dogecoinNet;
+	}
+
+	public DigibyteNet getDigibyteNet() {
+		return this.digibyteNet;
+	}
+
+	public DashNet getDashNet() {
+		return this.dashNet;
+	}
+
+	public FiroNet getFiroNet() {
+		return this.firoNet;
+	}
+
+	public RavencoinNet getRavencoinNet() {
+		return this.ravencoinNet;
 	}
 
 	public boolean isTradebotSystrayEnabled() {
