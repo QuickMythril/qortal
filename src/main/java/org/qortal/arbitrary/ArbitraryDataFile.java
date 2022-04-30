@@ -93,10 +93,12 @@ public class ArbitraryDataFile {
         File outputFile = outputFilePath.toFile();
         try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
             outputStream.write(fileContent);
+            outputStream.close();
             this.filePath = outputFilePath;
             // Verify hash
-            if (!this.hash58.equals(this.digest58())) {
-                LOGGER.error("Hash {} does not match file digest {} for signature: {}", this.hash58, this.digest58(), Base58.encode(signature));
+            String digest58 = this.digest58();
+            if (!this.hash58.equals(digest58)) {
+                LOGGER.error("Hash {} does not match file digest {} for signature: {}", this.hash58, digest58, Base58.encode(signature));
                 this.delete();
                 throw new DataException("Data file digest validation failed");
             }
