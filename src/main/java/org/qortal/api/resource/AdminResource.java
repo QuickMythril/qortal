@@ -381,6 +381,10 @@ public class AdminResource {
 			) @QueryParam("limit") Integer limit, @Parameter(
 				ref = "offset"
 			) @QueryParam("offset") Integer offset, @Parameter(
+				name = "tail",
+				description = "Fetch most recent log lines",
+				schema = @Schema(type = "boolean")
+			) @QueryParam("tail") Boolean tail, @Parameter(
 				ref = "reverse"
 			) @QueryParam("reverse") Boolean reverse) {
 		LoggerContext loggerContext = (LoggerContext) LogManager.getContext();
@@ -395,6 +399,13 @@ public class AdminResource {
 			// Slicing
 			if (reverse != null && reverse)
 				logLines = Lists.reverse(logLines);
+
+			// Tail mode - return the last X lines (where X = limit)
+			if (tail != null && tail) {
+				if (limit != null && limit > 0) {
+					offset = logLines.size() - limit;
+				}
+			}
 
 			// offset out of bounds?
 			if (offset != null && (offset < 0 || offset >= logLines.size()))
@@ -416,7 +427,7 @@ public class AdminResource {
 
 			limit = Math.min(limit, logLines.size());
 
-			logLines.subList(limit - 1, logLines.size()).clear();
+			logLines.subList(limit, logLines.size()).clear();
 
 			return String.join("\n", logLines);
 		} catch (IOException e) {
