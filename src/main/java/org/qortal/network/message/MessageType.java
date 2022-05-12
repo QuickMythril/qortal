@@ -61,7 +61,21 @@ public enum MessageType {
     GET_TRADE_PRESENCES(141, GetTradePresencesMessage::fromByteBuffer),
 
     ARBITRARY_METADATA(150, ArbitraryMetadataMessage::fromByteBuffer),
-    GET_ARBITRARY_METADATA(151, GetArbitraryMetadataMessage::fromByteBuffer);
+    GET_ARBITRARY_METADATA(151, GetArbitraryMetadataMessage::fromByteBuffer),
+
+    // Lite node support
+    ACCOUNT(160, AccountMessage::fromByteBuffer),
+    GET_ACCOUNT(161, GetAccountMessage::fromByteBuffer),
+
+    ACCOUNT_BALANCE(170, AccountBalanceMessage::fromByteBuffer),
+    GET_ACCOUNT_BALANCE(171, GetAccountBalanceMessage::fromByteBuffer),
+
+    NAMES(180, NamesMessage::fromByteBuffer),
+    GET_ACCOUNT_NAMES(181, GetAccountNamesMessage::fromByteBuffer),
+    GET_NAME(182, GetNameMessage::fromByteBuffer),
+
+    TRANSACTIONS(190, TransactionsMessage::fromByteBuffer),
+    GET_ACCOUNT_TRANSACTIONS(191, GetAccountTransactionsMessage::fromByteBuffer);
 
     public final int value;
     public final MessageProducer fromByteBufferMethod;

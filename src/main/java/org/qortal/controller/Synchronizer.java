@@ -134,6 +134,11 @@ public class Synchronizer extends Thread {
 	public void run() {
 		Thread.currentThread().setName("Synchronizer");
 
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes don't need to sync
+			return;
+		}
+
 		try {
 			while (running && !Controller.isStopping()) {
 				Thread.sleep(1000);

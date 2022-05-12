@@ -69,7 +69,8 @@ public class BlockChain {
 		newBlockSigHeight,
 		shareBinFix,
 		calcChainWeightTimestamp,
-		transactionV5Timestamp;
+		transactionV5Timestamp,
+		transactionV6Timestamp;
 	}
 
 	// Custom transaction fees
@@ -403,6 +404,10 @@ public class BlockChain {
 
 	public long getTransactionV5Timestamp() {
 		return this.featureTriggers.get(FeatureTrigger.transactionV5Timestamp.name()).longValue();
+	}
+
+	public long getTransactionV6Timestamp() {
+		return this.featureTriggers.get(FeatureTrigger.transactionV6Timestamp.name()).longValue();
 	}
 
 	// More complex getters for aspects that change by height or timestamp

@@ -393,7 +393,10 @@ public abstract class Transaction {
 	 * @return transaction version number
 	 */
 	public static int getVersionByTimestamp(long timestamp) {
-		if (timestamp >= BlockChain.getInstance().getTransactionV5Timestamp()) {
+		if (timestamp >= BlockChain.getInstance().getTransactionV6Timestamp()) {
+			return 6;
+		}
+		else if (timestamp >= BlockChain.getInstance().getTransactionV5Timestamp()) {
 			return 5;
 		}
 		return 4;
@@ -530,11 +533,6 @@ public abstract class Transaction {
 		if (now >= this.getDeadline())
 			return ValidationResult.TIMESTAMP_TOO_OLD;
 
-		// Transactions with a expiry prior to latest block's timestamp are too old
-		BlockData latestBlock = repository.getBlockRepository().getLastBlock();
-		if (this.getDeadline() <= latestBlock.getTimestamp())
-			return ValidationResult.TIMESTAMP_TOO_OLD;
-
 		// Transactions with a timestamp too far into future are too new
 		long maxTimestamp = now + Settings.getInstance().getMaxTransactionTimestampFuture();
 		if (this.transactionData.getTimestamp() > maxTimestamp)
@@ -545,6 +543,15 @@ public abstract class Transaction {
 		if (feeValidationResult != ValidationResult.OK)
 			return feeValidationResult;
 
+		if (Settings.getInstance().isLite()) {
+			// Everything from this point is difficult to validate for a lite node, since it has no blocks.
+			// For now, we will assume it is valid, to allow it to move around the network easily.
+			// If it turns out to be invalid, other full/top-only nodes will reject it on receipt.
+			// Lite nodes would never mint a block, so there's not much risk of holding invalid transactions.
+			// TODO: implement lite-only validation for each transaction type
+			return ValidationResult.OK;
+		}
+
 		PublicKeyAccount creator = this.getCreator();
 		if (creator == null)
 			return ValidationResult.MISSING_CREATOR;
@@ -552,6 +559,12 @@ public abstract class Transaction {
 		// Reject if unconfirmed pile already has X transactions from same creator
 		if (countUnconfirmedByCreator(creator) >= Settings.getInstance().getMaxUnconfirmedPerAccount())
 			return ValidationResult.TOO_MANY_UNCONFIRMED;
+
+		// Transactions with a expiry prior to latest block's timestamp are too old
+		// Not relevant for lite nodes, as they don't have any blocks
+		BlockData latestBlock = repository.getBlockRepository().getLastBlock();
+		if (this.getDeadline() <= latestBlock.getTimestamp())
+			return ValidationResult.TIMESTAMP_TOO_OLD;
 
 		// Check transaction's txGroupId
 		if (!this.isValidTxGroupId())

@@ -62,6 +62,11 @@ public abstract class RepositoryManager {
 	}
 
 	public static boolean archive(Repository repository) {
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes have no blockchain
+			return false;
+		}
+
 		// Bulk archive the database the first time we use archive mode
 		if (Settings.getInstance().isArchiveEnabled()) {
 			if (RepositoryManager.canArchiveOrPrune()) {
@@ -82,6 +87,11 @@ public abstract class RepositoryManager {
 	}
 
 	public static boolean prune(Repository repository) {
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes have no blockchain
+			return false;
+		}
+
 		// Bulk prune the database the first time we use top-only or block archive mode
 		if (Settings.getInstance().isTopOnly() ||
 			Settings.getInstance().isArchiveEnabled()) {

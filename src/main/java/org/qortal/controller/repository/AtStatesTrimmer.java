@@ -19,6 +19,11 @@ public class AtStatesTrimmer implements Runnable {
 	public void run() {
 		Thread.currentThread().setName("AT States trimmer");
 
+		if (Settings.getInstance().isLite()) {
+			// Nothing to trim in lite mode
+			return;
+		}
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			int trimStartHeight = repository.getATRepository().getAtTrimHeight();
 

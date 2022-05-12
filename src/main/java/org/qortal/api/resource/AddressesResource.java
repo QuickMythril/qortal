@@ -30,6 +30,7 @@ import org.qortal.api.Security;
 import org.qortal.api.model.ApiOnlineAccount;
 import org.qortal.api.model.RewardShareKeyRequest;
 import org.qortal.asset.Asset;
+import org.qortal.controller.LiteNode;
 import org.qortal.controller.OnlineAccountsManager;
 import org.qortal.crypto.Crypto;
 import org.qortal.data.account.AccountData;
@@ -109,18 +110,26 @@ public class AddressesResource {
 		if (!Crypto.isValidAddress(address))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ADDRESS);
 
-		byte[] lastReference = null;
+		AccountData accountData;
 
-		try (final Repository repository = RepositoryManager.getRepository()) {
-			AccountData accountData = repository.getAccountRepository().getAccount(address);
-			// Not found?
-			if (accountData == null)
-				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.ADDRESS_UNKNOWN);
-
-			lastReference = accountData.getReference();
-		} catch (DataException e) {
-			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes request data from peers instead of the local db
+			accountData = LiteNode.getInstance().fetchAccountData(address);
 		}
+		else {
+			// All other node types request data from local db
+			try (final Repository repository = RepositoryManager.getRepository()) {
+				accountData = repository.getAccountRepository().getAccount(address);
+			} catch (DataException e) {
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
+			}
+		}
+
+		// Not found?
+		if (accountData == null)
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.ADDRESS_UNKNOWN);
+
+		byte[] lastReference = accountData.getReference();
 
 		if (lastReference == null || lastReference.length == 0)
 			return "false";

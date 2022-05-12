@@ -61,6 +61,11 @@ public class BlockMinter extends Thread {
 	public void run() {
 		Thread.currentThread().setName("BlockMinter");
 
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes do not mint
+			return;
+		}
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			if (Settings.getInstance().getWipeUnconfirmedOnStart()) {
 				// Wipe existing unconfirmed transactions

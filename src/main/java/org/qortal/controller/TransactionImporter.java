@@ -11,6 +11,7 @@ import org.qortal.network.message.TransactionSignaturesMessage;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
+import org.qortal.settings.Settings;
 import org.qortal.transaction.Transaction;
 import org.qortal.transform.TransformationException;
 import org.qortal.utils.Base58;
@@ -55,6 +56,8 @@ public class TransactionImporter extends Thread {
 
     @Override
     public void run() {
+        Thread.currentThread().setName("Transaction Importer");
+
         try {
             while (!Controller.isStopping()) {
                 Thread.sleep(1000L);
@@ -106,6 +109,8 @@ public class TransactionImporter extends Thread {
 
             List<Transaction> sigValidTransactions = new ArrayList<>();
 
+            boolean isLiteNode = Settings.getInstance().isLite();
+
             // Signature validation round - does not require blockchain lock
             for (Map.Entry<TransactionData, Boolean> transactionEntry : incomingTransactionsCopy.entrySet()) {
                 // Quick exit?
@@ -119,6 +124,12 @@ public class TransactionImporter extends Thread {
                 // Only validate signature if we haven't already done so
                 Boolean isSigValid = transactionEntry.getValue();
                 if (!Boolean.TRUE.equals(isSigValid)) {
+                    if (isLiteNode) {
+                        // Lite nodes can't easily validate transactions, so for now we will have to assume that everything is valid
+                        sigValidTransactions.add(transaction);
+                        continue;
+                    }
+
                     if (!transaction.isSignatureValid()) {
                         String signature58 = Base58.encode(transactionData.getSignature());
 

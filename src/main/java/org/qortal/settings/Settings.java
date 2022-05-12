@@ -148,6 +148,8 @@ public class Settings {
 	 * This has a significant effect on execution time. */
 	private int onlineSignaturesTrimBatchSize = 100; // blocks
 
+	/** Lite nodes don't sync blocks, and instead request "derived data" from peers */
+	private boolean lite = false;
 
 	/** Whether we should prune old data to reduce database size
 	 * This prevents the node from being able to serve older blocks */
@@ -836,6 +838,10 @@ public class Settings {
 
 	public int getOnlineSignaturesTrimBatchSize() {
 		return this.onlineSignaturesTrimBatchSize;
+	}
+
+	public boolean isLite() {
+		return this.lite;
 	}
 
 	public boolean isTopOnly() {

@@ -8,11 +8,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.qortal.block.BlockChain;
+import org.qortal.controller.LiteNode;
 import org.qortal.data.account.AccountBalanceData;
 import org.qortal.data.account.AccountData;
 import org.qortal.data.account.RewardShareData;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
+import org.qortal.settings.Settings;
 import org.qortal.utils.Base58;
 
 @XmlAccessorType(XmlAccessType.NONE) // Stops JAX-RS errors when unmarshalling blockchain config
@@ -59,7 +61,17 @@ public class Account {
 	// Balance manipulations - assetId is 0 for QORT
 
 	public long getConfirmedBalance(long assetId) throws DataException {
-		AccountBalanceData accountBalanceData = this.repository.getAccountRepository().getBalance(this.address, assetId);
+		AccountBalanceData accountBalanceData;
+
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes request data from peers instead of the local db
+			accountBalanceData = LiteNode.getInstance().fetchAccountBalance(this.address, assetId);
+		}
+		else {
+			// All other node types fetch from the local db
+			accountBalanceData = this.repository.getAccountRepository().getBalance(this.address, assetId);
+		}
+
 		if (accountBalanceData == null)
 			return 0;
 

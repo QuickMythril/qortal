@@ -1084,11 +1084,13 @@ public class Network {
         // (If inbound sent anything here, it's possible it could be processed out-of-order with handshake message).
 
         if (peer.isOutbound()) {
-            // Send our height
-            Message heightMessage = buildHeightMessage(peer, Controller.getInstance().getChainTip());
-            if (!peer.sendMessage(heightMessage)) {
-                peer.disconnect("failed to send height/info");
-                return;
+            if (!Settings.getInstance().isLite()) {
+                // Send our height
+                Message heightMessage = buildHeightMessage(peer, Controller.getInstance().getChainTip());
+                if (!peer.sendMessage(heightMessage)) {
+                    peer.disconnect("failed to send height/info");
+                    return;
+                }
             }
 
             // Send our peers list

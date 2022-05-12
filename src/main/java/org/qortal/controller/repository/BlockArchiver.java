@@ -21,7 +21,7 @@ public class BlockArchiver implements Runnable {
 	public void run() {
 		Thread.currentThread().setName("Block archiver");
 
-		if (!Settings.getInstance().isArchiveEnabled()) {
+		if (!Settings.getInstance().isArchiveEnabled() || Settings.getInstance().isLite()) {
 			return;
 		}
 

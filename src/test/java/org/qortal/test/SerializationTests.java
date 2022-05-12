@@ -47,7 +47,6 @@ public class SerializationTests extends Common {
 				switch (txType) {
 					case GENESIS:
 					case ACCOUNT_FLAGS:
-					case AT:
 					case CHAT:
 					case PUBLICIZE:
 					case AIRDROP:

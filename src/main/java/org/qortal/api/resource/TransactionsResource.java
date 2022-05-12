@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +33,8 @@ import org.qortal.api.ApiException;
 import org.qortal.api.ApiExceptionFactory;
 import org.qortal.api.model.SimpleTransactionSignRequest;
 import org.qortal.controller.Controller;
+import org.qortal.controller.LiteNode;
+import org.qortal.crypto.Crypto;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.globalization.Translator;
 import org.qortal.repository.DataException;
@@ -364,6 +367,73 @@ public class TransactionsResource {
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
 		}
+	}
+
+	@GET
+	@Path("/address/{address}")
+	@Operation(
+			summary = "Returns transactions for given address",
+			responses = {
+					@ApiResponse(
+							description = "transactions",
+							content = @Content(
+									array = @ArraySchema(
+											schema = @Schema(
+													implementation = TransactionData.class
+											)
+									)
+							)
+					)
+			}
+	)
+	@ApiErrors({ApiError.INVALID_ADDRESS,  ApiError.REPOSITORY_ISSUE})
+	public List<TransactionData> getAddressTransactions(@PathParam("address") String address,
+												 		@Parameter(ref = "limit") @QueryParam("limit") Integer limit,
+												 		@Parameter(ref = "offset") @QueryParam("offset") Integer offset,
+														@Parameter(ref = "reverse") @QueryParam("reverse") Boolean reverse) {
+		if (!Crypto.isValidAddress(address)) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ADDRESS);
+		}
+
+		if (limit == null) {
+			limit = 0;
+		}
+		if (offset == null) {
+			offset = 0;
+		}
+
+		List<TransactionData> transactions;
+
+		if (Settings.getInstance().isLite()) {
+			// Fetch from network
+			transactions = LiteNode.getInstance().fetchAccountTransactions(address, limit, offset);
+
+			// Sort the data, since we can't guarantee the order that a peer sent it in
+			if (reverse) {
+				transactions.sort(Comparator.comparingLong(TransactionData::getTimestamp).reversed());
+			} else {
+				transactions.sort(Comparator.comparingLong(TransactionData::getTimestamp));
+			}
+		}
+		else {
+			// Fetch from local db
+			try (final Repository repository = RepositoryManager.getRepository()) {
+				List<byte[]> signatures = repository.getTransactionRepository().getSignaturesMatchingCriteria(null, null, null,
+						null, null, null, address, TransactionsResource.ConfirmationStatus.CONFIRMED, limit, offset, reverse);
+
+				// Expand signatures to transactions
+				transactions = new ArrayList<>(signatures.size());
+				for (byte[] signature : signatures) {
+					transactions.add(repository.getTransactionRepository().fromSignature(signature));
+				}
+			} catch (ApiException e) {
+				throw e;
+			} catch (DataException e) {
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
+			}
+		}
+
+		return transactions;
 	}
 
 	@GET

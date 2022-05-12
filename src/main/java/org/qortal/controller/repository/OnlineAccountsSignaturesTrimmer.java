@@ -21,6 +21,11 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 	public void run() {
 		Thread.currentThread().setName("Online Accounts trimmer");
 
+		if (Settings.getInstance().isLite()) {
+			// Nothing to trim in lite mode
+			return;
+		}
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			// Don't even start trimming until initial rush has ended
 			Thread.sleep(INITIAL_SLEEP_PERIOD);

@@ -32,6 +32,7 @@ import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 import org.qortal.api.ApiService;
 import org.qortal.api.DomainMapService;
 import org.qortal.api.GatewayService;
+import org.qortal.api.resource.TransactionsResource;
 import org.qortal.block.Block;
 import org.qortal.block.BlockChain;
 import org.qortal.block.BlockChain.BlockTimingByHeight;
@@ -39,8 +40,11 @@ import org.qortal.controller.arbitrary.*;
 import org.qortal.controller.repository.PruneManager;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.controller.tradebot.TradeBot;
+import org.qortal.data.account.AccountBalanceData;
+import org.qortal.data.account.AccountData;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.block.BlockSummaryData;
+import org.qortal.data.naming.NameData;
 import org.qortal.data.network.PeerChainTipData;
 import org.qortal.data.network.PeerData;
 import org.qortal.data.transaction.ChatTransactionData;
@@ -178,6 +182,52 @@ public class Controller extends Thread {
 			}
 		}
 		public GetArbitraryMetadataMessageStats getArbitraryMetadataMessageStats = new GetArbitraryMetadataMessageStats();
+
+		public static class GetAccountMessageStats {
+			public AtomicLong requests = new AtomicLong();
+			public AtomicLong cacheHits = new AtomicLong();
+			public AtomicLong unknownAccounts = new AtomicLong();
+
+			public GetAccountMessageStats() {
+			}
+		}
+		public GetAccountMessageStats getAccountMessageStats = new GetAccountMessageStats();
+
+		public static class GetAccountBalanceMessageStats {
+			public AtomicLong requests = new AtomicLong();
+			public AtomicLong unknownAccounts = new AtomicLong();
+
+			public GetAccountBalanceMessageStats() {
+			}
+		}
+		public GetAccountBalanceMessageStats getAccountBalanceMessageStats = new GetAccountBalanceMessageStats();
+
+		public static class GetAccountTransactionsMessageStats {
+			public AtomicLong requests = new AtomicLong();
+			public AtomicLong unknownAccounts = new AtomicLong();
+
+			public GetAccountTransactionsMessageStats() {
+			}
+		}
+		public GetAccountTransactionsMessageStats getAccountTransactionsMessageStats = new GetAccountTransactionsMessageStats();
+
+		public static class GetAccountNamesMessageStats {
+			public AtomicLong requests = new AtomicLong();
+			public AtomicLong unknownAccounts = new AtomicLong();
+
+			public GetAccountNamesMessageStats() {
+			}
+		}
+		public GetAccountNamesMessageStats getAccountNamesMessageStats = new GetAccountNamesMessageStats();
+
+		public static class GetNameMessageStats {
+			public AtomicLong requests = new AtomicLong();
+			public AtomicLong unknownAccounts = new AtomicLong();
+
+			public GetNameMessageStats() {
+			}
+		}
+		public GetNameMessageStats getNameMessageStats = new GetNameMessageStats();
 
 		public AtomicLong latestBlocksCacheRefills = new AtomicLong();
 
@@ -363,23 +413,27 @@ public class Controller extends Thread {
 			return; // Not System.exit() so that GUI can display error
 		}
 
-		// Rebuild Names table and check database integrity (if enabled)
-		NamesDatabaseIntegrityCheck namesDatabaseIntegrityCheck = new NamesDatabaseIntegrityCheck();
-		namesDatabaseIntegrityCheck.rebuildAllNames();
-		if (Settings.getInstance().isNamesIntegrityCheckEnabled()) {
-			namesDatabaseIntegrityCheck.runIntegrityCheck();
-		}
+		// If we have a non-lite node, we need to perform some startup actions
+		if (!Settings.getInstance().isLite()) {
 
-		LOGGER.info("Validating blockchain");
-		try {
-			BlockChain.validate();
+			// Rebuild Names table and check database integrity (if enabled)
+			NamesDatabaseIntegrityCheck namesDatabaseIntegrityCheck = new NamesDatabaseIntegrityCheck();
+			namesDatabaseIntegrityCheck.rebuildAllNames();
+			if (Settings.getInstance().isNamesIntegrityCheckEnabled()) {
+				namesDatabaseIntegrityCheck.runIntegrityCheck();
+			}
 
-			Controller.getInstance().refillLatestBlocksCache();
-			LOGGER.info(String.format("Our chain height at start-up: %d", Controller.getInstance().getChainHeight()));
-		} catch (DataException e) {
-			LOGGER.error("Couldn't validate blockchain", e);
-			Gui.getInstance().fatalError("Blockchain validation issue", e);
-			return; // Not System.exit() so that GUI can display error
+			LOGGER.info("Validating blockchain");
+			try {
+				BlockChain.validate();
+
+				Controller.getInstance().refillLatestBlocksCache();
+				LOGGER.info(String.format("Our chain height at start-up: %d", Controller.getInstance().getChainHeight()));
+			} catch (DataException e) {
+				LOGGER.error("Couldn't validate blockchain", e);
+				Gui.getInstance().fatalError("Blockchain validation issue", e);
+				return; // Not System.exit() so that GUI can display error
+			}
 		}
 
 		// Import current trade bot states and minting accounts if they exist
@@ -737,7 +791,11 @@ public class Controller extends Thread {
 		final Long minLatestBlockTimestamp = NTP.getTime() - (30 * 60 * 1000L);
 
 		synchronized (Synchronizer.getInstance().syncLock) {
-			if (this.isMintingPossible) {
+			if (Settings.getInstance().isLite()) {
+				actionText = Translator.INSTANCE.translate("SysTray", "LITE_NODE");
+				SysTray.getInstance().setTrayIcon(4);
+			}
+			else if (this.isMintingPossible) {
 				actionText = Translator.INSTANCE.translate("SysTray", "MINTING_ENABLED");
 				SysTray.getInstance().setTrayIcon(2);
 			}
@@ -759,7 +817,11 @@ public class Controller extends Thread {
 			}
 		}
 
-		String tooltip = String.format("%s - %d %s - %s %d", actionText, numberOfPeers, connectionsText, heightText, height) + "\n" + String.format("%s: %s", Translator.INSTANCE.translate("SysTray", "BUILD_VERSION"), this.buildVersion);
+		String tooltip = String.format("%s - %d %s", actionText, numberOfPeers, connectionsText);
+		if (!Settings.getInstance().isLite()) {
+			tooltip.concat(String.format(" - %s %d", heightText, height));
+		}
+		tooltip.concat(String.format("\n%s: %s", Translator.INSTANCE.translate("SysTray", "BUILD_VERSION"), this.buildVersion));
 		SysTray.getInstance().setToolTipText(tooltip);
 
 		this.callbackExecutor.execute(() -> {
@@ -916,6 +978,11 @@ public class Controller extends Thread {
 	// Callbacks for/from network
 
 	public void doNetworkBroadcast() {
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes have nothing to broadcast
+			return;
+		}
+
 		Network network = Network.getInstance();
 
 		// Send (if outbound) / Request peer lists
@@ -1198,6 +1265,26 @@ public class Controller extends Thread {
 				TradeBot.getInstance().onTradePresencesMessage(peer, message);
 				break;
 
+			case GET_ACCOUNT:
+				onNetworkGetAccountMessage(peer, message);
+				break;
+
+			case GET_ACCOUNT_BALANCE:
+				onNetworkGetAccountBalanceMessage(peer, message);
+				break;
+
+			case GET_ACCOUNT_TRANSACTIONS:
+				onNetworkGetAccountTransactionsMessage(peer, message);
+				break;
+
+			case GET_ACCOUNT_NAMES:
+				onNetworkGetAccountNamesMessage(peer, message);
+				break;
+
+			case GET_NAME:
+				onNetworkGetNameMessage(peer, message);
+				break;
+
 			default:
 				LOGGER.debug(() -> String.format("Unhandled %s message [ID %d] from peer %s", message.getType().name(), message.getId(), peer));
 				break;
@@ -1434,11 +1521,13 @@ public class Controller extends Thread {
 	private void onNetworkHeightV2Message(Peer peer, Message message) {
 		HeightV2Message heightV2Message = (HeightV2Message) message;
 
-		// If peer is inbound and we've not updated their height
-		// then this is probably their initial HEIGHT_V2 message
-		// so they need a corresponding HEIGHT_V2 message from us
-		if (!peer.isOutbound() && (peer.getChainTipData() == null || peer.getChainTipData().getLastHeight() == null))
-			peer.sendMessage(Network.getInstance().buildHeightMessage(peer, getChainTip()));
+		if (!Settings.getInstance().isLite()) {
+			// If peer is inbound and we've not updated their height
+			// then this is probably their initial HEIGHT_V2 message
+			// so they need a corresponding HEIGHT_V2 message from us
+			if (!peer.isOutbound() && (peer.getChainTipData() == null || peer.getChainTipData().getLastHeight() == null))
+				peer.sendMessage(Network.getInstance().buildHeightMessage(peer, getChainTip()));
+		}
 
 		// Update peer chain tip data
 		PeerChainTipData newChainTipData = new PeerChainTipData(heightV2Message.getHeight(), heightV2Message.getSignature(), heightV2Message.getTimestamp(), heightV2Message.getMinterPublicKey());
@@ -1446,6 +1535,193 @@ public class Controller extends Thread {
 
 		// Potentially synchronize
 		Synchronizer.getInstance().requestSync();
+	}
+
+	private void onNetworkGetAccountMessage(Peer peer, Message message) {
+		GetAccountMessage getAccountMessage = (GetAccountMessage) message;
+		String address = getAccountMessage.getAddress();
+		this.stats.getAccountMessageStats.requests.incrementAndGet();
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			AccountData accountData = repository.getAccountRepository().getAccount(address);
+
+			if (accountData == null) {
+				// We don't have this account
+				this.stats.getAccountMessageStats.unknownAccounts.getAndIncrement();
+
+				// Send valid, yet unexpected message type in response, so peer doesn't have to wait for timeout
+				LOGGER.debug(() -> String.format("Sending 'account unknown' response to peer %s for GET_ACCOUNT request for unknown account %s", peer, address));
+
+				// We'll send empty block summaries message as it's very short
+				Message accountUnknownMessage = new BlockSummariesMessage(Collections.emptyList());
+				accountUnknownMessage.setId(message.getId());
+				if (!peer.sendMessage(accountUnknownMessage))
+					peer.disconnect("failed to send account-unknown response");
+				return;
+			}
+
+			AccountMessage accountMessage = new AccountMessage(accountData);
+			accountMessage.setId(message.getId());
+
+			if (!peer.sendMessage(accountMessage)) {
+				peer.disconnect("failed to send account");
+			}
+
+		} catch (DataException e) {
+			LOGGER.error(String.format("Repository issue while send account %s to peer %s", address, peer), e);
+		}
+	}
+
+	private void onNetworkGetAccountBalanceMessage(Peer peer, Message message) {
+		GetAccountBalanceMessage getAccountBalanceMessage = (GetAccountBalanceMessage) message;
+		String address = getAccountBalanceMessage.getAddress();
+		long assetId = getAccountBalanceMessage.getAssetId();
+		this.stats.getAccountBalanceMessageStats.requests.incrementAndGet();
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			AccountBalanceData accountBalanceData = repository.getAccountRepository().getBalance(address, assetId);
+
+			if (accountBalanceData == null) {
+				// We don't have this account
+				this.stats.getAccountBalanceMessageStats.unknownAccounts.getAndIncrement();
+
+				// Send valid, yet unexpected message type in response, so peer doesn't have to wait for timeout
+				LOGGER.debug(() -> String.format("Sending 'account unknown' response to peer %s for GET_ACCOUNT_BALANCE request for unknown account %s and asset ID %d", peer, address, assetId));
+
+				// We'll send empty block summaries message as it's very short
+				Message accountUnknownMessage = new BlockSummariesMessage(Collections.emptyList());
+				accountUnknownMessage.setId(message.getId());
+				if (!peer.sendMessage(accountUnknownMessage))
+					peer.disconnect("failed to send account-unknown response");
+				return;
+			}
+
+			AccountBalanceMessage accountMessage = new AccountBalanceMessage(accountBalanceData);
+			accountMessage.setId(message.getId());
+
+			if (!peer.sendMessage(accountMessage)) {
+				peer.disconnect("failed to send account balance");
+			}
+
+		} catch (DataException e) {
+			LOGGER.error(String.format("Repository issue while send balance for account %s and asset ID %d to peer %s", address, assetId, peer), e);
+		}
+	}
+
+	private void onNetworkGetAccountTransactionsMessage(Peer peer, Message message) {
+		GetAccountTransactionsMessage getAccountTransactionsMessage = (GetAccountTransactionsMessage) message;
+		String address = getAccountTransactionsMessage.getAddress();
+		int limit = Math.min(getAccountTransactionsMessage.getLimit(), 100);
+		int offset = getAccountTransactionsMessage.getOffset();
+		this.stats.getAccountTransactionsMessageStats.requests.incrementAndGet();
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			List<byte[]> signatures = repository.getTransactionRepository().getSignaturesMatchingCriteria(null, null, null,
+					null, null, null, address, TransactionsResource.ConfirmationStatus.CONFIRMED, limit, offset, false);
+
+			// Expand signatures to transactions
+			List<TransactionData> transactions = new ArrayList<>(signatures.size());
+			for (byte[] signature : signatures) {
+				transactions.add(repository.getTransactionRepository().fromSignature(signature));
+			}
+
+			if (transactions == null) {
+				// We don't have this account
+				this.stats.getAccountTransactionsMessageStats.unknownAccounts.getAndIncrement();
+
+				// Send valid, yet unexpected message type in response, so peer doesn't have to wait for timeout
+				LOGGER.debug(() -> String.format("Sending 'account unknown' response to peer %s for GET_ACCOUNT_TRANSACTIONS request for unknown account %s", peer, address));
+
+				// We'll send empty block summaries message as it's very short
+				Message accountUnknownMessage = new BlockSummariesMessage(Collections.emptyList());
+				accountUnknownMessage.setId(message.getId());
+				if (!peer.sendMessage(accountUnknownMessage))
+					peer.disconnect("failed to send account-unknown response");
+				return;
+			}
+
+			TransactionsMessage transactionsMessage = new TransactionsMessage(transactions);
+			transactionsMessage.setId(message.getId());
+
+			if (!peer.sendMessage(transactionsMessage)) {
+				peer.disconnect("failed to send account transactions");
+			}
+
+		} catch (DataException e) {
+			LOGGER.error(String.format("Repository issue while sending transactions for account %s %d to peer %s", address, peer), e);
+		} catch (MessageException e) {
+			LOGGER.error(String.format("Message serialization issue while sending transactions for account %s %d to peer %s", address, peer), e);
+		}
+	}
+
+	private void onNetworkGetAccountNamesMessage(Peer peer, Message message) {
+		GetAccountNamesMessage getAccountNamesMessage = (GetAccountNamesMessage) message;
+		String address = getAccountNamesMessage.getAddress();
+		this.stats.getAccountNamesMessageStats.requests.incrementAndGet();
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			List<NameData> namesDataList = repository.getNameRepository().getNamesByOwner(address);
+
+			if (namesDataList == null) {
+				// We don't have this account
+				this.stats.getAccountNamesMessageStats.unknownAccounts.getAndIncrement();
+
+				// Send valid, yet unexpected message type in response, so peer doesn't have to wait for timeout
+				LOGGER.debug(() -> String.format("Sending 'account unknown' response to peer %s for GET_ACCOUNT_NAMES request for unknown account %s", peer, address));
+
+				// We'll send empty block summaries message as it's very short
+				Message accountUnknownMessage = new BlockSummariesMessage(Collections.emptyList());
+				accountUnknownMessage.setId(message.getId());
+				if (!peer.sendMessage(accountUnknownMessage))
+					peer.disconnect("failed to send account-unknown response");
+				return;
+			}
+
+			NamesMessage namesMessage = new NamesMessage(namesDataList);
+			namesMessage.setId(message.getId());
+
+			if (!peer.sendMessage(namesMessage)) {
+				peer.disconnect("failed to send account names");
+			}
+
+		} catch (DataException e) {
+			LOGGER.error(String.format("Repository issue while send names for account %s to peer %s", address, peer), e);
+		}
+	}
+
+	private void onNetworkGetNameMessage(Peer peer, Message message) {
+		GetNameMessage getNameMessage = (GetNameMessage) message;
+		String name = getNameMessage.getName();
+		this.stats.getNameMessageStats.requests.incrementAndGet();
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			NameData nameData = repository.getNameRepository().fromName(name);
+
+			if (nameData == null) {
+				// We don't have this account
+				this.stats.getNameMessageStats.unknownAccounts.getAndIncrement();
+
+				// Send valid, yet unexpected message type in response, so peer doesn't have to wait for timeout
+				LOGGER.debug(() -> String.format("Sending 'name unknown' response to peer %s for GET_NAME request for unknown name %s", peer, name));
+
+				// We'll send empty block summaries message as it's very short
+				Message nameUnknownMessage = new BlockSummariesMessage(Collections.emptyList());
+				nameUnknownMessage.setId(message.getId());
+				if (!peer.sendMessage(nameUnknownMessage))
+					peer.disconnect("failed to send name-unknown response");
+				return;
+			}
+
+			NamesMessage namesMessage = new NamesMessage(Arrays.asList(nameData));
+			namesMessage.setId(message.getId());
+
+			if (!peer.sendMessage(namesMessage)) {
+				peer.disconnect("failed to send name data");
+			}
+
+		} catch (DataException e) {
+			LOGGER.error(String.format("Repository issue while send name %s to peer %s", name, peer), e);
+		}
 	}
 
 
@@ -1499,6 +1775,11 @@ public class Controller extends Thread {
 	 * @return boolean - whether our node's blockchain is up to date or not
 	 */
 	public boolean isUpToDate(Long minLatestBlockTimestamp) {
+		if (Settings.getInstance().isLite()) {
+			// Lite nodes are always "up to date"
+			return true;
+		}
+
 		// Do we even have a vaguely recent block?
 		if (minLatestBlockTimestamp == null)
 			return false;

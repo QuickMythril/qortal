@@ -52,7 +52,8 @@
 		"newBlockSigHeight": 999999,
 		"shareBinFix": 6,
 		"calcChainWeightTimestamp": 0,
-		"transactionV5Timestamp": 0
+		"transactionV5Timestamp": 0,
+		"transactionV6Timestamp": 0
 	},
 	"genesisInfo": {
 		"version": 4,

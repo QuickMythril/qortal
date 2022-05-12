@@ -119,8 +119,21 @@ public class AdminResource {
 		nodeInfo.buildTimestamp = Controller.getInstance().getBuildTimestamp();
 		nodeInfo.nodeId = Network.getInstance().getOurNodeId();
 		nodeInfo.isTestNet = Settings.getInstance().isTestNet();
+		nodeInfo.type = getNodeType();
 
 		return nodeInfo;
+	}
+
+	private String getNodeType() {
+		if (Settings.getInstance().isTopOnly()) {
+			return "topOnly";
+		}
+		else if (Settings.getInstance().isLite()) {
+			return "lite";
+		}
+		else {
+			return "full";
+		}
 	}
 
 	@GET

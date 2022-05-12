@@ -19,6 +19,11 @@ public class BlockPruner implements Runnable {
 	public void run() {
 		Thread.currentThread().setName("Block pruner");
 
+		if (Settings.getInstance().isLite()) {
+			// Nothing to prune in lite mode
+			return;
+		}
+
 		boolean archiveMode = false;
 		if (!Settings.getInstance().isTopOnly()) {
 			// Top-only mode isn't enabled, but we might want to prune for the purposes of archiving
