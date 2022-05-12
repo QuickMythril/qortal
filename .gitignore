@@ -28,6 +28,7 @@
 /WindowsInstaller/Install Files/qortal.jar
 /*.7z
 /tmp
+/wallets
 /data*
 /src/test/resources/arbitrary/*/.qortal/cache
 apikey.txt

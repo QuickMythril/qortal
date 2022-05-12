@@ -819,9 +819,9 @@ public class Controller extends Thread {
 
 		String tooltip = String.format("%s - %d %s", actionText, numberOfPeers, connectionsText);
 		if (!Settings.getInstance().isLite()) {
-			tooltip.concat(String.format(" - %s %d", heightText, height));
+			tooltip = tooltip.concat(String.format(" - %s %d", heightText, height));
 		}
-		tooltip.concat(String.format("\n%s: %s", Translator.INSTANCE.translate("SysTray", "BUILD_VERSION"), this.buildVersion));
+		tooltip = tooltip.concat(String.format("\n%s: %s", Translator.INSTANCE.translate("SysTray", "BUILD_VERSION"), this.buildVersion));
 		SysTray.getInstance().setToolTipText(tooltip);
 
 		this.callbackExecutor.execute(() -> {
