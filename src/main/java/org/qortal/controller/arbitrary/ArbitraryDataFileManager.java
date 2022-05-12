@@ -1,5 +1,6 @@
 package org.qortal.controller.arbitrary;
 
+import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.qortal.arbitrary.ArbitraryDataFile;
@@ -53,6 +54,13 @@ public class ArbitraryDataFileManager extends Thread {
      * List to keep track of peers potentially available for direct connections, based on recent requests
      */
     private List<ArbitraryDirectConnectionInfo> directConnectionInfo = Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Map to keep track of peers requesting QDN data that we hold.
+     * Key = peer address string, value = time of last request.
+     * This allows for additional "burst" connections beyond existing limits.
+     */
+    private Map<String, Long> recentDataRequests = Collections.synchronizedMap(new HashMap<>());
 
 
     public static int MAX_FILE_HASH_RESPONSES = 1000;
@@ -108,6 +116,9 @@ public class ArbitraryDataFileManager extends Thread {
 
         final long directConnectionInfoMinimumTimestamp = now - ArbitraryDataManager.getInstance().ARBITRARY_DIRECT_CONNECTION_INFO_TIMEOUT;
         directConnectionInfo.removeIf(entry -> entry.getTimestamp() < directConnectionInfoMinimumTimestamp);
+
+        final long recentDataRequestMinimumTimestamp = now - ArbitraryDataManager.getInstance().ARBITRARY_RECENT_DATA_REQUESTS_TIMEOUT;
+        recentDataRequests.entrySet().removeIf(entry -> entry.getValue() < recentDataRequestMinimumTimestamp);
     }
 
 
@@ -487,6 +498,45 @@ public class ArbitraryDataFileManager extends Thread {
 
     private void removeFromRelayMap(ArbitraryRelayInfo entry) {
         arbitraryRelayMap.removeIf(relayInfo -> relayInfo.equals(entry));
+    }
+
+
+    // Peers requesting QDN data from us
+
+    /**
+     * Add an address string of a peer that is trying to request data from us.
+     * @param peerAddress
+     */
+    public void addRecentDataRequest(String peerAddress) {
+        if (peerAddress == null) {
+            return;
+        }
+
+        Long now = NTP.getTime();
+        if (now == null) {
+            return;
+        }
+
+        // Make sure to remove the port, since it isn't guaranteed to match next time
+        String[] parts = peerAddress.split(":");
+        if (parts.length == 0) {
+            return;
+        }
+        String host = parts[0];
+        if (!InetAddresses.isInetAddress(host)) {
+            // Invalid host
+            return;
+        }
+
+        this.recentDataRequests.put(host, now);
+    }
+
+    public boolean isPeerRequestingData(String peerAddressWithoutPort) {
+        return this.recentDataRequests.containsKey(peerAddressWithoutPort);
+    }
+
+    public boolean hasPendingDataRequest() {
+        return !this.recentDataRequests.isEmpty();
     }
 
 

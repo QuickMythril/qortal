@@ -47,6 +47,9 @@ public class ArbitraryDataManager extends Thread {
 	/** Maximum time to hold direct peer connection information */
 	public static final long ARBITRARY_DIRECT_CONNECTION_INFO_TIMEOUT = 2 * 60 * 1000L; // ms
 
+	/** Maximum time to hold information about recent data requests that we can fulfil */
+	public static final long ARBITRARY_RECENT_DATA_REQUESTS_TIMEOUT = 2 * 60 * 1000L; // ms
+
 	/** Maximum number of hops that an arbitrary signatures request is allowed to make */
 	private static int ARBITRARY_SIGNATURES_REQUEST_MAX_HOPS = 3;
 

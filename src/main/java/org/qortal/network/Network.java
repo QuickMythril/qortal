@@ -8,6 +8,7 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.qortal.block.BlockChain;
 import org.qortal.controller.Controller;
 import org.qortal.controller.arbitrary.ArbitraryDataFileListManager;
+import org.qortal.controller.arbitrary.ArbitraryDataManager;
 import org.qortal.crypto.Crypto;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.network.PeerData;
@@ -259,6 +260,18 @@ public class Network {
         return this.immutableConnectedPeers;
     }
 
+    public List<Peer> getImmutableConnectedDataPeers() {
+        return this.getImmutableConnectedPeers().stream()
+                .filter(p -> p.isDataPeer())
+                .collect(Collectors.toList());
+    }
+
+    public List<Peer> getImmutableConnectedNonDataPeers() {
+        return this.getImmutableConnectedPeers().stream()
+                .filter(p -> !p.isDataPeer())
+                .collect(Collectors.toList());
+    }
+
     public void addConnectedPeer(Peer peer) {
         this.connectedPeers.add(peer); // thread safe thanks to synchronized list
         this.immutableConnectedPeers = List.copyOf(this.connectedPeers); // also thread safe thanks to synchronized collection's toArray() being fed to List.of(array)
@@ -325,6 +338,7 @@ public class Network {
                         // Add this signature to the list of pending requests for this peer
                         LOGGER.info("Making connection to peer {} to request files for signature {}...", peerAddressString, Base58.encode(signature));
                         Peer peer = new Peer(peerData);
+                        peer.setIsDataPeer(true);
                         peer.addPendingSignatureRequest(signature);
                         return this.connectPeer(peer);
                         // If connection (and handshake) is successful, data will automatically be requested
@@ -685,6 +699,7 @@ public class Network {
             // Pick candidate
             PeerData peerData = peers.get(peerIndex);
             Peer newPeer = new Peer(peerData);
+            newPeer.setIsDataPeer(false);
 
             // Update connection attempt info
             peerData.setLastAttempted(now);

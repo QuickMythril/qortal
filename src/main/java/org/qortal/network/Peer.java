@@ -64,6 +64,11 @@ public class Peer {
      */
     private boolean isLocal;
 
+    /**
+     * True if connected for the purposes of transfering specific QDN data
+     */
+    private boolean isDataPeer;
+
     private final UUID peerConnectionId = UUID.randomUUID();
     private final Object byteBufferLock = new Object();
     private ByteBuffer byteBuffer;
@@ -194,6 +199,14 @@ public class Peer {
         return this.isOutbound;
     }
 
+    public boolean isDataPeer() {
+        return isDataPeer;
+    }
+
+    public void setIsDataPeer(boolean isDataPeer) {
+        this.isDataPeer = isDataPeer;
+    }
+
     public Handshake getHandshakeStatus() {
         synchronized (this.handshakingLock) {
             return this.handshakeStatus;
@@ -211,6 +224,11 @@ public class Peer {
     }
 
     private void generateRandomMaxConnectionAge() {
+        if (this.maxConnectionAge > 0L) {
+            // Already generated, so we don't want to overwrite the existing value
+            return;
+        }
+
         // Retrieve the min and max connection time from the settings, and calculate the range
         final int minPeerConnectionTime = Settings.getInstance().getMinPeerConnectionTime();
         final int maxPeerConnectionTime = Settings.getInstance().getMaxPeerConnectionTime();
@@ -891,6 +909,10 @@ public class Peer {
 
     public long getMaxConnectionAge() {
         return maxConnectionAge;
+    }
+
+    public void setMaxConnectionAge(long maxConnectionAge) {
+        this.maxConnectionAge = maxConnectionAge;
     }
 
     public boolean hasReachedMaxConnectionAge() {
