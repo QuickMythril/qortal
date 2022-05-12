@@ -13,8 +13,8 @@ import org.qortal.utils.Triple;
 public enum SupportedBlockchain {
 
 	BITCOIN(Arrays.asList(
-				Triple.valueOf(BitcoinACCTv1.NAME, BitcoinACCTv1.CODE_BYTES_HASH, BitcoinACCTv1::getInstance)
-				// Could add improved BitcoinACCTv2 here in the future
+				Triple.valueOf(BitcoinACCTv1.NAME, BitcoinACCTv1.CODE_BYTES_HASH, BitcoinACCTv1::getInstance),
+				Triple.valueOf(BitcoinACCTv3.NAME, BitcoinACCTv3.CODE_BYTES_HASH, BitcoinACCTv3::getInstance)
 			)) {
 		@Override
 		public ForeignBlockchain getInstance() {
@@ -23,7 +23,7 @@ public enum SupportedBlockchain {
 
 		@Override
 		public ACCT getLatestAcct() {
-			return BitcoinACCTv1.getInstance();
+			return BitcoinACCTv3.getInstance();
 		}
 	},
 
@@ -84,6 +84,48 @@ public enum SupportedBlockchain {
 		@Override
 		public ACCT getLatestAcct() {
 			return RavencoinACCTv3.getInstance();
+		}
+	},
+
+	NAMECOIN(Arrays.asList(
+			Triple.valueOf(NamecoinACCTv3.NAME, NamecoinACCTv3.CODE_BYTES_HASH, NamecoinACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Namecoin.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return NamecoinACCTv3.getInstance();
+		}
+	},
+
+	DASH(Arrays.asList(
+			Triple.valueOf(DashACCTv3.NAME, DashACCTv3.CODE_BYTES_HASH, DashACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Dash.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return DashACCTv3.getInstance();
+		}
+	},
+
+	FIRO(Arrays.asList(
+			Triple.valueOf(FiroACCTv3.NAME, FiroACCTv3.CODE_BYTES_HASH, FiroACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Firo.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return FiroACCTv3.getInstance();
 		}
 	};
 
