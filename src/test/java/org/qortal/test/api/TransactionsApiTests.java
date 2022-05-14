@@ -36,8 +36,8 @@ public class TransactionsApiTests extends ApiCommon {
 
 	@Test
 	public void testGetUnconfirmedTransactions() {
-		assertNotNull(this.transactionsResource.getUnconfirmedTransactions(null, null, null));
-		assertNotNull(this.transactionsResource.getUnconfirmedTransactions(1, 1, true));
+		assertNotNull(this.transactionsResource.getUnconfirmedTransactions(null, null, null, null, null));
+		assertNotNull(this.transactionsResource.getUnconfirmedTransactions(null, null, 1, 1, true));
 	}
 
 	@Test

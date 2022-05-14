@@ -253,14 +253,29 @@ public class TransactionsResource {
 		ApiError.REPOSITORY_ISSUE
 	})
 	public List<TransactionData> getUnconfirmedTransactions(@Parameter(
+			description = "A list of transaction types"
+	) @QueryParam("txType") List<TransactionType> txTypes, @Parameter(
+			description = "Transaction creator's base58 encoded public key"
+	) @QueryParam("creator") String creatorPublicKey58, @Parameter(
 		ref = "limit"
 	) @QueryParam("limit") Integer limit, @Parameter(
 		ref = "offset"
 	) @QueryParam("offset") Integer offset, @Parameter(
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
+
+		// Decode public key if supplied
+		byte[] creatorPublicKey = null;
+		if (creatorPublicKey58 != null) {
+			try {
+				creatorPublicKey = Base58.decode(creatorPublicKey58);
+			} catch (NumberFormatException e) {
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PUBLIC_KEY, e);
+			}
+		}
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			return repository.getTransactionRepository().getUnconfirmedTransactions(limit, offset, reverse);
+			return repository.getTransactionRepository().getUnconfirmedTransactions(txTypes, creatorPublicKey, limit, offset, reverse);
 		} catch (ApiException e) {
 			throw e;
 		} catch (DataException e) {

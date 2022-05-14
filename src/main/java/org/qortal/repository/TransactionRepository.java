@@ -257,7 +257,8 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public List<TransactionData> getUnconfirmedTransactions(Integer limit, Integer offset, Boolean reverse) throws DataException;
+	public List<TransactionData> getUnconfirmedTransactions(List<TransactionType> txTypes, byte[] creatorPublicKey,
+															Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	/**
 	 * Returns list of unconfirmed transactions in timestamp-else-signature order.
@@ -266,7 +267,7 @@ public interface TransactionRepository {
 	 * @throws DataException
 	 */
 	public default List<TransactionData> getUnconfirmedTransactions() throws DataException {
-		return getUnconfirmedTransactions(null, null, null);
+		return getUnconfirmedTransactions(null, null, null, null, null);
 	}
 
 	/**
