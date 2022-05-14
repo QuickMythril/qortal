@@ -31,6 +31,7 @@ import org.qortal.crosschain.Ravencoin.RavencoinNet;
 import org.qortal.crosschain.Namecoin.NamecoinNet;
 import org.qortal.crosschain.Dash.DashNet;
 import org.qortal.crosschain.Firo.FiroNet;
+import org.qortal.crosschain.Raptoreum.RaptoreumNet;
 import org.qortal.utils.EnumUtils;
 
 // All properties to be converted to JSON via JAXB
@@ -238,6 +239,7 @@ public class Settings {
 	private NamecoinNet namecoinNet = NamecoinNet.MAIN;
 	private DashNet dashNet = DashNet.MAIN;
 	private FiroNet firoNet = FiroNet.MAIN;
+	private RaptoreumNet raptoreumNet = RaptoreumNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
 	private boolean tradebotSystrayEnabled = false;
@@ -722,6 +724,10 @@ public class Settings {
 
 	public FiroNet getFiroNet() {
 		return this.firoNet;
+	}
+
+	public RaptoreumNet getRaptoreumNet() {
+		return this.raptoreumNet;
 	}
 
 	public boolean isTradebotSystrayEnabled() {
