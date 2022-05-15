@@ -46,6 +46,7 @@ public class Raptoreum extends Bitcoiny {
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
 						// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=rtm
 						new Server("209.50.52.239", ConnectionType.SSL, 50002),
+						new Server("209.50.61.246", ConnectionType.SSL, 50002),
 						new Server("209.151.151.21", ConnectionType.SSL, 50002));
 			}
 
