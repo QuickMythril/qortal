@@ -2,6 +2,7 @@ package org.qortal.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.qortal.data.block.BlockData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.network.Network;
 import org.qortal.network.Peer;
@@ -135,6 +136,9 @@ public class TransactionImporter extends Thread {
 
             boolean isLiteNode = Settings.getInstance().isLite();
 
+            // We need the latest block in order to check for expired transactions
+            BlockData latestBlock = Controller.getInstance().getChainTip();
+
             // Signature validation round - does not require blockchain lock
             for (Map.Entry<TransactionData, Boolean> transactionEntry : incomingTransactionsCopy.entrySet()) {
                 // Quick exit?
@@ -144,6 +148,20 @@ public class TransactionImporter extends Thread {
 
                 TransactionData transactionData = transactionEntry.getKey();
                 Transaction transaction = Transaction.fromData(repository, transactionData);
+                String signature58 = Base58.encode(transactionData.getSignature());
+
+                Long now = NTP.getTime();
+                if (now == null) {
+                    return;
+                }
+
+                // Drop expired transactions before they are considered "sig valid"
+                if (latestBlock != null && transaction.getDeadline() <= latestBlock.getTimestamp()) {
+                    LOGGER.debug("Removing expired {} transaction {} from import queue", transactionData.getType().name(), signature58);
+                    removeIncomingTransaction(transactionData.getSignature());
+                    invalidUnconfirmedTransactions.put(signature58, (now + EXPIRED_TRANSACTION_RECHECK_INTERVAL));
+                    continue;
+                }
 
                 // Only validate signature if we haven't already done so
                 Boolean isSigValid = transactionEntry.getValue();
@@ -158,13 +176,11 @@ public class TransactionImporter extends Thread {
                     }
 
                     if (!transaction.isSignatureValid()) {
-                        String signature58 = Base58.encode(transactionData.getSignature());
-
                         LOGGER.debug("Ignoring {} transaction {} with invalid signature", transactionData.getType().name(), signature58);
                         removeIncomingTransaction(transactionData.getSignature());
 
                         // Also add to invalidIncomingTransactions map
-                        Long now = NTP.getTime();
+                        now = NTP.getTime();
                         if (now != null) {
                             Long expiry = now + INVALID_TRANSACTION_RECHECK_INTERVAL;
                             LOGGER.trace("Adding invalid transaction {} to invalidUnconfirmedTransactions...", signature58);

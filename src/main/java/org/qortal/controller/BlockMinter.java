@@ -212,14 +212,6 @@ public class BlockMinter extends Thread {
 				// Do we need to build any potential new blocks?
 				List<PrivateKeyAccount> newBlocksMintingAccounts = mintingAccountsData.stream().map(accountData -> new PrivateKeyAccount(repository, accountData.getPrivateKey())).collect(Collectors.toList());
 
-				// We might need to sit the next block out, if one of our minting accounts signed the previous one
-				final byte[] previousBlockMinter = previousBlockData.getMinterPublicKey();
-				final boolean mintedLastBlock = mintingAccountsData.stream().anyMatch(mintingAccount -> Arrays.equals(mintingAccount.getPublicKey(), previousBlockMinter));
-				if (mintedLastBlock) {
-					LOGGER.trace(String.format("One of our keys signed the last block, so we won't sign the next one"));
-					continue;
-				}
-
 				if (parentSignatureForLastLowWeightBlock != null) {
 					// The last iteration found a higher weight block in the network, so sleep for a while
 					// to allow is to sync the higher weight chain. We are sleeping here rather than when

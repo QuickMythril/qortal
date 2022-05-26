@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingWorker;
 import javax.swing.event.PopupMenuEvent;
@@ -177,6 +178,14 @@ public class SysTray {
 			});
 			menu.add(syncTime);
 		}
+
+		JMenuItem about = new JMenuItem(Translator.INSTANCE.translate("SysTray", "BUILD_VERSION"));
+		about.addActionListener(actionEvent -> {
+			destroyHiddenDialog();
+
+			JOptionPane.showMessageDialog(null,"Qortal Core\n" + Translator.INSTANCE.translate("SysTray", "BUILD_VERSION") + ":\n" + Controller.getInstance().getVersionStringWithoutPrefix(),"Qortal Core",1);
+		});
+		menu.add(about);
 
 		JMenuItem exit = new JMenuItem(Translator.INSTANCE.translate("SysTray", "EXIT"));
 		exit.addActionListener(actionEvent -> {

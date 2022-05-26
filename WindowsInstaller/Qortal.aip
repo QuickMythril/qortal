@@ -17,10 +17,10 @@
     <ROW Property="Manufacturer" Value="Qortal"/>
     <ROW Property="MsiLogging" MultiBuildValue="DefaultBuild:vp"/>
     <ROW Property="NTP_GOOD" Value="false"/>
-    <ROW Property="ProductCode" Value="1033:{8EF8A9D7-8BD1-436A-B9E7-2F1F8AEFB507} 1049:{7A9E536E-93C2-47B5-9F6C-C4866C0DE68F} 2052:{E87CA833-375A-4A57-97C0-C4BADA8AEE59} 2057:{E5E73017-0CE6-429D-BC57-A588C63761F5} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{BAC69595-0A3F-4B9F-AB21-5DAC9F288F27} 1049:{4ADB3829-2ECB-4DB0-B114-4068417B6F01} 2052:{B830ACAC-079B-49A9-8271-25D89719826C} 2057:{3F18FD2A-1F0F-4A0A-96B7-21DB829CE7EB} " Type="16"/>
     <ROW Property="ProductLanguage" Value="2057"/>
     <ROW Property="ProductName" Value="Qortal"/>
-    <ROW Property="ProductVersion" Value="3.3.0" Type="32"/>
+    <ROW Property="ProductVersion" Value="3.3.1" Type="32"/>
     <ROW Property="RECONFIG_NTP" Value="true"/>
     <ROW Property="REMOVE_BLOCKCHAIN" Value="YES" Type="4"/>
     <ROW Property="REPAIR_BLOCKCHAIN" Value="YES" Type="4"/>
@@ -212,7 +212,7 @@
     <ROW Component="ADDITIONAL_LICENSE_INFO_71" ComponentId="{12A3ADBE-BB7A-496C-8869-410681E6232F}" Directory_="jdk.zipfs_Dir" Attributes="0" KeyPath="ADDITIONAL_LICENSE_INFO_71" Type="0"/>
     <ROW Component="ADDITIONAL_LICENSE_INFO_8" ComponentId="{D53AD95E-CF96-4999-80FC-5812277A7456}" Directory_="java.naming_Dir" Attributes="0" KeyPath="ADDITIONAL_LICENSE_INFO_8" Type="0"/>
     <ROW Component="ADDITIONAL_LICENSE_INFO_9" ComponentId="{6B7EA9B0-5D17-47A8-B78C-FACE86D15E01}" Directory_="java.net.http_Dir" Attributes="0" KeyPath="ADDITIONAL_LICENSE_INFO_9" Type="0"/>
-    <ROW Component="AI_CustomARPName" ComponentId="{99CB0542-3A63-45C2-B955-8ADAA2A85A91}" Directory_="APPDIR" Attributes="260" KeyPath="DisplayName" Options="1"/>
+    <ROW Component="AI_CustomARPName" ComponentId="{BD915701-2111-4453-8154-1E88163F5548}" Directory_="APPDIR" Attributes="260" KeyPath="DisplayName" Options="1"/>
     <ROW Component="AI_ExePath" ComponentId="{3644948D-AE0B-41BB-9FAF-A79E70490A08}" Directory_="APPDIR" Attributes="260" KeyPath="AI_ExePath"/>
     <ROW Component="APPDIR" ComponentId="{680DFDDE-3FB4-47A5-8FF5-934F576C6F91}" Directory_="APPDIR" Attributes="0"/>
     <ROW Component="AccessBridgeCallbacks.h" ComponentId="{288055D1-1062-47A3-AA44-5601B4E38AED}" Directory_="bridge_Dir" Attributes="0" KeyPath="AccessBridgeCallbacks.h" Type="0"/>
