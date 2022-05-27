@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -193,6 +194,19 @@ public class Bitcoin extends Bitcoiny {
 	@Override
 	public long getP2shFee(Long timestamp) throws ForeignBlockchainException {
 		return this.bitcoinNet.getP2shFee(timestamp);
+	}
+
+	/**
+ 	* Returns bitcoinj transaction sending <tt>amount</tt> to <tt>recipient</tt> using 20 sat/byte fee.
+ 	*
+ 	* @param xprv58 BIP32 private key
+ 	* @param recipient P2PKH address
+ 	* @param amount unscaled amount
+ 	* @return transaction, or null if insufficient funds
+ 	*/
+	@Override
+	public Transaction buildSpend(String xprv58, String recipient, long amount) {
+		return buildSpend(xprv58, recipient, amount, 20L);
 	}
 
 }
