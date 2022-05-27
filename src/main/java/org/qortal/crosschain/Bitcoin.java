@@ -19,6 +19,8 @@ public class Bitcoin extends Bitcoiny {
 
 	public static final String CURRENCY_CODE = "BTC";
 
+	private static final long MINIMUM_ORDER_AMOUNT = 100000; // 0.001 BTC minimum order, due to high fees
+
 	// Temporary values until a dynamic fee system is written.
 	private static final long OLD_FEE_AMOUNT = 4_000L; // Not 5000 so that existing P2SH-B can output 1000, avoiding dust issue, leaving 4000 for fees.
 	private static final long NEW_FEE_TIMESTAMP = 1598280000000L; // milliseconds since epoch
@@ -181,6 +183,11 @@ public class Bitcoin extends Bitcoiny {
 
 	public static synchronized void resetForTesting() {
 		instance = null;
+	}
+
+	@Override
+	public long getMinimumOrderAmount() {
+		return MINIMUM_ORDER_AMOUNT;
 	}
 
 	// Actual useful methods for use by other classes
