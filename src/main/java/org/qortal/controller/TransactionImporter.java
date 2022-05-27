@@ -99,10 +99,12 @@ public class TransactionImporter extends Thread {
      * @return a list of TransactionData objects, with valid signatures.
      */
     private List<TransactionData> getCachedSigValidTransactions() {
-        return this.incomingTransactions.entrySet().stream()
-                .filter(t -> Boolean.TRUE.equals(t.getValue()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        synchronized (this.incomingTransactions) {
+            return this.incomingTransactions.entrySet().stream()
+                    .filter(t -> Boolean.TRUE.equals(t.getValue()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        }
     }
 
     /**

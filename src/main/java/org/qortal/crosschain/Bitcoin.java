@@ -21,7 +21,7 @@ public class Bitcoin extends Bitcoiny {
 	// Temporary values until a dynamic fee system is written.
 	private static final long OLD_FEE_AMOUNT = 4_000L; // Not 5000 so that existing P2SH-B can output 1000, avoiding dust issue, leaving 4000 for fees.
 	private static final long NEW_FEE_TIMESTAMP = 1598280000000L; // milliseconds since epoch
-	private static final long NEW_FEE_AMOUNT = 10_000L;
+	private static final long NEW_FEE_AMOUNT = 6_000L;
 
 	private static final long NON_MAINNET_FEE = 1000L; // enough for TESTNET3 and should be OK for REGTEST
 
