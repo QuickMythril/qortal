@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.qortal.account.Account;
+import org.qortal.block.BlockChain;
 import org.qortal.controller.arbitrary.ArbitraryDataManager;
 import org.qortal.controller.arbitrary.ArbitraryDataStorageManager;
 import org.qortal.crypto.Crypto;
@@ -19,6 +20,7 @@ import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.arbitrary.ArbitraryDataFile;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.Transformer;
 import org.qortal.transform.transaction.ArbitraryTransactionTransformer;
 import org.qortal.transform.transaction.TransactionTransformer;
 import org.qortal.utils.ArbitraryTransactionUtils;
@@ -86,6 +88,14 @@ public class ArbitraryTransaction extends Transaction {
 	@Override
 	public boolean hasValidReference() throws DataException {
 		// We shouldn't really get this far, but just in case:
+
+		// Disable reference checking after feature trigger timestamp
+		if (this.arbitraryTransactionData.getTimestamp() >= BlockChain.getInstance().getDisableReferenceTimestamp()) {
+			// Allow any value as long as it is the correct length
+			return this.arbitraryTransactionData.getReference() != null &&
+					this.arbitraryTransactionData.getReference().length == Transformer.SIGNATURE_LENGTH;
+		}
+
 		if (this.arbitraryTransactionData.getReference() == null) {
 			return false;
 		}

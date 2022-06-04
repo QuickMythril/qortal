@@ -20,6 +20,7 @@ import org.qortal.test.common.Common;
 import org.qortal.transaction.DeployAtTransaction;
 import org.qortal.transaction.Transaction;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.block.BlockTransformation;
 import org.qortal.utils.BlockArchiveUtils;
 import org.qortal.utils.NTP;
 import org.qortal.utils.Triple;
@@ -123,8 +124,8 @@ public class BlockArchiveTests extends Common {
 
 			// Read block 2 from the archive
 			BlockArchiveReader reader = BlockArchiveReader.getInstance();
-			Triple<BlockData, List<TransactionData>, List<ATStateData>> block2Info = reader.fetchBlockAtHeight(2);
-			BlockData block2ArchiveData = block2Info.getA();
+			BlockTransformation block2Info = reader.fetchBlockAtHeight(2);
+			BlockData block2ArchiveData = block2Info.getBlockData();
 
 			// Read block 2 from the repository
 			BlockData block2RepositoryData = repository.getBlockRepository().fromHeight(2);
@@ -137,8 +138,8 @@ public class BlockArchiveTests extends Common {
 			assertEquals(1, block2ArchiveData.getOnlineAccountsCount());
 
 			// Read block 900 from the archive
-			Triple<BlockData, List<TransactionData>, List<ATStateData>> block900Info = reader.fetchBlockAtHeight(900);
-			BlockData block900ArchiveData = block900Info.getA();
+			BlockTransformation block900Info = reader.fetchBlockAtHeight(900);
+			BlockData block900ArchiveData = block900Info.getBlockData();
 
 			// Read block 900 from the repository
 			BlockData block900RepositoryData = repository.getBlockRepository().fromHeight(900);
@@ -200,10 +201,10 @@ public class BlockArchiveTests extends Common {
 
 				// Read a block from the archive
 				BlockArchiveReader reader = BlockArchiveReader.getInstance();
-				Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = reader.fetchBlockAtHeight(testHeight);
-				BlockData archivedBlockData = blockInfo.getA();
-				ATStateData archivedAtStateData = blockInfo.getC().isEmpty() ? null : blockInfo.getC().get(0);
-				List<TransactionData> archivedTransactions = blockInfo.getB();
+				BlockTransformation blockInfo = reader.fetchBlockAtHeight(testHeight);
+				BlockData archivedBlockData = blockInfo.getBlockData();
+				ATStateData archivedAtStateData = blockInfo.getAtStates().isEmpty() ? null : blockInfo.getAtStates().get(0);
+				List<TransactionData> archivedTransactions = blockInfo.getTransactions();
 
 				// Read the same block from the repository
 				BlockData repositoryBlockData = repository.getBlockRepository().fromHeight(testHeight);
@@ -255,7 +256,7 @@ public class BlockArchiveTests extends Common {
 
 			// Check block 10 (unarchived)
 			BlockArchiveReader reader = BlockArchiveReader.getInstance();
-			Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = reader.fetchBlockAtHeight(10);
+			BlockTransformation blockInfo = reader.fetchBlockAtHeight(10);
 			assertNull(blockInfo);
 
 		}

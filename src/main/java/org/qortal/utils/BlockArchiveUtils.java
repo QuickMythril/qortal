@@ -6,6 +6,7 @@ import org.qortal.data.transaction.TransactionData;
 import org.qortal.repository.BlockArchiveReader;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
+import org.qortal.transform.block.BlockTransformation;
 
 import java.util.List;
 
@@ -33,8 +34,7 @@ public class BlockArchiveUtils {
         repository.discardChanges();
         final int requestedRange = endHeight+1-startHeight;
 
-        List<Triple<BlockData, List<TransactionData>, List<ATStateData>>> blockInfoList =
-                BlockArchiveReader.getInstance().fetchBlocksFromRange(startHeight, endHeight);
+        List<BlockTransformation> blockInfoList = BlockArchiveReader.getInstance().fetchBlocksFromRange(startHeight, endHeight);
 
         // Ensure that we have received all of the requested blocks
         if (blockInfoList == null || blockInfoList.isEmpty()) {
@@ -43,27 +43,26 @@ public class BlockArchiveUtils {
         if (blockInfoList.size() != requestedRange) {
             throw new IllegalStateException("Non matching block count when importing from archive");
         }
-        Triple<BlockData, List<TransactionData>, List<ATStateData>> firstBlock = blockInfoList.get(0);
-        if (firstBlock == null || firstBlock.getA().getHeight() != startHeight) {
+        BlockTransformation firstBlock = blockInfoList.get(0);
+        if (firstBlock == null || firstBlock.getBlockData().getHeight() != startHeight) {
             throw new IllegalStateException("Non matching first block when importing from archive");
         }
         if (blockInfoList.size() > 0) {
-            Triple<BlockData, List<TransactionData>, List<ATStateData>> lastBlock =
-                    blockInfoList.get(blockInfoList.size() - 1);
-            if (lastBlock == null || lastBlock.getA().getHeight() != endHeight) {
+            BlockTransformation lastBlock = blockInfoList.get(blockInfoList.size() - 1);
+            if (lastBlock == null || lastBlock.getBlockData().getHeight() != endHeight) {
                 throw new IllegalStateException("Non matching last block when importing from archive");
             }
         }
 
         // Everything seems okay, so go ahead with the import
-        for (Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo : blockInfoList) {
+        for (BlockTransformation blockInfo : blockInfoList) {
             try {
                 // Save block
-                repository.getBlockRepository().save(blockInfo.getA());
+                repository.getBlockRepository().save(blockInfo.getBlockData());
 
                 // Save AT state data hashes
-                for (ATStateData atStateData : blockInfo.getC()) {
-                    atStateData.setHeight(blockInfo.getA().getHeight());
+                for (ATStateData atStateData : blockInfo.getAtStates()) {
+                    atStateData.setHeight(blockInfo.getBlockData().getHeight());
                     repository.getATRepository().save(atStateData);
                 }
 

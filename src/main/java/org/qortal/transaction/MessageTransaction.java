@@ -8,6 +8,7 @@ import org.qortal.account.Account;
 import org.qortal.account.PrivateKeyAccount;
 import org.qortal.account.PublicKeyAccount;
 import org.qortal.asset.Asset;
+import org.qortal.block.BlockChain;
 import org.qortal.crypto.Crypto;
 import org.qortal.crypto.MemoryPoW;
 import org.qortal.data.PaymentData;
@@ -20,6 +21,7 @@ import org.qortal.repository.DataException;
 import org.qortal.repository.GroupRepository;
 import org.qortal.repository.Repository;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.Transformer;
 import org.qortal.transform.transaction.ChatTransactionTransformer;
 import org.qortal.transform.transaction.MessageTransactionTransformer;
 import org.qortal.transform.transaction.TransactionTransformer;
@@ -163,6 +165,14 @@ public class MessageTransaction extends Transaction {
 	@Override
 	public boolean hasValidReference() throws DataException {
 		// We shouldn't really get this far, but just in case:
+
+		// Disable reference checking after feature trigger timestamp
+		if (this.messageTransactionData.getTimestamp() >= BlockChain.getInstance().getDisableReferenceTimestamp()) {
+			// Allow any value as long as it is the correct length
+			return this.messageTransactionData.getReference() != null &&
+					this.messageTransactionData.getReference().length == Transformer.SIGNATURE_LENGTH;
+		}
+
 		if (this.messageTransactionData.getReference() == null)
 			return false;
 

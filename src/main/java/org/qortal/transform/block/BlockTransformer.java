@@ -3,12 +3,14 @@ package org.qortal.transform.block;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.qortal.block.Block;
 import org.qortal.block.BlockChain;
+import org.qortal.crypto.Crypto;
 import org.qortal.data.at.ATStateData;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.transaction.TransactionData;
@@ -20,7 +22,6 @@ import org.qortal.transform.Transformer;
 import org.qortal.transform.transaction.TransactionTransformer;
 import org.qortal.utils.Base58;
 import org.qortal.utils.Serialization;
-import org.qortal.utils.Triple;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -45,14 +46,13 @@ public class BlockTransformer extends Transformer {
 
 	protected static final int AT_BYTES_LENGTH = INT_LENGTH;
 	protected static final int AT_FEES_LENGTH = AMOUNT_LENGTH;
-	protected static final int AT_LENGTH = AT_FEES_LENGTH + AT_BYTES_LENGTH;
 
 	protected static final int ONLINE_ACCOUNTS_COUNT_LENGTH = INT_LENGTH;
 	protected static final int ONLINE_ACCOUNTS_SIZE_LENGTH = INT_LENGTH;
 	protected static final int ONLINE_ACCOUNTS_TIMESTAMP_LENGTH = TIMESTAMP_LENGTH;
 	protected static final int ONLINE_ACCOUNTS_SIGNATURES_COUNT_LENGTH = INT_LENGTH;
 
-	protected static final int AT_ENTRY_LENGTH = ADDRESS_LENGTH + SHA256_LENGTH + AMOUNT_LENGTH;
+	public static final int AT_ENTRY_LENGTH = ADDRESS_LENGTH + SHA256_LENGTH + AMOUNT_LENGTH;
 
 	/**
 	 * Extract block data and transaction data from serialized bytes.
@@ -61,7 +61,7 @@ public class BlockTransformer extends Transformer {
 	 * @return BlockData and a List of transactions.
 	 * @throws TransformationException
 	 */
-	public static Triple<BlockData, List<TransactionData>, List<ATStateData>> fromBytes(byte[] bytes) throws TransformationException {
+	public static BlockTransformation fromBytes(byte[] bytes) throws TransformationException {
 		if (bytes == null)
 			return null;
 
@@ -76,28 +76,40 @@ public class BlockTransformer extends Transformer {
 	/**
 	 * Extract block data and transaction data from serialized bytes containing a single block.
 	 *
-	 * @param bytes
+	 * @param byteBuffer source of serialized block bytes
 	 * @return BlockData and a List of transactions.
 	 * @throws TransformationException
 	 */
-	public static Triple<BlockData, List<TransactionData>, List<ATStateData>> fromByteBuffer(ByteBuffer byteBuffer) throws TransformationException {
+	public static BlockTransformation fromByteBuffer(ByteBuffer byteBuffer) throws TransformationException {
+		return BlockTransformer.fromByteBuffer(byteBuffer, false);
+	}
+
+	/**
+	 * Extract block data and transaction data from serialized bytes containing a single block.
+	 *
+	 * @param byteBuffer source of serialized block bytes
+	 * @return BlockData and a List of transactions.
+	 * @throws TransformationException
+	 */
+	public static BlockTransformation fromByteBufferV2(ByteBuffer byteBuffer) throws TransformationException {
 		return BlockTransformer.fromByteBuffer(byteBuffer, true);
 	}
 
 	/**
-	 * Extract block data and transaction data from serialized bytes containing one or more blocks.
-	 * 
-	 * @param bytes
+	 * Extract block data and transaction data from serialized bytes containing a single block, in one of two forms.
+	 *
+	 * @param byteBuffer source of serialized block bytes
+	 * @param isV2 set to true if AT state info is represented by a single hash, false if serialized as per-AT address+state hash+fees
 	 * @return the next block's BlockData and a List of transactions.
 	 * @throws TransformationException
 	 */
-	public static Triple<BlockData, List<TransactionData>, List<ATStateData>> fromByteBuffer(ByteBuffer byteBuffer, boolean finalBlockInBuffer) throws TransformationException {
+	private static BlockTransformation fromByteBuffer(ByteBuffer byteBuffer, boolean isV2) throws TransformationException {
 		int version = byteBuffer.getInt();
 
-		if (finalBlockInBuffer && byteBuffer.remaining() < BASE_LENGTH + AT_BYTES_LENGTH - VERSION_LENGTH)
+		if (byteBuffer.remaining() < BASE_LENGTH + AT_BYTES_LENGTH - VERSION_LENGTH)
 			throw new TransformationException("Byte data too short for Block");
 
-		if (finalBlockInBuffer && byteBuffer.remaining() > BlockChain.getInstance().getMaxBlockSize())
+		if (byteBuffer.remaining() > BlockChain.getInstance().getMaxBlockSize())
 			throw new TransformationException("Byte data too long for Block");
 
 		long timestamp = byteBuffer.getLong();
@@ -117,41 +129,51 @@ public class BlockTransformer extends Transformer {
 
 		int atCount = 0;
 		long atFees = 0;
-		List<ATStateData> atStates = new ArrayList<>();
+		byte[] atStatesHash = null;
+		List<ATStateData> atStates = null;
 
-		int atBytesLength = byteBuffer.getInt();
+		if (isV2) {
+			// Simply: AT count, AT total fees, hash(all AT states)
+			atCount = byteBuffer.getInt();
+			atFees = byteBuffer.getLong();
+			atStatesHash = new byte[Transformer.SHA256_LENGTH];
+			byteBuffer.get(atStatesHash);
+		} else {
+			// V1: AT info byte length, then per-AT entries of AT address + state hash + fees
+			int atBytesLength = byteBuffer.getInt();
+			if (atBytesLength > BlockChain.getInstance().getMaxBlockSize())
+				throw new TransformationException("Byte data too long for Block's AT info");
 
-		if (atBytesLength > BlockChain.getInstance().getMaxBlockSize())
-			throw new TransformationException("Byte data too long for Block's AT info");
+			// Read AT-address, SHA256 hash and fees
+			if (atBytesLength % AT_ENTRY_LENGTH != 0)
+				throw new TransformationException("AT byte data not a multiple of AT entry length");
 
-		ByteBuffer atByteBuffer = byteBuffer.slice();
-		atByteBuffer.limit(atBytesLength);
+			ByteBuffer atByteBuffer = byteBuffer.slice();
+			atByteBuffer.limit(atBytesLength);
 
-		// Read AT-address, SHA256 hash and fees
-		if (atBytesLength % AT_ENTRY_LENGTH != 0)
-			throw new TransformationException("AT byte data not a multiple of AT entry length");
+			atStates = new ArrayList<>();
+			while (atByteBuffer.hasRemaining()) {
+				byte[] atAddressBytes = new byte[ADDRESS_LENGTH];
+				atByteBuffer.get(atAddressBytes);
+				String atAddress = Base58.encode(atAddressBytes);
 
-		while (atByteBuffer.hasRemaining()) {
-			byte[] atAddressBytes = new byte[ADDRESS_LENGTH];
-			atByteBuffer.get(atAddressBytes);
-			String atAddress = Base58.encode(atAddressBytes);
+				byte[] stateHash = new byte[SHA256_LENGTH];
+				atByteBuffer.get(stateHash);
 
-			byte[] stateHash = new byte[SHA256_LENGTH];
-			atByteBuffer.get(stateHash);
+				long fees = atByteBuffer.getLong();
 
-			long fees = atByteBuffer.getLong();
+				// Add this AT's fees to our total
+				atFees += fees;
 
-			// Add this AT's fees to our total
-			atFees += fees;
+				atStates.add(new ATStateData(atAddress, stateHash, fees));
+			}
 
-			atStates.add(new ATStateData(atAddress, stateHash, fees));
+			// Bump byteBuffer over AT states just read in slice
+			byteBuffer.position(byteBuffer.position() + atBytesLength);
+
+			// AT count to reflect the number of states we have
+			atCount = atStates.size();
 		}
-
-		// Bump byteBuffer over AT states just read in slice
-		byteBuffer.position(byteBuffer.position() + atBytesLength);
-
-		// AT count to reflect the number of states we have
-		atCount = atStates.size();
 
 		// Add AT fees to totalFees
 		totalFees += atFees;
@@ -221,16 +243,15 @@ public class BlockTransformer extends Transformer {
 			byteBuffer.get(onlineAccountsSignatures);
 		}
 
-		// We should only complain about excess byte data if we aren't expecting more blocks in this ByteBuffer
-		if (finalBlockInBuffer && byteBuffer.hasRemaining())
-			throw new TransformationException("Excess byte data found after parsing Block");
-
 		// We don't have a height!
 		Integer height = null;
 		BlockData blockData = new BlockData(version, reference, transactionCount, totalFees, transactionsSignature, height, timestamp,
 				minterPublicKey, minterSignature, atCount, atFees, encodedOnlineAccounts, onlineAccountsCount, onlineAccountsTimestamp, onlineAccountsSignatures);
 
-		return new Triple<>(blockData, transactions, atStates);
+		if (isV2)
+			return new BlockTransformation(blockData, transactions, atStatesHash);
+		else
+			return new BlockTransformation(blockData, transactions, atStates);
 	}
 
 	public static int getDataLength(Block block) throws TransformationException {
@@ -266,6 +287,14 @@ public class BlockTransformer extends Transformer {
 	}
 
 	public static byte[] toBytes(Block block) throws TransformationException {
+		return toBytes(block, false);
+	}
+
+	public static byte[] toBytesV2(Block block) throws TransformationException {
+		return toBytes(block, true);
+	}
+
+	private static byte[] toBytes(Block block, boolean isV2) throws TransformationException {
 		BlockData blockData = block.getBlockData();
 
 		try {
@@ -279,16 +308,37 @@ public class BlockTransformer extends Transformer {
 			bytes.write(blockData.getMinterSignature());
 
 			int atBytesLength = blockData.getATCount() * AT_ENTRY_LENGTH;
-			bytes.write(Ints.toByteArray(atBytesLength));
+			if (isV2) {
+				ByteArrayOutputStream atHashBytes = new ByteArrayOutputStream(atBytesLength);
+				long atFees = 0;
 
-			for (ATStateData atStateData : block.getATStates()) {
-				// Skip initial states generated by DEPLOY_AT transactions in the same block
-				if (atStateData.isInitial())
-					continue;
+				for (ATStateData atStateData : block.getATStates()) {
+					// Skip initial states generated by DEPLOY_AT transactions in the same block
+					if (atStateData.isInitial())
+						continue;
 
-				bytes.write(Base58.decode(atStateData.getATAddress()));
-				bytes.write(atStateData.getStateHash());
-				bytes.write(Longs.toByteArray(atStateData.getFees()));
+					atHashBytes.write(atStateData.getATAddress().getBytes(StandardCharsets.UTF_8));
+					atHashBytes.write(atStateData.getStateHash());
+					atHashBytes.write(Longs.toByteArray(atStateData.getFees()));
+
+					atFees += atStateData.getFees();
+				}
+
+				bytes.write(Ints.toByteArray(blockData.getATCount()));
+				bytes.write(Longs.toByteArray(atFees));
+				bytes.write(Crypto.digest(atHashBytes.toByteArray()));
+			} else {
+				bytes.write(Ints.toByteArray(atBytesLength));
+
+				for (ATStateData atStateData : block.getATStates()) {
+					// Skip initial states generated by DEPLOY_AT transactions in the same block
+					if (atStateData.isInitial())
+						continue;
+
+					bytes.write(Base58.decode(atStateData.getATAddress()));
+					bytes.write(atStateData.getStateHash());
+					bytes.write(Longs.toByteArray(atStateData.getFees()));
+				}
 			}
 
 			// Transactions

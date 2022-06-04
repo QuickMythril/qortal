@@ -509,6 +509,7 @@ public class IntegrityTests extends Common {
     @Ignore("Checks 'live' repository")
     @Test
     public void testRepository() throws DataException {
+        Common.setShouldRetainRepositoryAfterTest(true);
         Settings.fileInstance("settings.json"); // use 'live' settings
 
         String repositoryUrlTemplate = "jdbc:hsqldb:file:%s" + File.separator + "blockchain;create=false;hsqldb.full_log_replay=true";

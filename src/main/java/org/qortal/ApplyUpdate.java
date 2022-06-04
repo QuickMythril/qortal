@@ -37,7 +37,7 @@ public class ApplyUpdate {
 	private static final String JAVA_TOOL_OPTIONS_NAME = "JAVA_TOOL_OPTIONS";
 	private static final String JAVA_TOOL_OPTIONS_VALUE = "-XX:MaxRAMFraction=4";
 
-	private static final long CHECK_INTERVAL = 10 * 1000L; // ms
+	private static final long CHECK_INTERVAL = 30 * 1000L; // ms
 	private static final int MAX_ATTEMPTS = 12;
 
 	public static void main(String[] args) {

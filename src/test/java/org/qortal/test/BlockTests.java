@@ -24,6 +24,7 @@ import org.qortal.test.common.TransactionUtils;
 import org.qortal.transaction.Transaction;
 import org.qortal.transaction.Transaction.TransactionType;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.block.BlockTransformation;
 import org.qortal.transform.block.BlockTransformer;
 import org.qortal.transform.transaction.TransactionTransformer;
 import org.qortal.utils.Base58;
@@ -121,10 +122,10 @@ public class BlockTests extends Common {
 
 			assertEquals(BlockTransformer.getDataLength(block), bytes.length);
 
-			Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = BlockTransformer.fromBytes(bytes);
+			BlockTransformation blockInfo = BlockTransformer.fromBytes(bytes);
 
 			// Compare transactions
-			List<TransactionData> deserializedTransactions = blockInfo.getB();
+			List<TransactionData> deserializedTransactions = blockInfo.getTransactions();
 			assertEquals("Transaction count differs", blockData.getTransactionCount(), deserializedTransactions.size());
 
 			for (int i = 0; i < blockData.getTransactionCount(); ++i) {

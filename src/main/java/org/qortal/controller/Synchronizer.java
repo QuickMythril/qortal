@@ -26,14 +26,7 @@ import org.qortal.event.Event;
 import org.qortal.event.EventBus;
 import org.qortal.network.Network;
 import org.qortal.network.Peer;
-import org.qortal.network.message.BlockMessage;
-import org.qortal.network.message.BlockSummariesMessage;
-import org.qortal.network.message.GetBlockMessage;
-import org.qortal.network.message.GetBlockSummariesMessage;
-import org.qortal.network.message.GetSignaturesV2Message;
-import org.qortal.network.message.Message;
-import org.qortal.network.message.SignaturesMessage;
-import org.qortal.network.message.MessageType;
+import org.qortal.network.message.*;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
@@ -1579,12 +1572,23 @@ public class Synchronizer extends Thread {
 		Message getBlockMessage = new GetBlockMessage(signature);
 
 		Message message = peer.getResponse(getBlockMessage);
-		if (message == null || message.getType() != MessageType.BLOCK)
+		if (message == null)
 			return null;
 
-		BlockMessage blockMessage = (BlockMessage) message;
+		switch (message.getType()) {
+			case BLOCK: {
+				BlockMessage blockMessage = (BlockMessage) message;
+				return new Block(repository, blockMessage.getBlockData(), blockMessage.getTransactions(), blockMessage.getAtStates());
+			}
 
-		return new Block(repository, blockMessage.getBlockData(), blockMessage.getTransactions(), blockMessage.getAtStates());
+			case BLOCK_V2: {
+				BlockV2Message blockMessage = (BlockV2Message) message;
+				return new Block(repository, blockMessage.getBlockData(), blockMessage.getTransactions(), blockMessage.getAtStatesHash());
+			}
+
+			default:
+				return null;
+		}
 	}
 
 	public void populateBlockSummariesMinterLevels(Repository repository, List<BlockSummaryData> blockSummaries) throws DataException {

@@ -12,6 +12,7 @@ import org.qortal.data.network.PeerData;
 import org.qortal.network.message.ChallengeMessage;
 import org.qortal.network.message.Message;
 import org.qortal.network.message.MessageException;
+import org.qortal.network.message.MessageType;
 import org.qortal.network.task.MessageTask;
 import org.qortal.network.task.PingTask;
 import org.qortal.settings.Settings;
@@ -545,6 +546,10 @@ public class Peer {
                     // Copy bytes after read message to front of buffer,
                     // adjusting position accordingly, reset limit to capacity
                     this.byteBuffer.compact();
+
+                    // Unsupported message type? Discard with no further processing
+                    if (message.getType() == MessageType.UNSUPPORTED)
+                        continue;
 
                     BlockingQueue<Message> queue = this.replyQueues.get(message.getId());
                     if (queue != null) {

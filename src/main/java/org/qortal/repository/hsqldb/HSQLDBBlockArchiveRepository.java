@@ -1,16 +1,13 @@
 package org.qortal.repository.hsqldb;
 
-import org.qortal.api.ApiError;
-import org.qortal.api.ApiExceptionFactory;
 import org.qortal.api.model.BlockSignerSummary;
-import org.qortal.block.Block;
 import org.qortal.data.block.BlockArchiveData;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.block.BlockSummaryData;
 import org.qortal.repository.BlockArchiveReader;
 import org.qortal.repository.BlockArchiveRepository;
 import org.qortal.repository.DataException;
-import org.qortal.utils.Triple;
+import org.qortal.transform.block.BlockTransformation;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,11 +26,11 @@ public class HSQLDBBlockArchiveRepository implements BlockArchiveRepository {
 
     @Override
     public BlockData fromSignature(byte[] signature) throws DataException {
-        Triple blockInfo = BlockArchiveReader.getInstance().fetchBlockWithSignature(signature, this.repository);
-        if (blockInfo != null) {
-            return (BlockData) blockInfo.getA();
-        }
-        return null;
+        BlockTransformation blockInfo = BlockArchiveReader.getInstance().fetchBlockWithSignature(signature, this.repository);
+        if (blockInfo == null)
+            return null;
+
+        return blockInfo.getBlockData();
     }
 
     @Override
@@ -47,11 +44,11 @@ public class HSQLDBBlockArchiveRepository implements BlockArchiveRepository {
 
     @Override
     public BlockData fromHeight(int height) throws DataException {
-        Triple blockInfo = BlockArchiveReader.getInstance().fetchBlockAtHeight(height);
-        if (blockInfo != null) {
-            return (BlockData) blockInfo.getA();
-        }
-        return null;
+        BlockTransformation blockInfo = BlockArchiveReader.getInstance().fetchBlockAtHeight(height);
+        if (blockInfo == null)
+            return null;
+
+        return blockInfo.getBlockData();
     }
 
     @Override
@@ -79,9 +76,9 @@ public class HSQLDBBlockArchiveRepository implements BlockArchiveRepository {
             int height = referenceBlock.getHeight();
             if (height > 0) {
                 // Request the block at height + 1
-                Triple blockInfo = BlockArchiveReader.getInstance().fetchBlockAtHeight(height + 1);
+                BlockTransformation blockInfo = BlockArchiveReader.getInstance().fetchBlockAtHeight(height + 1);
                 if (blockInfo != null) {
-                    return (BlockData) blockInfo.getA();
+                    return blockInfo.getBlockData();
                 }
             }
         }

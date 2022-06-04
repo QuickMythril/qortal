@@ -61,6 +61,7 @@ public class Common {
 
 
 	public static final String testSettingsFilename = "test-settings-v2.json";
+	public static boolean shouldRetainRepositoryAfterTest = false;
 
 	static {
 		// Load/check settings, which potentially sets up blockchain config, etc.
@@ -126,6 +127,7 @@ public class Common {
 
 	public static void useSettings(String settingsFilename) throws DataException {
 		Common.useSettingsAndDb(settingsFilename, true);
+		setShouldRetainRepositoryAfterTest(false);
 	}
 
 	public static void useDefaultSettings() throws DataException {
@@ -207,7 +209,16 @@ public class Common {
 		RepositoryManager.setRepositoryFactory(repositoryFactory);
 	}
 
+	public static void setShouldRetainRepositoryAfterTest(boolean shouldRetain) {
+		shouldRetainRepositoryAfterTest = shouldRetain;
+	}
+
 	public static void deleteTestRepository() throws DataException {
+		if (shouldRetainRepositoryAfterTest) {
+			// Don't delete if we've requested to keep the db intact
+			return;
+		}
+
 		// Delete repository directory if exists
 		Path repositoryPath = Paths.get(Settings.getInstance().getRepositoryPath());
 		try {

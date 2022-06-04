@@ -1362,6 +1362,18 @@ public class Controller extends Thread {
 
 			Block block = new Block(repository, blockData);
 
+			// V2 support
+			if (peer.getPeersVersion() >= BlockV2Message.MIN_PEER_VERSION) {
+				Message blockMessage = new BlockV2Message(block);
+				blockMessage.setId(message.getId());
+				if (!peer.sendMessage(blockMessage)) {
+					peer.disconnect("failed to send block");
+					// Don't fall-through to caching because failure to send might be from failure to build message
+					return;
+				}
+				return;
+			}
+
 			CachedBlockMessage blockMessage = new CachedBlockMessage(block);
 			blockMessage.setId(message.getId());
 

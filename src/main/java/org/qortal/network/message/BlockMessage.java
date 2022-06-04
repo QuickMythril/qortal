@@ -9,6 +9,7 @@ import org.qortal.data.at.ATStateData;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.block.BlockTransformation;
 import org.qortal.transform.block.BlockTransformer;
 import org.qortal.utils.Triple;
 
@@ -46,12 +47,12 @@ public class BlockMessage extends Message {
 		try {
 			int height = byteBuffer.getInt();
 
-			Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = BlockTransformer.fromByteBuffer(byteBuffer);
+			BlockTransformation blockTransformation = BlockTransformer.fromByteBuffer(byteBuffer);
 
-			BlockData blockData = blockInfo.getA();
+			BlockData blockData = blockTransformation.getBlockData();
 			blockData.setHeight(height);
 
-			return new BlockMessage(id, blockData, blockInfo.getB(), blockInfo.getC());
+			return new BlockMessage(id, blockData, blockTransformation.getTransactions(), blockTransformation.getAtStates());
 		} catch (TransformationException e) {
 			LOGGER.info(String.format("Received garbled BLOCK message: %s", e.getMessage()));
 			throw new MessageException(e.getMessage(), e);

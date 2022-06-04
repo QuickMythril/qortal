@@ -9,6 +9,7 @@ import org.qortal.data.block.BlockData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.settings.Settings;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.block.BlockTransformation;
 import org.qortal.transform.block.BlockTransformer;
 import org.qortal.utils.Triple;
 
@@ -66,7 +67,7 @@ public class BlockArchiveReader {
         this.fileListCache = Map.copyOf(map);
     }
 
-    public Triple<BlockData, List<TransactionData>, List<ATStateData>> fetchBlockAtHeight(int height) {
+    public BlockTransformation fetchBlockAtHeight(int height) {
         if (this.fileListCache == null) {
             this.fetchFileList();
         }
@@ -77,13 +78,13 @@ public class BlockArchiveReader {
         }
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(serializedBytes);
-        Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = null;
+        BlockTransformation blockInfo = null;
         try {
             blockInfo = BlockTransformer.fromByteBuffer(byteBuffer);
-            if (blockInfo != null && blockInfo.getA() != null) {
+            if (blockInfo != null && blockInfo.getBlockData() != null) {
                 // Block height is stored outside of the main serialized bytes, so it
                 // won't be set automatically.
-                blockInfo.getA().setHeight(height);
+                blockInfo.getBlockData().setHeight(height);
             }
         } catch (TransformationException e) {
             return null;
@@ -91,8 +92,7 @@ public class BlockArchiveReader {
         return blockInfo;
     }
 
-    public Triple<BlockData, List<TransactionData>, List<ATStateData>> fetchBlockWithSignature(
-            byte[] signature, Repository repository) {
+    public BlockTransformation fetchBlockWithSignature(byte[] signature, Repository repository) {
 
         if (this.fileListCache == null) {
             this.fetchFileList();
@@ -105,13 +105,12 @@ public class BlockArchiveReader {
         return null;
     }
 
-    public List<Triple<BlockData, List<TransactionData>, List<ATStateData>>> fetchBlocksFromRange(
-            int startHeight, int endHeight) {
+    public List<BlockTransformation> fetchBlocksFromRange(int startHeight, int endHeight) {
 
-        List<Triple<BlockData, List<TransactionData>, List<ATStateData>>> blockInfoList = new ArrayList<>();
+        List<BlockTransformation> blockInfoList = new ArrayList<>();
 
         for (int height = startHeight; height <= endHeight; height++) {
-            Triple<BlockData, List<TransactionData>, List<ATStateData>> blockInfo = this.fetchBlockAtHeight(height);
+            BlockTransformation blockInfo = this.fetchBlockAtHeight(height);
             if (blockInfo == null) {
                 return blockInfoList;
             }

@@ -31,6 +31,7 @@ import org.qortal.repository.GroupRepository;
 import org.qortal.repository.Repository;
 import org.qortal.settings.Settings;
 import org.qortal.transform.TransformationException;
+import org.qortal.transform.Transformer;
 import org.qortal.transform.transaction.TransactionTransformer;
 import org.qortal.utils.NTP;
 
@@ -905,6 +906,13 @@ public abstract class Transaction {
 	 * @throws DataException
 	 */
 	public boolean hasValidReference() throws DataException {
+		// Disable reference checking after feature trigger timestamp
+		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getDisableReferenceTimestamp()) {
+			// Allow any value as long as it is the correct length
+			return this.transactionData.getReference() != null &&
+					this.transactionData.getReference().length == Transformer.SIGNATURE_LENGTH;
+		}
+
 		Account creator = getCreator();
 
 		return Arrays.equals(transactionData.getReference(), creator.getLastReference());

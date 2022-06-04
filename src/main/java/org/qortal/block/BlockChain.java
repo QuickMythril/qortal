@@ -70,7 +70,8 @@ public class BlockChain {
 		shareBinFix,
 		calcChainWeightTimestamp,
 		transactionV5Timestamp,
-		transactionV6Timestamp;
+		transactionV6Timestamp,
+		disableReferenceTimestamp
 	}
 
 	// Custom transaction fees
@@ -408,6 +409,10 @@ public class BlockChain {
 
 	public long getTransactionV6Timestamp() {
 		return this.featureTriggers.get(FeatureTrigger.transactionV6Timestamp.name()).longValue();
+	}
+
+	public long getDisableReferenceTimestamp() {
+		return this.featureTriggers.get(FeatureTrigger.disableReferenceTimestamp.name()).longValue();
 	}
 
 	// More complex getters for aspects that change by height or timestamp

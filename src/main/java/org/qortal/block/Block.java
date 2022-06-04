@@ -3,9 +3,12 @@ package org.qortal.block;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -118,6 +121,8 @@ public class Block {
 
 	/** Remote/imported/loaded AT states */
 	protected List<ATStateData> atStates;
+	/** Remote hash of AT states - in lieu of full AT state data in {@code atStates} */
+	protected byte[] atStatesHash;
 	/** Locally-generated AT states */
 	protected List<ATStateData> ourAtStates;
 	/** Locally-generated AT fees */
@@ -255,7 +260,7 @@ public class Block {
 	 * Constructs new Block using passed transaction and AT states.
 	 * <p>
 	 * This constructor typically used when receiving a serialized block over the network.
-	 * 
+	 *
 	 * @param repository
 	 * @param blockData
 	 * @param transactions
@@ -277,6 +282,35 @@ public class Block {
 		this.atStates = atStates;
 		for (ATStateData atState : atStates)
 			totalFees += atState.getFees();
+
+		this.blockData.setTotalFees(totalFees);
+	}
+
+	/**
+	 * Constructs new Block using passed transaction and minimal AT state info.
+	 * <p>
+	 * This constructor typically used when receiving a serialized block over the network.
+	 *
+	 * @param repository
+	 * @param blockData
+	 * @param transactions
+	 * @param atStatesHash
+	 */
+	public Block(Repository repository, BlockData blockData, List<TransactionData> transactions, byte[] atStatesHash) {
+		this(repository, blockData);
+
+		this.transactions = new ArrayList<>();
+
+		long totalFees = 0;
+
+		// We have to sum fees too
+		for (TransactionData transactionData : transactions) {
+			this.transactions.add(Transaction.fromData(repository, transactionData));
+			totalFees += transactionData.getFee();
+		}
+
+		this.atStatesHash = atStatesHash;
+		totalFees += this.blockData.getATFees();
 
 		this.blockData.setTotalFees(totalFees);
 	}
@@ -1194,7 +1228,7 @@ public class Block {
 	 */
 	private ValidationResult areAtsValid() throws DataException {
 		// Locally generated AT states should be valid so no need to re-execute them
-		if (this.ourAtStates == this.getATStates()) // Note object reference compare
+		if (this.ourAtStates != null && this.ourAtStates == this.atStates) // Note object reference compare
 			return ValidationResult.OK;
 
 		// Generate local AT states for comparison
@@ -1208,8 +1242,33 @@ public class Block {
 		if (this.ourAtFees != this.blockData.getATFees())
 			return ValidationResult.AT_STATES_MISMATCH;
 
-		// Note: this.atStates fully loaded thanks to this.getATStates() call above
-		for (int s = 0; s < this.atStates.size(); ++s) {
+		// If we have a single AT states hash then compare that in preference
+		if (this.atStatesHash != null) {
+			int atBytesLength = blockData.getATCount() * BlockTransformer.AT_ENTRY_LENGTH;
+			ByteArrayOutputStream atHashBytes = new ByteArrayOutputStream(atBytesLength);
+
+			try {
+				for (ATStateData atStateData : this.ourAtStates) {
+					atHashBytes.write(atStateData.getATAddress().getBytes(StandardCharsets.UTF_8));
+					atHashBytes.write(atStateData.getStateHash());
+					atHashBytes.write(Longs.toByteArray(atStateData.getFees()));
+				}
+			} catch (IOException e) {
+				throw new DataException("Couldn't validate AT states hash due to serialization issue?", e);
+			}
+
+			byte[] ourAtStatesHash = Crypto.digest(atHashBytes.toByteArray());
+			if (!Arrays.equals(ourAtStatesHash, this.atStatesHash))
+				return ValidationResult.AT_STATES_MISMATCH;
+
+			// Use our AT state data from now on
+			this.atStates = this.ourAtStates;
+			return ValidationResult.OK;
+		}
+
+		// Note: this.atStates fully loaded thanks to this.getATStates() call:
+		this.getATStates();
+		for (int s = 0; s < this.ourAtStates.size(); ++s) {
 			ATStateData ourAtState = this.ourAtStates.get(s);
 			ATStateData theirAtState = this.atStates.get(s);
 
