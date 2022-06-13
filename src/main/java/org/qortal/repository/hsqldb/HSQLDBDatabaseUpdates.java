@@ -964,6 +964,11 @@ public class HSQLDBDatabaseUpdates {
 					stmt.execute("DROP TABLE ArbitraryPeers");
 					break;
 
+				case 42:
+					// We need more space for online accounts
+					stmt.execute("ALTER TABLE Blocks ALTER COLUMN online_accounts SET DATA TYPE VARBINARY(10240)");
+					break;
+
 				default:
 					// nothing to do
 					return false;
