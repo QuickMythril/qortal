@@ -378,10 +378,6 @@ public class Block {
 				// Online account (reward-share) with current timestamp but reward-share cancelled
 				continue;
 
-			if (accountIndex >= 7850)
-				// Temporary limitation as first stage of multipart minting fix
-				continue;
-
 			indexedOnlineAccounts.put(accountIndex, onlineAccountData);
 		}
 		List<Integer> accountIndexes = new ArrayList<>(indexedOnlineAccounts.keySet());
@@ -392,10 +388,6 @@ public class Block {
 		onlineAccountsSet = onlineAccountsSet.convert(accountIndexes);
 		byte[] encodedOnlineAccounts = BlockTransformer.encodeOnlineAccounts(onlineAccountsSet);
 		int onlineAccountsCount = onlineAccountsSet.size();
-
-		if (encodedOnlineAccounts.length > 1024)
-			// Safety check - to be removed along with above temporary limitation
-			return null;
 
 		// Concatenate online account timestamp signatures (in correct order)
 		byte[] onlineAccountsSignatures = new byte[onlineAccountsCount * Transformer.SIGNATURE_LENGTH];
