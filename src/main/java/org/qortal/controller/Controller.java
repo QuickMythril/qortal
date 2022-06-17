@@ -715,6 +715,24 @@ public class Controller extends Thread {
 		return lastMisbehaved != null && lastMisbehaved > NTP.getTime() - MISBEHAVIOUR_COOLOFF;
 	};
 
+	/** True if peer has unknown height or lower height. */
+	public static final Predicate<Peer> hasShorterBlockchain = peer -> {
+		BlockData ourLatestBlockData = getInstance().getChainTip();
+		int ourHeight = ourLatestBlockData.getHeight();
+		final PeerChainTipData peerChainTipData = peer.getChainTipData();
+
+		// Ensure we have chain tip data for this peer
+		if (peerChainTipData == null)
+			return true;
+
+		// Remove if peer is at a lower height than us
+		Integer peerHeight = peerChainTipData.getLastHeight();
+		if (peerHeight == null || peerHeight < ourHeight)
+			return true;
+
+		return false;
+	};
+
 	public static final Predicate<Peer> hasNoRecentBlock = peer -> {
 		final Long minLatestBlockTimestamp = getMinimumLatestBlockTimestamp();
 		final PeerChainTipData peerChainTipData = peer.getChainTipData();

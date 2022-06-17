@@ -690,6 +690,7 @@ public class ArbitraryDataFileListManager {
                     // Relay request hasn't reached the maximum number of hops yet, so can be rebroadcast
 
                     Message relayGetArbitraryDataFileListMessage = new GetArbitraryDataFileListMessage(signature, hashes, requestTime, requestHops, requestingPeer);
+                    relayGetArbitraryDataFileListMessage.setId(message.getId());
 
                     LOGGER.debug("Rebroadcasting hash list request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(

@@ -339,6 +339,7 @@ public class ArbitraryMetadataManager {
                 if (requestingPeer != null) {
 
                     ArbitraryMetadataMessage forwardArbitraryMetadataMessage = new ArbitraryMetadataMessage(signature, arbitraryMetadataMessage.getArbitraryMetadataFile());
+                    forwardArbitraryMetadataMessage.setId(arbitraryMetadataMessage.getId());
 
                     // Forward to requesting peer
                     LOGGER.debug("Forwarding metadata to requesting peer: {}", requestingPeer);
