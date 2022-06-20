@@ -42,6 +42,7 @@ import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
 import org.qortal.utils.Base58;
+import org.qortal.utils.NTP;
 
 @Path("/crosschain/tradebot")
 @Tag(name = "Cross-Chain (Trade-Bot)")
@@ -137,7 +138,8 @@ public class CrossChainTradeBotResource {
 		if (tradeBotCreateRequest.qortAmount <= 0 || tradeBotCreateRequest.fundingQortAmount <= 0)
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.ORDER_SIZE_TOO_SMALL);
 
-		if (!Controller.getInstance().isUpToDate())
+		final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
+		if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCKCHAIN_NEEDS_SYNC);
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
@@ -198,7 +200,8 @@ public class CrossChainTradeBotResource {
 		if (tradeBotRespondRequest.receivingAddress == null || !Crypto.isValidAddress(tradeBotRespondRequest.receivingAddress))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ADDRESS);
 
-		if (!Controller.getInstance().isUpToDate())
+		final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
+		if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCKCHAIN_NEEDS_SYNC);
 
 		// Extract data from cross-chain trading AT

@@ -171,8 +171,8 @@ public class Synchronizer extends Thread {
 
 	public Integer getSyncPercent() {
 		synchronized (this.syncLock) {
-			// Report as 100% synced if the latest block is within the last 30 mins
-			final Long minLatestBlockTimestamp = NTP.getTime() - (30 * 60 * 1000L);
+			// Report as 100% synced if the latest block is within the last 60 mins
+			final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
 			if (Controller.getInstance().isUpToDate(minLatestBlockTimestamp)) {
 				return 100;
 			}
@@ -198,8 +198,6 @@ public class Synchronizer extends Thread {
 		// Already synchronizing via another thread?
 		if (this.isSynchronizing)
 			return true;
-
-		boolean isNewConsensusActive = NTP.getTime() >= BlockChain.getInstance().getNewConsensusTimestamp();
 
 		// Needs a mutable copy of the unmodifiableList
 		List<Peer> peers = new ArrayList<>(Network.getInstance().getImmutableHandshakedPeers());
@@ -229,10 +227,6 @@ public class Synchronizer extends Thread {
 		if (peers.size() < Settings.getInstance().getMinBlockchainPeers())
 			return true;
 
-		if (isNewConsensusActive)
-			// Disregard peers with a shorter chain
-			peers.removeIf(Controller.hasShorterBlockchain);
-
 		// Disregard peers that have no block signature or the same block signature as us
 		peers.removeIf(Controller.hasNoOrSameBlock);
 
@@ -241,13 +235,11 @@ public class Synchronizer extends Thread {
 
 		final int peersBeforeComparison = peers.size();
 
-		if (!isNewConsensusActive) {
-			// Request recent block summaries from the remaining peers, and locate our common block with each
-			Synchronizer.getInstance().findCommonBlocksWithPeers(peers);
+		// Request recent block summaries from the remaining peers, and locate our common block with each
+		Synchronizer.getInstance().findCommonBlocksWithPeers(peers);
 
-			// Compare the peers against each other, and against our chain, which will return an updated list excluding those without common blocks
-			peers = Synchronizer.getInstance().comparePeers(peers);
-		}
+		// Compare the peers against each other, and against our chain, which will return an updated list excluding those without common blocks
+		peers = Synchronizer.getInstance().comparePeers(peers);
 
 		// We may have added more inferior chain tips when comparing peers, so remove any peers that are currently on those chains
 		peers.removeIf(Controller.hasInferiorChainTip);
@@ -993,13 +985,8 @@ public class Synchronizer extends Thread {
 						return SynchronizationResult.NOTHING_TO_DO;
 					}
 
-					boolean isNewConsensusActive = NTP.getTime() >= BlockChain.getInstance().getNewConsensusTimestamp();
-
 					// Unless we're doing a forced sync, we might need to compare blocks after common block
-					boolean isBlockComparisonNeeded = isNewConsensusActive
-							? ourInitialHeight == peerHeight
-							: ourInitialHeight > commonBlockHeight;
-					if (!force && isBlockComparisonNeeded) {
+					if (!force && ourInitialHeight > commonBlockHeight) {
 						SynchronizationResult chainCompareResult = compareChains(repository, commonBlockData, ourLatestBlockData, peer, peerHeight, peerBlockSummaries);
 						if (chainCompareResult != SynchronizationResult.OK)
 							return chainCompareResult;
@@ -1200,56 +1187,27 @@ public class Synchronizer extends Thread {
 				peerBlockSummaries.addAll(moreBlockSummaries);
 			}
 
-			boolean isNewConsensusActive = NTP.getTime() >= BlockChain.getInstance().getNewConsensusTimestamp();
-			if (isNewConsensusActive) {
-				int parentHeight = ourLatestBlockData.getHeight() - 1;
+			// Fetch our corresponding block summaries
+			List<BlockSummaryData> ourBlockSummaries = repository.getBlockRepository().getBlockSummaries(commonBlockHeight + 1, ourLatestBlockData.getHeight());
 
-				BlockSummaryData ourLatestBlockSummary = new BlockSummaryData(ourLatestBlockData);
-				byte[] ourParentBlockSignature = ourLatestBlockData.getReference();
+			// Populate minter account levels for both lists of block summaries
+			populateBlockSummariesMinterLevels(repository, ourBlockSummaries);
+			populateBlockSummariesMinterLevels(repository, peerBlockSummaries);
 
-				BlockSummaryData peersLatestBlockSummary = peerBlockSummaries.get(peerBlockSummaries.size() - 1);
-				byte[] peersParentBlockSignature = peerBlockSummaries.size() > 1
-						? peerBlockSummaries.get(peerBlockSummaries.size() - 1 - 1).getSignature()
-						: commonBlockSig;
+			final int mutualHeight = commonBlockHeight + Math.min(ourBlockSummaries.size(), peerBlockSummaries.size());
 
-				// Populate minter account levels for both lists of block summaries
-				populateBlockSummariesMinterLevels(repository, Collections.singletonList(ourLatestBlockSummary));
-				populateBlockSummariesMinterLevels(repository, Collections.singletonList(peersLatestBlockSummary));
+			// Calculate cumulative chain weights of both blockchain subsets, from common block to highest mutual block.
+			BigInteger ourChainWeight = Block.calcChainWeight(commonBlockHeight, commonBlockSig, ourBlockSummaries, mutualHeight);
+			BigInteger peerChainWeight = Block.calcChainWeight(commonBlockHeight, commonBlockSig, peerBlockSummaries, mutualHeight);
 
-				BigInteger ourChainWeight = Block.calcBlockWeight(parentHeight, ourParentBlockSignature, ourLatestBlockSummary);
-				BigInteger peerChainWeight = Block.calcBlockWeight(parentHeight, peersParentBlockSignature, peersLatestBlockSummary);
+			NumberFormat accurateFormatter = new DecimalFormat("0.################E0");
+			LOGGER.debug(String.format("commonBlockHeight: %d, commonBlockSig: %.8s, ourBlockSummaries.size(): %d, peerBlockSummaries.size(): %d", commonBlockHeight, Base58.encode(commonBlockSig), ourBlockSummaries.size(), peerBlockSummaries.size()));
+			LOGGER.debug(String.format("Our chain weight: %s, peer's chain weight: %s (higher is better)", accurateFormatter.format(ourChainWeight), accurateFormatter.format(peerChainWeight)));
 
-				NumberFormat accurateFormatter = new DecimalFormat("0.################E0");
-				LOGGER.debug(String.format("Our chain weight: %s, peer's chain weight: %s (higher is better)", accurateFormatter.format(ourChainWeight), accurateFormatter.format(peerChainWeight)));
-
-				// If our blockchain has greater weight then don't synchronize with peer
-				if (ourChainWeight.compareTo(peerChainWeight) >= 0) {
-					LOGGER.debug(String.format("Not synchronizing with peer %s as we have better blockchain", peer));
-					return SynchronizationResult.INFERIOR_CHAIN;
-				}
-			} else {
-				// Fetch our corresponding block summaries
-				List<BlockSummaryData> ourBlockSummaries = repository.getBlockRepository().getBlockSummaries(commonBlockHeight + 1, ourLatestBlockData.getHeight());
-
-				// Populate minter account levels for both lists of block summaries
-				populateBlockSummariesMinterLevels(repository, ourBlockSummaries);
-				populateBlockSummariesMinterLevels(repository, peerBlockSummaries);
-
-				final int mutualHeight = commonBlockHeight + Math.min(ourBlockSummaries.size(), peerBlockSummaries.size());
-
-				// Calculate cumulative chain weights of both blockchain subsets, from common block to highest mutual block.
-				BigInteger ourChainWeight = Block.calcChainWeight(commonBlockHeight, commonBlockSig, ourBlockSummaries, mutualHeight);
-				BigInteger peerChainWeight = Block.calcChainWeight(commonBlockHeight, commonBlockSig, peerBlockSummaries, mutualHeight);
-
-				NumberFormat accurateFormatter = new DecimalFormat("0.################E0");
-				LOGGER.debug(String.format("commonBlockHeight: %d, commonBlockSig: %.8s, ourBlockSummaries.size(): %d, peerBlockSummaries.size(): %d", commonBlockHeight, Base58.encode(commonBlockSig), ourBlockSummaries.size(), peerBlockSummaries.size()));
-				LOGGER.debug(String.format("Our chain weight: %s, peer's chain weight: %s (higher is better)", accurateFormatter.format(ourChainWeight), accurateFormatter.format(peerChainWeight)));
-
-				// If our blockchain has greater weight then don't synchronize with peer
-				if (ourChainWeight.compareTo(peerChainWeight) >= 0) {
-					LOGGER.debug(String.format("Not synchronizing with peer %s as we have better blockchain", peer));
-					return SynchronizationResult.INFERIOR_CHAIN;
-				}
+			// If our blockchain has greater weight then don't synchronize with peer
+			if (ourChainWeight.compareTo(peerChainWeight) >= 0) {
+				LOGGER.debug(String.format("Not synchronizing with peer %s as we have better blockchain", peer));
+				return SynchronizationResult.INFERIOR_CHAIN;
 			}
 		}
 

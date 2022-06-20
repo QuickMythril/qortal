@@ -52,7 +52,6 @@
 		"newBlockSigHeight": 999999,
 		"shareBinFix": 999999,
 		"calcChainWeightTimestamp": 0,
-		"newConsensusTimestamp": 0,
 		"transactionV5Timestamp": 0,
 		"transactionV6Timestamp": 0,
 		"disableReferenceTimestamp": 9999999999999

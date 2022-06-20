@@ -69,7 +69,6 @@ public class BlockChain {
 		newBlockSigHeight,
 		shareBinFix,
 		calcChainWeightTimestamp,
-		newConsensusTimestamp,
 		transactionV5Timestamp,
 		transactionV6Timestamp,
 		disableReferenceTimestamp
@@ -402,10 +401,6 @@ public class BlockChain {
 
 	public long getCalcChainWeightTimestamp() {
 		return this.featureTriggers.get(FeatureTrigger.calcChainWeightTimestamp.name()).longValue();
-	}
-
-	public long getNewConsensusTimestamp() {
-		return this.featureTriggers.get(FeatureTrigger.newConsensusTimestamp.name()).longValue();
 	}
 
 	public long getTransactionV5Timestamp() {

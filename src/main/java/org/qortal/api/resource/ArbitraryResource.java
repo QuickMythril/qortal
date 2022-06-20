@@ -57,6 +57,7 @@ import org.qortal.transform.TransformationException;
 import org.qortal.transform.transaction.ArbitraryTransactionTransformer;
 import org.qortal.transform.transaction.TransactionTransformer;
 import org.qortal.utils.Base58;
+import org.qortal.utils.NTP;
 import org.qortal.utils.ZipUtils;
 
 @Path("/arbitrary")
@@ -1099,7 +1100,8 @@ public class ArbitraryResource {
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, error);
 			}
 
-			if (!Controller.getInstance().isUpToDate()) {
+			final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
+			if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp)) {
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCKCHAIN_NEEDS_SYNC);
 			}
 

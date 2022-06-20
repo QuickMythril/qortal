@@ -715,24 +715,6 @@ public class Controller extends Thread {
 		return lastMisbehaved != null && lastMisbehaved > NTP.getTime() - MISBEHAVIOUR_COOLOFF;
 	};
 
-	/** True if peer has unknown height or lower height. */
-	public static final Predicate<Peer> hasShorterBlockchain = peer -> {
-		BlockData ourLatestBlockData = getInstance().getChainTip();
-		int ourHeight = ourLatestBlockData.getHeight();
-		final PeerChainTipData peerChainTipData = peer.getChainTipData();
-
-		// Ensure we have chain tip data for this peer
-		if (peerChainTipData == null)
-			return true;
-
-		// Remove if peer is at a lower height than us
-		Integer peerHeight = peerChainTipData.getLastHeight();
-		if (peerHeight == null || peerHeight < ourHeight)
-			return true;
-
-		return false;
-	};
-
 	public static final Predicate<Peer> hasNoRecentBlock = peer -> {
 		final Long minLatestBlockTimestamp = getMinimumLatestBlockTimestamp();
 		final PeerChainTipData peerChainTipData = peer.getChainTipData();
@@ -805,29 +787,34 @@ public class Controller extends Thread {
 		String actionText;
 
 		// Use a more tolerant latest block timestamp in the isUpToDate() calls below to reduce misleading statuses.
-		// Any block in the last 30 minutes is considered "up to date" for the purposes of displaying statuses.
-		final Long minLatestBlockTimestamp = NTP.getTime() - (30 * 60 * 1000L);
+		// Any block in the last 2 hours is considered "up to date" for the purposes of displaying statuses.
+		// This also aligns with the time interval required for continued online account submission.
+		final Long minLatestBlockTimestamp = NTP.getTime() - (2 * 60 * 60 * 1000L);
+
+		// Only show sync percent if it's less than 100, to avoid confusion
+		final Integer syncPercent = Synchronizer.getInstance().getSyncPercent();
+		final boolean isSyncing = (syncPercent != null && syncPercent < 100);
 
 		synchronized (Synchronizer.getInstance().syncLock) {
 			if (Settings.getInstance().isLite()) {
 				actionText = Translator.INSTANCE.translate("SysTray", "LITE_NODE");
 				SysTray.getInstance().setTrayIcon(4);
 			}
-			else if (this.isMintingPossible) {
-				actionText = Translator.INSTANCE.translate("SysTray", "MINTING_ENABLED");
-				SysTray.getInstance().setTrayIcon(2);
-			}
 			else if (numberOfPeers < Settings.getInstance().getMinBlockchainPeers()) {
 				actionText = Translator.INSTANCE.translate("SysTray", "CONNECTING");
 				SysTray.getInstance().setTrayIcon(3);
 			}
-			else if (!this.isUpToDate(minLatestBlockTimestamp) && Synchronizer.getInstance().isSynchronizing()) {
+			else if (!this.isUpToDate(minLatestBlockTimestamp) && isSyncing) {
 				actionText = String.format("%s - %d%%", Translator.INSTANCE.translate("SysTray", "SYNCHRONIZING_BLOCKCHAIN"), Synchronizer.getInstance().getSyncPercent());
 				SysTray.getInstance().setTrayIcon(3);
 			}
 			else if (!this.isUpToDate(minLatestBlockTimestamp)) {
 				actionText = String.format("%s", Translator.INSTANCE.translate("SysTray", "SYNCHRONIZING_BLOCKCHAIN"));
 				SysTray.getInstance().setTrayIcon(3);
+			}
+			else if (OnlineAccountsManager.getInstance().hasOnlineAccounts()) {
+				actionText = Translator.INSTANCE.translate("SysTray", "MINTING_ENABLED");
+				SysTray.getInstance().setTrayIcon(2);
 			}
 			else {
 				actionText = Translator.INSTANCE.translate("SysTray", "MINTING_DISABLED");

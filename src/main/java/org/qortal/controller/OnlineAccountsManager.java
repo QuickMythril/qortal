@@ -60,6 +60,8 @@ public class OnlineAccountsManager extends Thread {
 
     private final List<OnlineAccountData> onlineAccountsImportQueue = Collections.synchronizedList(new ArrayList<>());
 
+    private boolean hasOnlineAccounts = false;
+
 
     /** Cache of current 'online accounts' */
     List<OnlineAccountData> onlineAccounts = new ArrayList<>();
@@ -114,6 +116,10 @@ public class OnlineAccountsManager extends Thread {
     public void shutdown() {
         isStopping = true;
         this.interrupt();
+    }
+
+    public boolean hasOnlineAccounts() {
+        return this.hasOnlineAccounts;
     }
 
 
@@ -280,6 +286,12 @@ public class OnlineAccountsManager extends Thread {
             return;
         }
 
+        // Don't submit if we're more than 2 hours out of sync (unless we're in recovery mode)
+        final Long minLatestBlockTimestamp = now - (2 * 60 * 60 * 1000L);
+        if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp) && !Synchronizer.getInstance().getRecoveryMode()) {
+            return;
+        }
+
         List<MintingAccountData> mintingAccounts;
         try (final Repository repository = RepositoryManager.getRepository()) {
             mintingAccounts = repository.getAccountRepository().getMintingAccounts();
@@ -321,6 +333,7 @@ public class OnlineAccountsManager extends Thread {
         // 'current' timestamp
         final long onlineAccountsTimestamp = toOnlineAccountTimestamp(now);
         boolean hasInfoChanged = false;
+        boolean existingAccountsExist = false;
 
         byte[] timestampBytes = Longs.toByteArray(onlineAccountsTimestamp);
         List<OnlineAccountData> ourOnlineAccounts = new ArrayList<>();
@@ -341,8 +354,10 @@ public class OnlineAccountsManager extends Thread {
 
                     if (Arrays.equals(existingOnlineAccountData.getPublicKey(), ourOnlineAccountData.getPublicKey())) {
                         // If our online account is already present, with same timestamp, then move on to next mintingAccount
-                        if (existingOnlineAccountData.getTimestamp() == onlineAccountsTimestamp)
+                        if (existingOnlineAccountData.getTimestamp() == onlineAccountsTimestamp) {
+                            existingAccountsExist = true;
                             continue MINTING_ACCOUNTS;
+                        }
 
                         // If our online account is already present, but with older timestamp, then remove it
                         iterator.remove();
@@ -357,6 +372,9 @@ public class OnlineAccountsManager extends Thread {
             ourOnlineAccounts.add(ourOnlineAccountData);
             hasInfoChanged = true;
         }
+
+        // Keep track of whether we have online accounts circulating in the network, for systray status
+        this.hasOnlineAccounts = existingAccountsExist || !ourOnlineAccounts.isEmpty();
 
         if (!hasInfoChanged)
             return;

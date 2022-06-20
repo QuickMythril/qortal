@@ -723,9 +723,9 @@ public class TransactionsResource {
 		ApiError.BLOCKCHAIN_NEEDS_SYNC, ApiError.INVALID_SIGNATURE, ApiError.INVALID_DATA, ApiError.TRANSFORMATION_ERROR, ApiError.REPOSITORY_ISSUE
 	})
 	public String processTransaction(String rawBytes58) {
-		// Only allow a transaction to be processed if our latest block is less than 30 minutes old
+		// Only allow a transaction to be processed if our latest block is less than 60 minutes old
 		// If older than this, we should first wait until the blockchain is synced
-		final Long minLatestBlockTimestamp = NTP.getTime() - (30 * 60 * 1000L);
+		final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
 		if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCKCHAIN_NEEDS_SYNC);
 
