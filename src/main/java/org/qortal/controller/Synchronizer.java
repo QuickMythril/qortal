@@ -81,7 +81,7 @@ public class Synchronizer extends Thread {
 	private boolean syncRequestPending = false;
 
 	// Keep track of invalid blocks so that we don't keep trying to sync them
-	private Map<String, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
+	private Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
 	public Long timeValidBlockLastReceived = null;
 	public Long timeInvalidBlockLastReceived = null;
 
@@ -617,7 +617,7 @@ public class Synchronizer extends Thread {
 							// We have already determined that the correct chain diverged from a lower height. We are safe to skip these peers.
 							for (Peer peer : peersSharingCommonBlock) {
 								LOGGER.debug(String.format("Peer %s has common block at height %d but the superior chain is at height %d. Removing it from this round.", peer, commonBlockSummary.getHeight(), dropPeersAfterCommonBlockHeight));
-								this.addInferiorChainSignature(peer.getChainTipData().getLastBlockSignature());
+								//this.addInferiorChainSignature(peer.getChainTipData().getLastBlockSignature());
 							}
 							continue;
 						}
@@ -628,7 +628,9 @@ public class Synchronizer extends Thread {
 					int minChainLength = this.calculateMinChainLengthOfPeers(peersSharingCommonBlock, commonBlockSummary);
 
 					// Fetch block summaries from each peer
-					for (Peer peer : peersSharingCommonBlock) {
+					Iterator peersSharingCommonBlockIterator = peersSharingCommonBlock.iterator();
+					while (peersSharingCommonBlockIterator.hasNext()) {
+						Peer peer = (Peer) peersSharingCommonBlockIterator.next();
 
 						// If we're shutting down, just return the latest peer list
 						if (Controller.isStopping())
@@ -685,6 +687,8 @@ public class Synchronizer extends Thread {
 						if (this.containsInvalidBlockSummary(peer.getCommonBlockData().getBlockSummariesAfterCommonBlock())) {
 							LOGGER.debug("Ignoring peer %s because it holds an invalid block", peer);
 							peers.remove(peer);
+							peersSharingCommonBlockIterator.remove();
+							continue;
 						}
 
 						// Reduce minChainLength if needed. If we don't have any blocks, this peer will be excluded from chain weight comparisons later in the process, so we shouldn't update minChainLength
@@ -840,6 +844,10 @@ public class Synchronizer extends Thread {
 
 	/* Invalid block signature tracking */
 
+	public Map<ByteArray, Long> getInvalidBlockSignatures() {
+		return this.invalidBlockSignatures;
+	}
+
 	private void addInvalidBlockSignature(byte[] signature) {
 		Long now = NTP.getTime();
 		if (now == null) {
@@ -847,8 +855,7 @@ public class Synchronizer extends Thread {
 		}
 
 		// Add or update existing entry
-		String sig58 = Base58.encode(signature);
-		invalidBlockSignatures.put(sig58, now);
+		invalidBlockSignatures.put(ByteArray.wrap(signature), now);
 	}
 	private void deleteOlderInvalidSignatures(Long now) {
 		if (now == null) {
@@ -867,17 +874,16 @@ public class Synchronizer extends Thread {
 			}
 		}
 	}
-	private boolean containsInvalidBlockSummary(List<BlockSummaryData> blockSummaries) {
+	public boolean containsInvalidBlockSummary(List<BlockSummaryData> blockSummaries) {
 		if (blockSummaries == null || invalidBlockSignatures == null) {
 			return false;
 		}
 
 		// Loop through our known invalid blocks and check each one against supplied block summaries
-		for (String invalidSignature58 : invalidBlockSignatures.keySet()) {
-			byte[] invalidSignature = Base58.decode(invalidSignature58);
+		for (ByteArray invalidSignature : invalidBlockSignatures.keySet()) {
 			for (BlockSummaryData blockSummary : blockSummaries) {
 				byte[] signature = blockSummary.getSignature();
-				if (Arrays.equals(signature, invalidSignature)) {
+				if (Arrays.equals(signature, invalidSignature.value)) {
 					return true;
 				}
 			}
@@ -890,10 +896,9 @@ public class Synchronizer extends Thread {
 		}
 
 		// Loop through our known invalid blocks and check each one against supplied block signatures
-		for (String invalidSignature58 : invalidBlockSignatures.keySet()) {
-			byte[] invalidSignature = Base58.decode(invalidSignature58);
+		for (ByteArray invalidSignature : invalidBlockSignatures.keySet()) {
 			for (byte[] signature : blockSignatures) {
-				if (Arrays.equals(signature, invalidSignature)) {
+				if (Arrays.equals(signature, invalidSignature.value)) {
 					return true;
 				}
 			}

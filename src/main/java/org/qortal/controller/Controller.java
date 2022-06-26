@@ -113,6 +113,7 @@ public class Controller extends Thread {
 	private long repositoryBackupTimestamp = startTime; // ms
 	private long repositoryMaintenanceTimestamp = startTime; // ms
 	private long repositoryCheckpointTimestamp = startTime; // ms
+	private long prunePeersTimestamp = startTime; // ms
 	private long ntpCheckTimestamp = startTime; // ms
 	private long deleteExpiredTimestamp = startTime + DELETE_EXPIRED_INTERVAL; // ms
 
@@ -552,6 +553,7 @@ public class Controller extends Thread {
 		final long repositoryBackupInterval = Settings.getInstance().getRepositoryBackupInterval();
 		final long repositoryCheckpointInterval = Settings.getInstance().getRepositoryCheckpointInterval();
 		long repositoryMaintenanceInterval = getRandomRepositoryMaintenanceInterval();
+		final long prunePeersInterval = 5 * 60 * 1000L; // Every 5 minutes
 
 		// Start executor service for trimming or pruning
 		PruneManager.getInstance().start();
@@ -649,10 +651,15 @@ public class Controller extends Thread {
 				}
 
 				// Prune stuck/slow/old peers
-				try {
-					Network.getInstance().prunePeers();
-				} catch (DataException e) {
-					LOGGER.warn(String.format("Repository issue when trying to prune peers: %s", e.getMessage()));
+				if (now >= prunePeersTimestamp + prunePeersInterval) {
+					prunePeersTimestamp = now + prunePeersInterval;
+
+					try {
+						LOGGER.debug("Pruning peers...");
+						Network.getInstance().prunePeers();
+					} catch (DataException e) {
+						LOGGER.warn(String.format("Repository issue when trying to prune peers: %s", e.getMessage()));
+					}
 				}
 
 				// Delete expired transactions
@@ -1232,6 +1239,10 @@ public class Controller extends Thread {
 
 			case ONLINE_ACCOUNTS_V2:
 				OnlineAccountsManager.getInstance().onNetworkOnlineAccountsV2Message(peer, message);
+				break;
+
+			case GET_ONLINE_ACCOUNTS_V3:
+				OnlineAccountsManager.getInstance().onNetworkGetOnlineAccountsV3Message(peer, message);
 				break;
 
 			case GET_ARBITRARY_DATA:

@@ -295,7 +295,7 @@ public class TradeBot implements Listener {
 	}
 
 	public static byte[] deriveTradeNativePublicKey(byte[] privateKey) {
-		return PrivateKeyAccount.toPublicKey(privateKey);
+		return Crypto.toPublicKey(privateKey);
 	}
 
 	public static byte[] deriveTradeForeignPublicKey(byte[] privateKey) {

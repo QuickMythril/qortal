@@ -71,7 +71,8 @@ public class BlockChain {
 		calcChainWeightTimestamp,
 		transactionV5Timestamp,
 		transactionV6Timestamp,
-		disableReferenceTimestamp
+		disableReferenceTimestamp,
+		aggregateSignatureTimestamp;
 	}
 
 	// Custom transaction fees
@@ -413,6 +414,10 @@ public class BlockChain {
 
 	public long getDisableReferenceTimestamp() {
 		return this.featureTriggers.get(FeatureTrigger.disableReferenceTimestamp.name()).longValue();
+	}
+
+	public long getAggregateSignatureTimestamp() {
+		return this.featureTriggers.get(FeatureTrigger.aggregateSignatureTimestamp.name()).longValue();
 	}
 
 	// More complex getters for aspects that change by height or timestamp

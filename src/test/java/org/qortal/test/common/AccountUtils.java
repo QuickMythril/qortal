@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.qortal.account.PrivateKeyAccount;
+import org.qortal.crypto.Crypto;
 import org.qortal.data.transaction.BaseTransactionData;
 import org.qortal.data.transaction.PaymentTransactionData;
 import org.qortal.data.transaction.RewardShareTransactionData;
@@ -45,7 +46,7 @@ public class AccountUtils {
 		long timestamp = repository.getTransactionRepository().fromSignature(reference).getTimestamp() + 1;
 
 		byte[] rewardSharePrivateKey = mintingAccount.getRewardSharePrivateKey(recipientAccount.getPublicKey());
-		byte[] rewardSharePublicKey = PrivateKeyAccount.toPublicKey(rewardSharePrivateKey);
+		byte[] rewardSharePublicKey = Crypto.toPublicKey(rewardSharePrivateKey);
 
 		BaseTransactionData baseTransactionData = new BaseTransactionData(timestamp, txGroupId, reference, mintingAccount.getPublicKey(), fee, null);
 		TransactionData transactionData = new RewardShareTransactionData(baseTransactionData, recipientAccount.getAddress(), rewardSharePublicKey, sharePercent);

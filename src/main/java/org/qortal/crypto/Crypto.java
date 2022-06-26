@@ -253,6 +253,10 @@ public abstract class Crypto {
 		return false;
 	}
 
+	public static byte[] toPublicKey(byte[] privateKey) {
+		return new Ed25519PrivateKeyParameters(privateKey, 0).generatePublicKey().getEncoded();
+	}
+
 	public static boolean verify(byte[] publicKey, byte[] signature, byte[] message) {
 		try {
 			return Ed25519.verify(signature, 0, publicKey, 0, message, 0, message.length);
@@ -264,16 +268,24 @@ public abstract class Crypto {
 	public static byte[] sign(Ed25519PrivateKeyParameters edPrivateKeyParams, byte[] message) {
 		byte[] signature = new byte[SIGNATURE_LENGTH];
 
-		edPrivateKeyParams.sign(Ed25519.Algorithm.Ed25519, edPrivateKeyParams.generatePublicKey(), null, message, 0, message.length, signature, 0);
+		edPrivateKeyParams.sign(Ed25519.Algorithm.Ed25519,null, message, 0, message.length, signature, 0);
+
+		return signature;
+	}
+
+	public static byte[] sign(byte[] privateKey, byte[] message) {
+		byte[] signature = new byte[SIGNATURE_LENGTH];
+
+		new Ed25519PrivateKeyParameters(privateKey, 0).sign(Ed25519.Algorithm.Ed25519,null, message, 0, message.length, signature, 0);
 
 		return signature;
 	}
 
 	public static byte[] getSharedSecret(byte[] privateKey, byte[] publicKey) {
-		byte[] x25519PrivateKey = BouncyCastle25519.toX25519PrivateKey(privateKey);
+		byte[] x25519PrivateKey = Qortal25519Extras.toX25519PrivateKey(privateKey);
 		X25519PrivateKeyParameters xPrivateKeyParams = new X25519PrivateKeyParameters(x25519PrivateKey, 0);
 
-		byte[] x25519PublicKey = BouncyCastle25519.toX25519PublicKey(publicKey);
+		byte[] x25519PublicKey = Qortal25519Extras.toX25519PublicKey(publicKey);
 		X25519PublicKeyParameters xPublicKeyParams = new X25519PublicKeyParameters(x25519PublicKey, 0);
 
 		byte[] sharedSecret = new byte[SHARED_SECRET_LENGTH];
@@ -281,5 +293,4 @@ public abstract class Crypto {
 
 		return sharedSecret;
 	}
-
 }

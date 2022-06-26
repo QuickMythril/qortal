@@ -435,6 +435,7 @@ public class ArbitraryMetadataManager {
                     // Relay request hasn't reached the maximum number of hops yet, so can be rebroadcast
 
                     Message relayGetArbitraryMetadataMessage = new GetArbitraryMetadataMessage(signature, requestTime, requestHops);
+                    relayGetArbitraryMetadataMessage.setId(message.getId());
 
                     LOGGER.debug("Rebroadcasting metadata request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(

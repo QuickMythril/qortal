@@ -46,6 +46,7 @@ public abstract class Message {
 	private static final int MAX_DATA_SIZE = 10 * 1024 * 1024; // 10MB
 
 	protected static final byte[] EMPTY_DATA_BYTES = new byte[0];
+	private static final ByteBuffer EMPTY_READ_ONLY_BYTE_BUFFER = ByteBuffer.wrap(EMPTY_DATA_BYTES).asReadOnlyBuffer();
 
 	protected int id;
 	protected final MessageType type;
@@ -126,7 +127,7 @@ public abstract class Message {
 			if (dataSize > 0 && dataSize + CHECKSUM_LENGTH > readOnlyBuffer.remaining())
 				return null;
 
-			ByteBuffer dataSlice = null;
+			ByteBuffer dataSlice = EMPTY_READ_ONLY_BYTE_BUFFER;
 			if (dataSize > 0) {
 				byte[] expectedChecksum = new byte[CHECKSUM_LENGTH];
 				readOnlyBuffer.get(expectedChecksum);

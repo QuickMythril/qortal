@@ -524,6 +524,7 @@ public class ArbitraryDataFileListManager {
                         forwardArbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes, requestTime, requestHops,
                                 arbitraryDataFileListMessage.getPeerAddress(), arbitraryDataFileListMessage.isRelayPossible());
                     }
+                    forwardArbitraryDataFileListMessage.setId(message.getId());
 
                     // Forward to requesting peer
                     LOGGER.debug("Forwarding file list with {} hashes to requesting peer: {}", hashes.size(), requestingPeer);

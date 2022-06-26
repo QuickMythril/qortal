@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.qortal.account.PrivateKeyAccount;
 import org.qortal.crypto.Crypto;
 import org.qortal.globalization.Translator;
 import org.qortal.gui.SysTray;
@@ -1003,7 +1002,7 @@ public class HSQLDBRepository implements Repository {
 		if (privateKey == null)
 			return null;
 
-		return PrivateKeyAccount.toPublicKey(privateKey);
+		return Crypto.toPublicKey(privateKey);
 	}
 
 	public static String ed25519PublicKeyToAddress(byte[] publicKey) {
