@@ -22,8 +22,7 @@ import org.qortal.utils.Triple;
 import java.io.IOException;
 import java.util.*;
 
-import static org.qortal.controller.arbitrary.ArbitraryDataFileListManager.RELAY_REQUEST_MAX_DURATION;
-import static org.qortal.controller.arbitrary.ArbitraryDataFileListManager.RELAY_REQUEST_MAX_HOPS;
+import static org.qortal.controller.arbitrary.ArbitraryDataFileListManager.*;
 
 public class ArbitraryMetadataManager {
 
@@ -439,9 +438,9 @@ public class ArbitraryMetadataManager {
 
                     LOGGER.debug("Rebroadcasting metadata request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(
-                            broadcastPeer -> broadcastPeer == peer ||
-                                    Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost())
-                                    ? null : relayGetArbitraryMetadataMessage);
+                            broadcastPeer ->
+                                    !broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
+                                    broadcastPeer == peer || Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost()) ? null : relayGetArbitraryMetadataMessage);
 
                 }
                 else {

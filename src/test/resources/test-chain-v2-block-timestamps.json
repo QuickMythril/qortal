@@ -55,7 +55,8 @@
 		"calcChainWeightTimestamp": 0,
 		"transactionV5Timestamp": 0,
 		"transactionV6Timestamp": 9999999999999,
-		"aggregateSignatureTimestamp": 9999999999999
+		"disableReferenceTimestamp": 9999999999999,
+		"aggregateSignatureTimestamp": 0
 	},
 	"genesisInfo": {
 		"version": 4,

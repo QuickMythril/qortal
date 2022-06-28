@@ -67,6 +67,9 @@ public class ArbitraryDataFileListManager {
     /** Maximum number of hops that a file list relay request is allowed to make */
     public static int RELAY_REQUEST_MAX_HOPS = 4;
 
+    /** Minimum peer version to use relay */
+    public static String RELAY_MIN_PEER_VERSION = "3.4.0";
+
 
     private ArbitraryDataFileListManager() {
     }
@@ -695,9 +698,10 @@ public class ArbitraryDataFileListManager {
 
                     LOGGER.debug("Rebroadcasting hash list request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(
-                            broadcastPeer -> broadcastPeer == peer ||
-                                    Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost())
-                                    ? null : relayGetArbitraryDataFileListMessage);
+                            broadcastPeer ->
+                                    !broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
+                                    broadcastPeer == peer || Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost()) ? null : relayGetArbitraryDataFileListMessage
+                    );
 
                 }
                 else {
