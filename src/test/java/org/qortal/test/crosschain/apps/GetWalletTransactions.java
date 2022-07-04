@@ -75,7 +75,7 @@ public class GetWalletTransactions {
 
 		System.out.println(String.format("Found %d transaction%s", transactions.size(), (transactions.size() != 1 ? "s" : "")));
 
-		for (SimpleTransaction transaction : transactions.stream().sorted(Comparator.comparingInt(SimpleTransaction::getTimestamp)).collect(Collectors.toList()))
+		for (SimpleTransaction transaction : transactions.stream().sorted(Comparator.comparingLong(SimpleTransaction::getTimestamp)).collect(Collectors.toList()))
 			System.out.println(String.format("%s", transaction));
 	}
 

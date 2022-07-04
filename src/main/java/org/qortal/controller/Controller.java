@@ -819,7 +819,7 @@ public class Controller extends Thread {
 				actionText = String.format("%s", Translator.INSTANCE.translate("SysTray", "SYNCHRONIZING_BLOCKCHAIN"));
 				SysTray.getInstance().setTrayIcon(3);
 			}
-			else if (OnlineAccountsManager.getInstance().hasOnlineAccounts()) {
+			else if (OnlineAccountsManager.getInstance().hasActiveOnlineAccountSignatures()) {
 				actionText = Translator.INSTANCE.translate("SysTray", "MINTING_ENABLED");
 				SysTray.getInstance().setTrayIcon(2);
 			}

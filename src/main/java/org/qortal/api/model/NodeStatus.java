@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.qortal.controller.Controller;
+import org.qortal.controller.OnlineAccountsManager;
 import org.qortal.controller.Synchronizer;
 import org.qortal.network.Network;
 
@@ -21,7 +22,7 @@ public class NodeStatus {
 	public final int height;
 
 	public NodeStatus() {
-		this.isMintingPossible = Controller.getInstance().isMintingPossible();
+		this.isMintingPossible = OnlineAccountsManager.getInstance().hasActiveOnlineAccountSignatures();
 
 		this.syncPercent = Synchronizer.getInstance().getSyncPercent();
 		this.isSynchronizing = Synchronizer.getInstance().isSynchronizing();

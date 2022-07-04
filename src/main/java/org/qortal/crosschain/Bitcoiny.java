@@ -375,7 +375,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 
 	public Long getWalletBalanceFromTransactions(String key58) throws ForeignBlockchainException {
 		long balance = 0;
-		Comparator<SimpleTransaction> oldestTimestampFirstComparator = Comparator.comparingInt(SimpleTransaction::getTimestamp);
+		Comparator<SimpleTransaction> oldestTimestampFirstComparator = Comparator.comparingLong(SimpleTransaction::getTimestamp);
 		List<SimpleTransaction> transactions = getWalletTransactions(key58).stream().sorted(oldestTimestampFirstComparator).collect(Collectors.toList());
 		for (SimpleTransaction transaction : transactions) {
 			balance += transaction.getTotalAmount();
@@ -455,7 +455,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 				// Process new keys
 			} while (true);
 
-			Comparator<SimpleTransaction> newestTimestampFirstComparator = Comparator.comparingInt(SimpleTransaction::getTimestamp).reversed();
+			Comparator<SimpleTransaction> newestTimestampFirstComparator = Comparator.comparingLong(SimpleTransaction::getTimestamp).reversed();
 
 			// Update cache and return
 			transactionsCacheTimestamp = NTP.getTime();
@@ -537,7 +537,8 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 			// All inputs and outputs relate to this wallet, so the balance should be unaffected
 			amount = 0;
 		}
-		return new SimpleTransaction(t.txHash, t.timestamp, amount, fee, inputs, outputs);
+		long timestampMillis = t.timestamp * 1000L;
+		return new SimpleTransaction(t.txHash, timestampMillis, amount, fee, inputs, outputs);
 	}
 
 	/**

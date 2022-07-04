@@ -125,11 +125,11 @@ public class AdminResource {
 	}
 
 	private String getNodeType() {
-		if (Settings.getInstance().isTopOnly()) {
-			return "topOnly";
-		}
-		else if (Settings.getInstance().isLite()) {
+		if (Settings.getInstance().isLite()) {
 			return "lite";
+		}
+		else if (Settings.getInstance().isTopOnly()) {
+			return "topOnly";
 		}
 		else {
 			return "full";
