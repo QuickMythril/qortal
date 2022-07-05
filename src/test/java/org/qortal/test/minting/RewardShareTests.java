@@ -177,4 +177,143 @@ public class RewardShareTests extends Common {
 		}
 	}
 
+	@Test
+	public void testCreateRewardSharesBeforeReduction() throws DataException {
+		final int sharePercent = 0;
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount dilbertAccount = Common.getTestAccount(repository, "dilbert");
+
+			// Create 6 reward shares
+			for (int i=0; i<6; i++) {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			}
+
+			// 7th reward share should fail because we've reached the limit (and we're not yet requiring a self share)
+			AssertionError assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+		}
+	}
+
+	@Test
+	public void testCreateRewardSharesAfterReduction() throws DataException {
+		Common.useSettings("test-settings-v2-reward-shares.json");
+
+		final int sharePercent = 0;
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount dilbertAccount = Common.getTestAccount(repository, "dilbert");
+
+			// Create 2 reward shares
+			for (int i=0; i<2; i++) {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			}
+
+			// 3rd reward share should fail because we've reached the limit (and we haven't got a self share)
+			AssertionError assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+		}
+	}
+
+	@Test
+	public void testCreateSelfAndRewardSharesAfterReduction() throws DataException {
+		Common.useSettings("test-settings-v2-reward-shares.json");
+
+		final int sharePercent = 0;
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount dilbertAccount = Common.getTestAccount(repository, "dilbert");
+
+			// Create 2 reward shares
+			for (int i=0; i<2; i++) {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			}
+
+			// 3rd reward share should fail because we've reached the limit (and we haven't got a self share)
+			AssertionError assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+
+			// Now create a self share, which should succeed as we have space for it
+			AccountUtils.rewardShare(repository, dilbertAccount, dilbertAccount, sharePercent);
+
+			// 4th reward share should fail because we've reached the limit (including the self share)
+			assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, dilbertAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+		}
+	}
+
+	@Test
+	public void testCreateFounderRewardSharesBeforeReduction() throws DataException {
+		final int sharePercent = 0;
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount aliceFounderAccount = Common.getTestAccount(repository, "alice");
+
+			// Create 5 reward shares (not 6, because alice already starts with a self reward share in the genesis block)
+			for (int i=0; i<5; i++) {
+				AccountUtils.rewardShare(repository, aliceFounderAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			}
+
+			// 6th reward share should fail
+			AssertionError assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, aliceFounderAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+		}
+	}
+
+	@Test
+	public void testCreateFounderRewardSharesAfterReduction() throws DataException {
+		Common.useSettings("test-settings-v2-reward-shares.json");
+
+		final int sharePercent = 0;
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount aliceFounderAccount = Common.getTestAccount(repository, "alice");
+
+			// Create 5 reward shares (not 6, because alice already starts with a self reward share in the genesis block)
+			for (int i=0; i<5; i++) {
+				AccountUtils.rewardShare(repository, aliceFounderAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			}
+
+			// 6th reward share should fail
+			AssertionError assertionError = null;
+			try {
+				AccountUtils.rewardShare(repository, aliceFounderAccount, Common.generateRandomSeedAccount(repository), sharePercent);
+			} catch (AssertionError e) {
+				assertionError = e;
+			}
+			assertNotNull("Transaction should be invalid", assertionError);
+			assertTrue("Transaction should be invalid due to reaching maximum reward shares", assertionError.getMessage().contains("MAXIMUM_REWARD_SHARES"));
+		}
+	}
+
 }

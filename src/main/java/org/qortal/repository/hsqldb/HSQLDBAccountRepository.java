@@ -689,6 +689,17 @@ public class HSQLDBAccountRepository implements AccountRepository {
 	}
 
 	@Override
+	public int countSelfShares(byte[] minterPublicKey) throws DataException {
+		String sql = "SELECT COUNT(*) FROM RewardShares WHERE minter_public_key = ? AND minter = recipient";
+
+		try (ResultSet resultSet = this.repository.checkedExecute(sql, minterPublicKey)) {
+			return resultSet.getInt(1);
+		} catch (SQLException e) {
+			throw new DataException("Unable to count self-shares in repository", e);
+		}
+	}
+
+	@Override
 	public List<RewardShareData> getRewardShares() throws DataException {
 		String sql = "SELECT minter_public_key, minter, recipient, share_percent, reward_share_public_key FROM RewardShares";
 

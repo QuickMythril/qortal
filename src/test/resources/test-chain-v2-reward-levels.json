@@ -10,7 +10,11 @@
 	],
 	"requireGroupForApproval": false,
 	"minAccountLevelToRewardShare": 5,
-	"maxRewardSharesPerMintingAccount": 20,
+	"maxRewardSharesPerFounderMintingAccount": 6,
+	"maxRewardSharesByTimestamp": [
+		{ "timestamp": 0, "maxShares": 20 },
+		{ "timestamp": 9999999999999, "maxShares": 3 }
+	],
 	"founderEffectiveMintingLevel": 10,
 	"onlineAccountSignaturesMinLifetime": 3600000,
 	"onlineAccountSignaturesMaxLifetime": 86400000,
@@ -51,6 +55,7 @@
 		"atFindNextTransactionFix": 0,
 		"newBlockSigHeight": 999999,
 		"shareBinFix": 6,
+		"rewardShareLimitTimestamp": 9999999999999,
 		"calcChainWeightTimestamp": 0,
 		"transactionV5Timestamp": 0,
 		"transactionV6Timestamp": 0,

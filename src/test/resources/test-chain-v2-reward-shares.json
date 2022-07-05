@@ -13,7 +13,7 @@
 	"maxRewardSharesPerFounderMintingAccount": 6,
 	"maxRewardSharesByTimestamp": [
 		{ "timestamp": 0, "maxShares": 6 },
-		{ "timestamp": 9999999999999, "maxShares": 3 }
+		{ "timestamp": 1655460000000, "maxShares": 3 }
 	],
 	"founderEffectiveMintingLevel": 10,
 	"onlineAccountSignaturesMinLifetime": 3600000,
@@ -55,8 +55,9 @@
 		"atFindNextTransactionFix": 0,
 		"newBlockSigHeight": 999999,
 		"shareBinFix": 999999,
-		"rewardShareLimitTimestamp": 9999999999999,
+		"rewardShareLimitTimestamp": 0,
 		"calcChainWeightTimestamp": 0,
+		"newConsensusTimestamp": 0,
 		"transactionV5Timestamp": 0,
 		"transactionV6Timestamp": 0,
 		"disableReferenceTimestamp": 9999999999999,
@@ -75,19 +76,16 @@
 			{ "type": "GENESIS", "recipient": "QaUpHNhT3Ygx6avRiKobuLdusppR5biXjL", "amount": "1000000" },
 			{ "type": "GENESIS", "recipient": "Qci5m9k4rcwe4ruKrZZQKka4FzUUMut3er", "amount": "1000000" },
 
-			{ "type": "GENESIS", "recipient": "QaUpHNhT3Ygx6avRiKobuLdusppR5biXjL", "amount": "10000", "assetId": 1 },
-			{ "type": "GENESIS", "recipient": "Qci5m9k4rcwe4ruKrZZQKka4FzUUMut3er", "amount": "8", "assetId": 1 },
-
 			{ "type": "CREATE_GROUP", "creatorPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "groupName": "dev-group", "description": "developer group", "isOpen": false, "approvalThreshold": "PCT100", "minimumBlockDelay": 0, "maximumBlockDelay": 1440 },
 
-			{ "type": "ISSUE_ASSET", "issuerPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "assetName": "TEST", "description": "test asset", "data": "", "quantity": 1000000, "isDivisible": true, "fee": 0 },
-			{ "type": "ISSUE_ASSET", "issuerPublicKey": "C6wuddsBV3HzRrXUtezE7P5MoRXp5m3mEDokRDGZB6ry", "assetName": "OTHER", "description": "other test asset", "data": "", "quantity": 1000000, "isDivisible": true, "fee": 0 },
-			{ "type": "ISSUE_ASSET", "issuerPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "assetName": "GOLD", "description": "gold test asset", "data": "", "quantity": 1000000, "isDivisible": true, "fee": 0 },
+			{ "type": "ISSUE_ASSET", "issuerPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "assetName": "TEST", "description": "test asset", "data": "", "quantity": "1000000", "isDivisible": true, "fee": 0 },
+			{ "type": "ISSUE_ASSET", "issuerPublicKey": "C6wuddsBV3HzRrXUtezE7P5MoRXp5m3mEDokRDGZB6ry", "assetName": "OTHER", "description": "other test asset", "data": "", "quantity": "1000000", "isDivisible": true, "fee": 0 },
+			{ "type": "ISSUE_ASSET", "issuerPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "assetName": "GOLD", "description": "gold test asset", "data": "", "quantity": "1000000", "isDivisible": true, "fee": 0 },
 
 			{ "type": "ACCOUNT_FLAGS", "target": "QgV4s3xnzLhVBEJxcYui4u4q11yhUHsd9v", "andMask": -1, "orMask": 1, "xorMask": 0 },
-			{ "type": "REWARD_SHARE", "minterPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "recipient": "QgV4s3xnzLhVBEJxcYui4u4q11yhUHsd9v", "rewardSharePublicKey": "7PpfnvLSG7y4HPh8hE7KoqAjLCkv7Ui6xw4mKAkbZtox", "sharePercent": 100 },
+			{ "type": "REWARD_SHARE", "minterPublicKey": "2tiMr5LTpaWCgbRvkPK8TFd7k63DyHJMMFFsz9uBf1ZP", "recipient": "QgV4s3xnzLhVBEJxcYui4u4q11yhUHsd9v", "rewardSharePublicKey": "7PpfnvLSG7y4HPh8hE7KoqAjLCkv7Ui6xw4mKAkbZtox", "sharePercent": "100" },
 
-			{ "type": "ACCOUNT_LEVEL", "target": "Qci5m9k4rcwe4ruKrZZQKka4FzUUMut3er", "level": 8 }
+			{ "type": "ACCOUNT_LEVEL", "target": "Qci5m9k4rcwe4ruKrZZQKka4FzUUMut3er", "level": 5 }
 		]
 	}
 }
