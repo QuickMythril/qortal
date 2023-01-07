@@ -758,6 +758,18 @@ public class Settings {
 		return this.pirateChainNet;
 	}
 
+	public NamecoinNet getNamecoinNet() {
+		return this.namecoinNet;
+	}
+
+	public DashNet getDashNet() {
+		return this.dashNet;
+	}
+
+	public FiroNet getFiroNet() {
+		return this.firoNet;
+	}
+
 	public String getWalletsPath() {
 		return this.walletsPath;
 	}
