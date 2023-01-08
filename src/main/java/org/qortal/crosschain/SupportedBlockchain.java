@@ -97,6 +97,48 @@ public enum SupportedBlockchain {
 		public ACCT getLatestAcct() {
 			return PirateChainACCTv3.getInstance();
 		}
+	},
+
+	NAMECOIN(Arrays.asList(
+			Triple.valueOf(NamecoinACCTv3.NAME, NamecoinACCTv3.CODE_BYTES_HASH, NamecoinACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Namecoin.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return NamecoinACCTv3.getInstance();
+		}
+	},
+
+	DASH(Arrays.asList(
+			Triple.valueOf(DashACCTv3.NAME, DashACCTv3.CODE_BYTES_HASH, DashACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Dash.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return DashACCTv3.getInstance();
+		}
+	},
+
+	FIRO(Arrays.asList(
+			Triple.valueOf(FiroACCTv3.NAME, FiroACCTv3.CODE_BYTES_HASH, FiroACCTv3::getInstance)
+		)) {
+		@Override
+		public ForeignBlockchain getInstance() {
+			return Firo.getInstance();
+		}
+
+		@Override
+		public ACCT getLatestAcct() {
+			return FiroACCTv3.getInstance();
+		}
 	};
 
 	private static final Map<ByteArray, Supplier<ACCT>> supportedAcctsByCodeHash = Arrays.stream(SupportedBlockchain.values())
