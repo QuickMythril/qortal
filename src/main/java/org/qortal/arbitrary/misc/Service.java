@@ -10,9 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
@@ -20,6 +18,31 @@ import static java.util.stream.Collectors.toMap;
 public enum Service {
     AUTO_UPDATE(1, false, null, null),
     ARBITRARY_DATA(100, false, null, null),
+    QCHAT_ATTACHMENT(120, true, 1024*1024L, null) {
+        @Override
+        public ValidationResult validate(Path path) {
+            // Custom validation function to require a single file, with a whitelisted extension
+            int fileCount = 0;
+            File[] files = path.toFile().listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        return ValidationResult.DIRECTORIES_NOT_ALLOWED;
+                    }
+                    final String extension = FilenameUtils.getExtension(file.getName()).toLowerCase();
+                    final List<String> allowedExtensions = Arrays.asList("zip", "pdf", "txt", "odt", "ods", "doc", "docx", "xls", "xlsx", "ppt", "pptx");
+                    if (extension == null || !allowedExtensions.contains(extension)) {
+                        return ValidationResult.INVALID_FILE_EXTENSION;
+                    }
+                    fileCount++;
+                }
+            }
+            if (fileCount != 1) {
+                return ValidationResult.INVALID_FILE_COUNT;
+            }
+            return ValidationResult.OK;
+        }
+    },
     WEBSITE(200, true, null, null) {
         @Override
         public ValidationResult validate(Path path) {
@@ -143,7 +166,8 @@ public enum Service {
         MISSING_INDEX_FILE(4),
         DIRECTORIES_NOT_ALLOWED(5),
         INVALID_FILE_EXTENSION(6),
-        MISSING_DATA(7);
+        MISSING_DATA(7),
+        INVALID_FILE_COUNT(8);
 
         public final int value;
 

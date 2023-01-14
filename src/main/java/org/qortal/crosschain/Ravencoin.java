@@ -138,6 +138,8 @@ public class Ravencoin extends Bitcoiny {
 			Context bitcoinjContext = new Context(ravencoinNet.getParams());
 
 			instance = new Ravencoin(ravencoinNet, electrumX, bitcoinjContext, CURRENCY_CODE);
+
+			electrumX.setBlockchain(instance);
 		}
 
 		return instance;

@@ -47,7 +47,6 @@ public class SerializationTests extends Common {
 				switch (txType) {
 					case GENESIS:
 					case ACCOUNT_FLAGS:
-					case CHAT:
 					case PUBLICIZE:
 					case AIRDROP:
 					case ENABLE_FORGING:
@@ -60,6 +59,7 @@ public class SerializationTests extends Common {
 				TransactionData transactionData = TransactionUtils.randomTransaction(repository, signingAccount, txType, true);
 				Transaction transaction = Transaction.fromData(repository, transactionData);
 				transaction.sign(signingAccount);
+				transaction.importAsUnconfirmed();
 
 				final int claimedLength = TransactionTransformer.getDataLength(transactionData);
 				byte[] serializedTransaction = TransactionTransformer.toBytes(transactionData);

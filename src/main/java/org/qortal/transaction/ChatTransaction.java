@@ -30,7 +30,7 @@ public class ChatTransaction extends Transaction {
 	private ChatTransactionData chatTransactionData;
 
 	// Other useful constants
-	public static final int MAX_DATA_SIZE = 1024;
+	public static final int MAX_DATA_SIZE = 4000;
 	public static final int POW_BUFFER_SIZE = 8 * 1024 * 1024; // bytes
 	public static final int POW_DIFFICULTY_ABOVE_QORT_THRESHOLD = 8; // leading zero bits
 	public static final int POW_DIFFICULTY_BELOW_QORT_THRESHOLD = 18; // leading zero bits
