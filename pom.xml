@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.qortal</groupId>
 	<artifactId>qortal</artifactId>
-	<version>3.8.2</version>
+	<version>3.8.3</version>
 	<packaging>jar</packaging>
 	<properties>
 		<skipTests>true</skipTests>
