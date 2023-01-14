@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.qortal.arbitrary.exception.DataNotPublishedException;
 import org.qortal.arbitrary.exception.MissingDataException;
 import org.qortal.arbitrary.misc.Service;
 import org.qortal.controller.arbitrary.ArbitraryDataBuildManager;
@@ -169,10 +170,18 @@ public class ArbitraryDataReader {
             this.uncompress();
             this.validate();
 
+        } catch (DataNotPublishedException e) {
+            if (e.getMessage() != null) {
+                // Log the message only, to avoid spamming the logs with a full stack trace
+                LOGGER.debug("DataNotPublishedException when trying to load QDN resource: {}", e.getMessage());
+            }
+            this.deleteWorkingDirectory();
+            throw e;
+
         } catch (DataException e) {
             LOGGER.info("DataException when trying to load QDN resource", e);
             this.deleteWorkingDirectory();
-            throw new DataException(e.getMessage());
+            throw e;
 
         } finally {
             this.postExecute();

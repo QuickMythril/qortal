@@ -82,7 +82,7 @@ public class ArbitraryDataFileManager extends Thread {
 
         try {
             // Use a fixed thread pool to execute the arbitrary data file requests
-            int threadCount = 10;
+            int threadCount = 5;
             ExecutorService arbitraryDataFileRequestExecutor = Executors.newFixedThreadPool(threadCount);
             for (int i = 0; i < threadCount; i++) {
                 arbitraryDataFileRequestExecutor.execute(new ArbitraryDataFileRequestThread());
@@ -288,7 +288,7 @@ public class ArbitraryDataFileManager extends Thread {
         // The ID needs to match that of the original request
         message.setId(originalMessage.getId());
 
-        if (!requestingPeer.sendMessage(message)) {
+        if (!requestingPeer.sendMessageWithTimeout(message, (int) ArbitraryDataManager.ARBITRARY_REQUEST_TIMEOUT)) {
             LOGGER.debug("Failed to forward arbitrary data file to peer {}", requestingPeer);
             requestingPeer.disconnect("failed to forward arbitrary data file");
         }
@@ -564,13 +564,16 @@ public class ArbitraryDataFileManager extends Thread {
                 LOGGER.trace("Hash {} exists", hash58);
 
                 // We can serve the file directly as we already have it
+                LOGGER.debug("Sending file {}...", arbitraryDataFile);
                 ArbitraryDataFileMessage arbitraryDataFileMessage = new ArbitraryDataFileMessage(signature, arbitraryDataFile);
                 arbitraryDataFileMessage.setId(message.getId());
-                if (!peer.sendMessage(arbitraryDataFileMessage)) {
-                    LOGGER.debug("Couldn't sent file");
+                if (!peer.sendMessageWithTimeout(arbitraryDataFileMessage, (int) ArbitraryDataManager.ARBITRARY_REQUEST_TIMEOUT)) {
+                    LOGGER.debug("Couldn't send file {}", arbitraryDataFile);
                     peer.disconnect("failed to send file");
                 }
-                LOGGER.debug("Sent file {}", arbitraryDataFile);
+                else {
+                    LOGGER.debug("Sent file {}", arbitraryDataFile);
+                }
             }
             else if (relayInfo != null) {
                 LOGGER.debug("We have relay info for hash {}", Base58.encode(hash));

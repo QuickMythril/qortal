@@ -85,6 +85,10 @@ public class ChatTransactionData extends TransactionData {
 		return this.chatReference;
 	}
 
+	public void setChatReference(byte[] chatReference) {
+		this.chatReference = chatReference;
+	}
+
 	public byte[] getData() {
 		return this.data;
 	}

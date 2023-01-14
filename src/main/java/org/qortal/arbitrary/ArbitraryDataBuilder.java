@@ -2,6 +2,7 @@ package org.qortal.arbitrary;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.qortal.arbitrary.exception.DataNotPublishedException;
 import org.qortal.arbitrary.exception.MissingDataException;
 import org.qortal.arbitrary.metadata.ArbitraryDataMetadataCache;
 import org.qortal.arbitrary.misc.Service;
@@ -88,7 +89,7 @@ public class ArbitraryDataBuilder {
             if (latestPut == null) {
                 String message = String.format("Couldn't find PUT transaction for name %s, service %s and identifier %s",
                         this.name, this.service, this.identifierString());
-                throw new DataException(message);
+                throw new DataNotPublishedException(message);
             }
             this.latestPutTransaction = latestPut;
 

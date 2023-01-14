@@ -1,4 +1,4 @@
-package org.qortal.test;
+package org.qortal.test.serialization;
 
 import org.junit.Ignore;
 import org.junit.Test;

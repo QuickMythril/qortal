@@ -279,7 +279,7 @@ public class Settings {
 	private String[] bootstrapHosts = new String[] {
 			"http://bootstrap.qortal.org",
 			"http://bootstrap2.qortal.org",
-			"http://62.171.190.193"
+			"http://bootstrap.qortal.online"
 	};
 
 	// Auto-update sources

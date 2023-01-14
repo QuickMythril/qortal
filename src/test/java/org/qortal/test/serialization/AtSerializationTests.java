@@ -1,4 +1,4 @@
-package org.qortal.test.at;
+package org.qortal.test.serialization;
 
 import com.google.common.hash.HashCode;
 import org.junit.After;
