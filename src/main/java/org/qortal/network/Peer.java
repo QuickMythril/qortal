@@ -155,6 +155,11 @@ public class Peer {
      */
     private CommonBlockData commonBlockData;
 
+    /**
+     * Last time we detected this peer as TOO_DIVERGENT
+     */
+    private Long lastTooDivergentTime;
+
     // Message stats
 
     private static class MessageStats {
@@ -381,6 +386,14 @@ public class Peer {
 
     public void setCommonBlockData(CommonBlockData commonBlockData) {
         this.commonBlockData = commonBlockData;
+    }
+
+    public Long getLastTooDivergentTime() {
+        return this.lastTooDivergentTime;
+    }
+
+    public void setLastTooDivergentTime(Long lastTooDivergentTime) {
+        this.lastTooDivergentTime = lastTooDivergentTime;
     }
 
     public boolean isSyncInProgress() {

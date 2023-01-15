@@ -1121,6 +1121,7 @@ public class Synchronizer extends Thread {
 			// If common block is too far behind us then we're on massively different forks so give up.
 			if (!force && testHeight < ourHeight - MAXIMUM_COMMON_DELTA) {
 				LOGGER.info(String.format("Blockchain too divergent with peer %s", peer));
+				peer.setLastTooDivergentTime(NTP.getTime());
 				return SynchronizationResult.TOO_DIVERGENT;
 			}
 
@@ -1129,6 +1130,9 @@ public class Synchronizer extends Thread {
 
 			testHeight = Math.max(testHeight - step, 1);
 		}
+
+		// Peer not considered too divergent
+		peer.setLastTooDivergentTime(0L);
 
 		// Prepend test block's summary as first block summary, as summaries returned are *after* test block
 		BlockSummaryData testBlockSummary = new BlockSummaryData(testBlockData);

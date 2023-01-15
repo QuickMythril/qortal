@@ -162,7 +162,7 @@ public class Settings {
 	 * This prevents the node from being able to serve older blocks */
 	private boolean topOnly = false;
 	/** The amount of recent blocks we should keep when pruning */
-	private int pruneBlockLimit = 1450;
+	private int pruneBlockLimit = 6000;
 
 	/** How often to attempt AT state pruning (ms). */
 	private long atStatesPruneInterval = 3219L; // milliseconds
@@ -218,7 +218,7 @@ public class Settings {
 	public long recoveryModeTimeout = 10 * 60 * 1000L;
 
 	/** Minimum peer version number required in order to sync with them */
-	private String minPeerVersion = "3.8.0";
+	private String minPeerVersion = "3.8.2";
 	/** Whether to allow connections with peers below minPeerVersion
 	 * If true, we won't sync with them but they can still sync with us, and will show in the peers list
 	 * If false, sync will be blocked both ways, and they will not appear in the peers list */

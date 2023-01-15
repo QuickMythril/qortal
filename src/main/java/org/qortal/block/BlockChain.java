@@ -100,6 +100,13 @@ public class BlockChain {
 	/** Whether only one registered name is allowed per account. */
 	private boolean oneNamePerAccount = false;
 
+	/** Checkpoints */
+	public static class Checkpoint {
+		public int height;
+		public String signature;
+	}
+	private List<Checkpoint> checkpoints;
+
 	/** Block rewards by block height */
 	public static class RewardByHeight {
 		public int height;
@@ -379,6 +386,10 @@ public class BlockChain {
 
 	public boolean oneNamePerAccount() {
 		return this.oneNamePerAccount;
+	}
+
+	public List<Checkpoint> getCheckpoints() {
+		return this.checkpoints;
 	}
 
 	public List<RewardByHeight> getBlockRewardsByHeight() {
@@ -679,6 +690,7 @@ public class BlockChain {
 
 		boolean isTopOnly = Settings.getInstance().isTopOnly();
 		boolean archiveEnabled = Settings.getInstance().isArchiveEnabled();
+		boolean isLite = Settings.getInstance().isLite();
 		boolean canBootstrap = Settings.getInstance().getBootstrap();
 		boolean needsArchiveRebuild = false;
 		BlockData chainTip;
@@ -699,22 +711,44 @@ public class BlockChain {
 					}
 				}
 			}
+
+			// Validate checkpoints
+			// Limited to topOnly nodes for now, in order to reduce risk, and to solve a real-world problem with divergent topOnly nodes
+			// TODO: remove the isTopOnly conditional below once this feature has had more testing time
+			if (isTopOnly && !isLite) {
+				List<Checkpoint> checkpoints = BlockChain.getInstance().getCheckpoints();
+				for (Checkpoint checkpoint : checkpoints) {
+					BlockData blockData = repository.getBlockRepository().fromHeight(checkpoint.height);
+					if (blockData == null) {
+						// Try the archive
+						blockData = repository.getBlockArchiveRepository().fromHeight(checkpoint.height);
+					}
+					if (blockData == null) {
+						LOGGER.trace("Couldn't find block for height {}", checkpoint.height);
+						// This is likely due to the block being pruned, so is safe to ignore.
+						// Continue, as there might be other blocks we can check more definitively.
+						continue;
+					}
+
+					byte[] signature = Base58.decode(checkpoint.signature);
+					if (!Arrays.equals(signature, blockData.getSignature())) {
+						LOGGER.info("Error: block at height {} with signature {} doesn't match checkpoint sig: {}. Bootstrapping...", checkpoint.height, Base58.encode(blockData.getSignature()), checkpoint.signature);
+						needsArchiveRebuild = true;
+						break;
+					}
+					LOGGER.info("Block at height {} matches checkpoint signature", blockData.getHeight());
+				}
+			}
+
 		}
 
-		boolean hasBlocks = (chainTip != null && chainTip.getHeight() > 1);
+		// Check first block is Genesis Block
+		if (!isGenesisBlockValid() || needsArchiveRebuild) {
+			try {
+				rebuildBlockchain();
 
-		if (isTopOnly && hasBlocks) {
-			// Top-only mode is enabled and we have blocks, so it's possible that the genesis block has been pruned
-			// It's best not to validate it, and there's no real need to
-		} else {
-			// Check first block is Genesis Block
-			if (!isGenesisBlockValid() || needsArchiveRebuild) {
-				try {
-					rebuildBlockchain();
-
-				} catch (InterruptedException e) {
-					throw new DataException(String.format("Interrupted when trying to rebuild blockchain: %s", e.getMessage()));
-				}
+			} catch (InterruptedException e) {
+				throw new DataException(String.format("Interrupted when trying to rebuild blockchain: %s", e.getMessage()));
 			}
 		}
 
@@ -723,9 +757,7 @@ public class BlockChain {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			repository.checkConsistency();
 
-			// Set the number of blocks to validate based on the pruned state of the chain
-			// If pruned, subtract an extra 10 to allow room for error
-			int blocksToValidate = (isTopOnly || archiveEnabled) ? Settings.getInstance().getPruneBlockLimit() - 10 : 1440;
+			int blocksToValidate = Math.min(Settings.getInstance().getPruneBlockLimit() - 10, 1440);
 
 			int startHeight = Math.max(repository.getBlockRepository().getBlockchainHeight() - blocksToValidate, 1);
 			BlockData detachedBlockData = repository.getBlockRepository().getDetachedBlockSignature(startHeight);

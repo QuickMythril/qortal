@@ -769,6 +769,16 @@ public class Controller extends Thread {
 		}
 	};
 
+	public static final Predicate<Peer> wasRecentlyTooDivergent = peer -> {
+		Long now = NTP.getTime();
+		Long peerLastTooDivergentTime = peer.getLastTooDivergentTime();
+		if (now == null || peerLastTooDivergentTime == null)
+			return false;
+
+		// Exclude any peers that were TOO_DIVERGENT in the last 5 mins
+		return (now - peerLastTooDivergentTime < 5 * 60 * 1000L);
+	};
+
 	private long getRandomRepositoryMaintenanceInterval() {
 		final long minInterval = Settings.getInstance().getRepositoryMaintenanceMinInterval();
 		final long maxInterval = Settings.getInstance().getRepositoryMaintenanceMaxInterval();
