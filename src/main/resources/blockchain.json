@@ -88,7 +88,7 @@
 		"chatReferenceTimestamp": 1674316800000
 	},
 	"checkpoints": [
-		{ "height": 1131800, "signature": "EpRam4PLdKzULMp7xNU7XG964AKfioG3g1k7cxwxWXnXspPwnjfF6UncEz4feuSA9mr1vW5d3YQPGruXYjj4vciSh4SPj5iWRxkHRWFeRpQnmVUyaVumuBTwM8nnLKJTdtkZnd6d8Mc5mVFdHs6EwLBTY4HECoRcbo4e4FwkfqVon4M" }
+		{ "height": 1136300, "signature": "3BbwawEF2uN8Ni5ofpJXkukoU8ctAPxYoFB7whq9pKfBnjfZcpfEJT4R95NvBDoTP8WDyWvsUvbfHbcr9qSZuYpSKZjUQTvdFf6eqznHGEwhZApWfvXu6zjGCxYCp65F4jsVYYJjkzbjmkCg5WAwN5voudngA23kMK6PpTNygapCzXt" }
 	],
 	"genesisInfo": {
 		"version": 4,

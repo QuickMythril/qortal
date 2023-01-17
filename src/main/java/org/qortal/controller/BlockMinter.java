@@ -63,8 +63,8 @@ public class BlockMinter extends Thread {
 	public void run() {
 		Thread.currentThread().setName("BlockMinter");
 
-		if (Settings.getInstance().isLite()) {
-			// Lite nodes do not mint
+		if (Settings.getInstance().isTopOnly() || Settings.getInstance().isLite()) {
+			// Top only and lite nodes do not sign blocks
 			return;
 		}
 		if (Settings.getInstance().getWipeUnconfirmedOnStart()) {
