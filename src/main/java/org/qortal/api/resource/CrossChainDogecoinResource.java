@@ -66,7 +66,7 @@ public class CrossChainDogecoinResource {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
 
 		try {
-			Long balance = dogecoin.getWalletBalanceFromTransactions(key58);
+			Long balance = dogecoin.getWalletBalance(key58);
 			if (balance == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 

@@ -84,7 +84,7 @@ public class BlockApiTests extends ApiCommon {
 
 	@Test
 	public void testGetBlockRange() {
-		assertNotNull(this.blocksResource.getBlockRange(1, 1));
+		assertNotNull(this.blocksResource.getBlockRange(1, 1, false, false));
 
 		List<Integer> testValues = Arrays.asList(null, Integer.valueOf(1));
 

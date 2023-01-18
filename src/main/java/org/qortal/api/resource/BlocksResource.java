@@ -634,13 +634,16 @@ public class BlocksResource {
 	@ApiErrors({
 		ApiError.REPOSITORY_ISSUE
 	})
-	public List<BlockData> getBlockRange(@PathParam("height") int height, @Parameter(
-		ref = "count"
-	) @QueryParam("count") int count) {
+	public List<BlockData> getBlockRange(@PathParam("height") int height,
+										 @Parameter(ref = "count") @QueryParam("count") int count,
+										 @Parameter(ref = "reverse") @QueryParam("reverse") Boolean reverse,
+										 @QueryParam("includeOnlineSignatures") Boolean includeOnlineSignatures) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			List<BlockData> blocks = new ArrayList<>();
+			boolean shouldReverse = (reverse != null && reverse == true);
 
-			for (/* count already set */; count > 0; --count, ++height) {
+			int i = 0;
+			while (i < count) {
 				BlockData blockData = repository.getBlockRepository().fromHeight(height);
 				if (blockData == null) {
 					// Not found - try the archive
@@ -650,8 +653,14 @@ public class BlocksResource {
 						break;
 					}
 				}
+				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+					blockData.setOnlineAccountsSignatures(null);
+				}
 
 				blocks.add(blockData);
+
+				height = shouldReverse ? height - 1 : height + 1;
+				i++;
 			}
 
 			return blocks;

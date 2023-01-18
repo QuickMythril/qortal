@@ -357,19 +357,33 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	 * @return unspent BTC balance, or null if unable to determine balance
 	 */
 	public Long getWalletBalance(String key58) throws ForeignBlockchainException {
-		// It's more accurate to calculate the balance from the transactions, rather than asking Bitcoinj
-		return this.getWalletBalanceFromTransactions(key58);
+		Long balance = 0L;
 
-//		Context.propagate(bitcoinjContext);
-//
-//		Wallet wallet = walletFromDeterministicKey58(key58);
-//		wallet.setUTXOProvider(new WalletAwareUTXOProvider(this, wallet));
-//
-//		Coin balance = wallet.getBalance();
-//		if (balance == null)
-//			return null;
-//
-//		return balance.value;
+		List<TransactionOutput> allUnspentOutputs = new ArrayList<>();
+		Set<String> walletAddresses = this.getWalletAddresses(key58);
+		for (String address : walletAddresses) {
+			allUnspentOutputs.addAll(this.getUnspentOutputs(address));
+		}
+		for (TransactionOutput output : allUnspentOutputs) {
+			if (!output.isAvailableForSpending()) {
+				continue;
+			}
+			balance += output.getValue().value;
+		}
+		return balance;
+	}
+
+	public Long getWalletBalanceFromBitcoinj(String key58) {
+		Context.propagate(bitcoinjContext);
+
+		Wallet wallet = walletFromDeterministicKey58(key58);
+		wallet.setUTXOProvider(new WalletAwareUTXOProvider(this, wallet));
+
+		Coin balance = wallet.getBalance();
+		if (balance == null)
+			return null;
+
+		return balance.value;
 	}
 
 	public Long getWalletBalanceFromTransactions(String key58) throws ForeignBlockchainException {
@@ -461,6 +475,64 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 					.sorted(newestTimestampFirstComparator).collect(Collectors.toList());
 
 			return transactionsCache;
+		}
+	}
+
+	public Set<String> getWalletAddresses(String key58) throws ForeignBlockchainException {
+		synchronized (this) {
+			Context.propagate(bitcoinjContext);
+
+			Wallet wallet = walletFromDeterministicKey58(key58);
+			DeterministicKeyChain keyChain = wallet.getActiveKeyChain();
+
+			keyChain.setLookaheadSize(Bitcoiny.WALLET_KEY_LOOKAHEAD_INCREMENT);
+			keyChain.maybeLookAhead();
+
+			List<DeterministicKey> keys = new ArrayList<>(keyChain.getLeafKeys());
+
+			Set<String> keySet = new HashSet<>();
+
+			int unusedCounter = 0;
+			int ki = 0;
+			do {
+				boolean areAllKeysUnused = true;
+
+				for (; ki < keys.size(); ++ki) {
+					DeterministicKey dKey = keys.get(ki);
+
+					// Check for transactions
+					Address address = Address.fromKey(this.params, dKey, ScriptType.P2PKH);
+					keySet.add(address.toString());
+					byte[] script = ScriptBuilder.createOutputScript(address).getProgram();
+
+					// Ask for transaction history - if it's empty then key has never been used
+					List<TransactionHash> historicTransactionHashes = this.getAddressTransactions(script, false);
+
+					if (!historicTransactionHashes.isEmpty()) {
+						areAllKeysUnused = false;
+					}
+				}
+
+				if (areAllKeysUnused) {
+					// No transactions
+					if (unusedCounter >= Settings.getInstance().getGapLimit()) {
+						// ... and we've hit our search limit
+						break;
+					}
+					// We haven't hit our search limit yet so increment the counter and keep looking
+					unusedCounter += WALLET_KEY_LOOKAHEAD_INCREMENT;
+				} else {
+					// Some keys in this batch were used, so reset the counter
+					unusedCounter = 0;
+				}
+
+				// Generate some more keys
+				keys.addAll(generateMoreKeys(keyChain));
+
+				// Process new keys
+			} while (true);
+
+			return keySet;
 		}
 	}
 

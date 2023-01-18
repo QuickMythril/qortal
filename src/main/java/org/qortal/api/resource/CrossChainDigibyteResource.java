@@ -68,7 +68,7 @@ public class CrossChainDigibyteResource {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
 
 		try {
-			Long balance = digibyte.getWalletBalanceFromTransactions(key58);
+			Long balance = digibyte.getWalletBalance(key58);
 			if (balance == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 
