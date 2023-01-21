@@ -20,12 +20,24 @@ public enum Service {
     ARBITRARY_DATA(100, false, null, null),
     QCHAT_ATTACHMENT(120, true, 1024*1024L, null) {
         @Override
-        public ValidationResult validate(Path path) {
+        public ValidationResult validate(Path path) throws IOException {
+            ValidationResult superclassResult = super.validate(path);
+            if (superclassResult != ValidationResult.OK) {
+                return superclassResult;
+            }
+
             // Custom validation function to require a single file, with a whitelisted extension
             int fileCount = 0;
             File[] files = path.toFile().listFiles();
+            // If already a single file, replace the list with one that contains that file only
+            if (files == null && path.toFile().isFile()) {
+                files = new File[] { path.toFile() };
+            }
             if (files != null) {
                 for (File file : files) {
+                    if (file.getName().equals(".qortal")) {
+                        continue;
+                    }
                     if (file.isDirectory()) {
                         return ValidationResult.DIRECTORIES_NOT_ALLOWED;
                     }
@@ -45,7 +57,12 @@ public enum Service {
     },
     WEBSITE(200, true, null, null) {
         @Override
-        public ValidationResult validate(Path path) {
+        public ValidationResult validate(Path path) throws IOException {
+            ValidationResult superclassResult = super.validate(path);
+            if (superclassResult != ValidationResult.OK) {
+                return superclassResult;
+            }
+
             // Custom validation function to require an index HTML file in the root directory
             List<String> fileNames = ArbitraryDataRenderer.indexFiles();
             String[] files = path.toFile().list();
@@ -76,12 +93,24 @@ public enum Service {
     METADATA(1100, false, null, null),
     GIF_REPOSITORY(1200, true, 25*1024*1024L, null) {
         @Override
-        public ValidationResult validate(Path path) {
+        public ValidationResult validate(Path path) throws IOException {
+            ValidationResult superclassResult = super.validate(path);
+            if (superclassResult != ValidationResult.OK) {
+                return superclassResult;
+            }
+
             // Custom validation function to require .gif files only, and at least 1
             int gifCount = 0;
             File[] files = path.toFile().listFiles();
+            // If already a single file, replace the list with one that contains that file only
+            if (files == null && path.toFile().isFile()) {
+                files = new File[] { path.toFile() };
+            }
             if (files != null) {
                 for (File file : files) {
+                    if (file.getName().equals(".qortal")) {
+                        continue;
+                    }
                     if (file.isDirectory()) {
                         return ValidationResult.DIRECTORIES_NOT_ALLOWED;
                     }

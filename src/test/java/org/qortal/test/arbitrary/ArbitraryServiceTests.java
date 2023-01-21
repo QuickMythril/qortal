@@ -1,11 +1,26 @@
 package org.qortal.test.arbitrary;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.qortal.account.PrivateKeyAccount;
+import org.qortal.arbitrary.ArbitraryDataFile;
+import org.qortal.arbitrary.ArbitraryDataReader;
+import org.qortal.arbitrary.exception.MissingDataException;
 import org.qortal.arbitrary.misc.Service;
 import org.qortal.arbitrary.misc.Service.ValidationResult;
+import org.qortal.controller.arbitrary.ArbitraryDataManager;
+import org.qortal.data.transaction.ArbitraryTransactionData;
+import org.qortal.data.transaction.RegisterNameTransactionData;
 import org.qortal.repository.DataException;
+import org.qortal.repository.Repository;
+import org.qortal.repository.RepositoryManager;
+import org.qortal.test.common.ArbitraryUtils;
 import org.qortal.test.common.Common;
+import org.qortal.test.common.TransactionUtils;
+import org.qortal.test.common.transaction.TestTransaction;
+import org.qortal.transaction.RegisterNameTransaction;
+import org.qortal.utils.Base58;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -117,8 +132,25 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.GIF_REPOSITORY;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.OK, service.validate(path));
+    }
+
+    @Test
+    public void testValidateSingleFileGifRepository() throws IOException {
+        // Generate some random data
+        byte[] data = new byte[1024];
+        new Random().nextBytes(data);
+
+        // Write the data to a single file in a temp path
+        Path path = Files.createTempDirectory("testValidateSingleFileGifRepository");
+        path.toFile().deleteOnExit();
+        Path imagePath = Paths.get(path.toString(), "image1.gif");
+        Files.write(imagePath, data, StandardOpenOption.CREATE);
+
+        Service service = Service.GIF_REPOSITORY;
+        assertTrue(service.isValidationRequired());
+
+        assertEquals(ValidationResult.OK, service.validate(imagePath));
     }
 
     @Test
@@ -140,7 +172,6 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.GIF_REPOSITORY;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.DIRECTORIES_NOT_ALLOWED, service.validate(path));
     }
 
@@ -151,7 +182,6 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.GIF_REPOSITORY;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.MISSING_DATA, service.validate(path));
     }
 
@@ -171,8 +201,49 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.GIF_REPOSITORY;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.INVALID_FILE_EXTENSION, service.validate(path));
+    }
+
+    @Test
+    public void testValidatePublishedGifRepository() throws IOException, DataException, MissingDataException, IllegalAccessException {
+        try (final Repository repository = RepositoryManager.getRepository()) {
+
+            // Generate some random data
+            byte[] data = new byte[1024];
+            new Random().nextBytes(data);
+
+            // Write the data to several files in a temp path
+            Path path = Files.createTempDirectory("testValidateGifRepository");
+            path.toFile().deleteOnExit();
+            Files.write(Paths.get(path.toString(), "image1.gif"), data, StandardOpenOption.CREATE);
+            Files.write(Paths.get(path.toString(), "image2.gif"), data, StandardOpenOption.CREATE);
+            Files.write(Paths.get(path.toString(), "image3.gif"), data, StandardOpenOption.CREATE);
+
+            Service service = Service.GIF_REPOSITORY;
+            assertTrue(service.isValidationRequired());
+
+            assertEquals(ValidationResult.OK, service.validate(path));
+
+            PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+            String publicKey58 = Base58.encode(alice.getPublicKey());
+            String name = "TEST"; // Can be anything for this test
+            String identifier = "test_identifier";
+
+            // Register the name to Alice
+            RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, "");
+            transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+            TransactionUtils.signAndMint(repository, transactionData, alice);
+
+            // Set difficulty to 1
+            FieldUtils.writeField(ArbitraryDataManager.getInstance(), "powDifficulty", 1, true);
+
+            // Create PUT transaction
+            ArbitraryUtils.createAndMintTxn(repository, publicKey58, path, name, identifier, ArbitraryTransactionData.Method.PUT, service, alice);
+
+            // Build the latest data state for this name, and no exceptions should be thrown because validation passes
+            ArbitraryDataReader arbitraryDataReader1a = new ArbitraryDataReader(name, ArbitraryDataFile.ResourceIdType.NAME, service, identifier);
+            arbitraryDataReader1a.loadSynchronously(true);
+        }
     }
 
     @Test
@@ -181,7 +252,7 @@ public class ArbitraryServiceTests extends Common {
         byte[] data = new byte[1024];
         new Random().nextBytes(data);
 
-        // Write the data to several files in a temp path
+        // Write the data a single file in a temp path
         Path path = Files.createTempDirectory("testValidateQChatAttachment");
         path.toFile().deleteOnExit();
         Files.write(Paths.get(path.toString(), "document.pdf"), data, StandardOpenOption.CREATE);
@@ -189,8 +260,25 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.QCHAT_ATTACHMENT;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.OK, service.validate(path));
+    }
+
+    @Test
+    public void testValidateSingleFileQChatAttachment() throws IOException {
+        // Generate some random data
+        byte[] data = new byte[1024];
+        new Random().nextBytes(data);
+
+        // Write the data a single file in a temp path
+        Path path = Files.createTempDirectory("testValidateSingleFileQChatAttachment");
+        path.toFile().deleteOnExit();
+        Path filePath = Paths.get(path.toString(), "document.pdf");
+        Files.write(filePath, data, StandardOpenOption.CREATE);
+
+        Service service = Service.QCHAT_ATTACHMENT;
+        assertTrue(service.isValidationRequired());
+
+        assertEquals(ValidationResult.OK, service.validate(filePath));
     }
 
     @Test
@@ -199,7 +287,7 @@ public class ArbitraryServiceTests extends Common {
         byte[] data = new byte[1024];
         new Random().nextBytes(data);
 
-        // Write the data to several files in a temp path
+        // Write the data a single file in a temp path
         Path path = Files.createTempDirectory("testValidateInvalidQChatAttachmentFileExtension");
         path.toFile().deleteOnExit();
         Files.write(Paths.get(path.toString(), "application.exe"), data, StandardOpenOption.CREATE);
@@ -207,7 +295,6 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.QCHAT_ATTACHMENT;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.INVALID_FILE_EXTENSION, service.validate(path));
     }
 
@@ -218,7 +305,6 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.QCHAT_ATTACHMENT;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.INVALID_FILE_COUNT, service.validate(path));
     }
 
@@ -241,7 +327,6 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.QCHAT_ATTACHMENT;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.DIRECTORIES_NOT_ALLOWED, service.validate(path));
     }
 
@@ -260,8 +345,48 @@ public class ArbitraryServiceTests extends Common {
         Service service = Service.QCHAT_ATTACHMENT;
         assertTrue(service.isValidationRequired());
 
-        // There is an index file in the root
         assertEquals(ValidationResult.INVALID_FILE_COUNT, service.validate(path));
+    }
+
+    @Test
+    public void testValidatePublishedQChatAttachment() throws IOException, DataException, MissingDataException, IllegalAccessException {
+        try (final Repository repository = RepositoryManager.getRepository()) {
+
+            // Generate some random data
+            byte[] data = new byte[1024];
+            new Random().nextBytes(data);
+
+            // Write the data a single file in a temp path
+            Path path = Files.createTempDirectory("testValidateSingleFileQChatAttachment");
+            path.toFile().deleteOnExit();
+            Path filePath = Paths.get(path.toString(), "document.pdf");
+            Files.write(filePath, data, StandardOpenOption.CREATE);
+
+            Service service = Service.QCHAT_ATTACHMENT;
+            assertTrue(service.isValidationRequired());
+
+            assertEquals(ValidationResult.OK, service.validate(filePath));
+
+            PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+            String publicKey58 = Base58.encode(alice.getPublicKey());
+            String name = "TEST"; // Can be anything for this test
+            String identifier = "test_identifier";
+
+            // Register the name to Alice
+            RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, "");
+            transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+            TransactionUtils.signAndMint(repository, transactionData, alice);
+
+            // Set difficulty to 1
+            FieldUtils.writeField(ArbitraryDataManager.getInstance(), "powDifficulty", 1, true);
+
+            // Create PUT transaction
+            ArbitraryUtils.createAndMintTxn(repository, publicKey58, filePath, name, identifier, ArbitraryTransactionData.Method.PUT, service, alice);
+
+            // Build the latest data state for this name, and no exceptions should be thrown because validation passes
+            ArbitraryDataReader arbitraryDataReader1a = new ArbitraryDataReader(name, ArbitraryDataFile.ResourceIdType.NAME, service, identifier);
+            arbitraryDataReader1a.loadSynchronously(true);
+        }
     }
 
 }
