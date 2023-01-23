@@ -12,6 +12,7 @@ import org.qortal.arbitrary.exception.MissingDataException;
 import org.qortal.arbitrary.misc.Category;
 import org.qortal.arbitrary.misc.Service;
 import org.qortal.controller.arbitrary.ArbitraryDataManager;
+import org.qortal.data.arbitrary.ArbitraryResourceMetadata;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.data.transaction.RegisterNameTransactionData;
 import org.qortal.repository.DataException;
@@ -25,9 +26,13 @@ import org.qortal.transaction.RegisterNameTransaction;
 import org.qortal.utils.Base58;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.*;
 
@@ -276,6 +281,94 @@ public class ArbitraryTransactionMetadataTests extends Common {
             assertEquals(expectedDescription, arbitraryDataFile.getMetadata().getDescription());
             assertEquals(expectedTags, arbitraryDataFile.getMetadata().getTags());
             assertEquals(category, arbitraryDataFile.getMetadata().getCategory());
+        }
+    }
+
+    @Test
+    public void testSingleFileList() throws DataException, IOException, MissingDataException {
+        try (final Repository repository = RepositoryManager.getRepository()) {
+            PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+            String publicKey58 = Base58.encode(alice.getPublicKey());
+            String name = "TEST"; // Can be anything for this test
+            String identifier = null; // Not used for this test
+            Service service = Service.ARBITRARY_DATA;
+            int chunkSize = 100;
+            int dataLength = 900; // Actual data length will be longer due to encryption
+
+            // Register the name to Alice
+            RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, "");
+            transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+            TransactionUtils.signAndMint(repository, transactionData, alice);
+
+            // Add a few files at multiple levels
+            byte[] data = new byte[1024];
+            new Random().nextBytes(data);
+            Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            Path file1 = Paths.get(path1.toString(), "file.txt");
+
+            // Create PUT transaction
+            ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, file1, name, identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize);
+
+            // Check the file list metadata is correct
+            assertEquals(1, arbitraryDataFile.getMetadata().getFiles().size());
+            assertTrue(arbitraryDataFile.getMetadata().getFiles().contains("file.txt"));
+
+            // Ensure the file list can be read back out again, when specified to be included
+            ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(arbitraryDataFile.getMetadata(), true);
+            assertTrue(resourceMetadata.getFiles().contains("file.txt"));
+
+            // Ensure it's not returned when specified to be excluded
+            // The entire object will be null because there is no metadata
+            ArbitraryResourceMetadata resourceMetadataSimple = ArbitraryResourceMetadata.fromTransactionMetadata(arbitraryDataFile.getMetadata(), false);
+            assertNull(resourceMetadataSimple);
+        }
+    }
+
+    @Test
+    public void testMultipleFileList() throws DataException, IOException, MissingDataException {
+        try (final Repository repository = RepositoryManager.getRepository()) {
+            PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+            String publicKey58 = Base58.encode(alice.getPublicKey());
+            String name = "TEST"; // Can be anything for this test
+            String identifier = null; // Not used for this test
+            Service service = Service.ARBITRARY_DATA;
+            int chunkSize = 100;
+            int dataLength = 900; // Actual data length will be longer due to encryption
+
+            // Register the name to Alice
+            RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, "");
+            transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+            TransactionUtils.signAndMint(repository, transactionData, alice);
+
+            // Add a few files at multiple levels
+            byte[] data = new byte[1024];
+            new Random().nextBytes(data);
+            Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            Files.write(Paths.get(path1.toString(), "image1.jpg"), data, StandardOpenOption.CREATE);
+
+            Path subdirectory = Paths.get(path1.toString(), "subdirectory");
+            Files.createDirectories(subdirectory);
+            Files.write(Paths.get(subdirectory.toString(), "config.json"), data, StandardOpenOption.CREATE);
+
+            // Create PUT transaction
+            ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name, identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize);
+
+            // Check the file list metadata is correct
+            assertEquals(3, arbitraryDataFile.getMetadata().getFiles().size());
+            assertTrue(arbitraryDataFile.getMetadata().getFiles().contains("file.txt"));
+            assertTrue(arbitraryDataFile.getMetadata().getFiles().contains("image1.jpg"));
+            assertTrue(arbitraryDataFile.getMetadata().getFiles().contains("subdirectory/config.json"));
+
+            // Ensure the file list can be read back out again, when specified to be included
+            ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(arbitraryDataFile.getMetadata(), true);
+            assertTrue(resourceMetadata.getFiles().contains("file.txt"));
+            assertTrue(resourceMetadata.getFiles().contains("image1.jpg"));
+            assertTrue(resourceMetadata.getFiles().contains("subdirectory/config.json"));
+
+            // Ensure it's not returned when specified to be excluded
+            // The entire object will be null because there is no metadata
+            ArbitraryResourceMetadata resourceMetadataSimple = ArbitraryResourceMetadata.fromTransactionMetadata(arbitraryDataFile.getMetadata(), false);
+            assertNull(resourceMetadataSimple);
         }
     }
 

@@ -19,6 +19,7 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
     private String description;
     private List<String> tags;
     private Category category;
+    private List<String> files;
 
     private static int MAX_TITLE_LENGTH = 80;
     private static int MAX_DESCRIPTION_LENGTH = 500;
@@ -77,6 +78,20 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
             }
             this.chunks = chunksList;
         }
+
+        List<String> filesList = new ArrayList<>();
+        if (metadata.has("files")) {
+            JSONArray files = metadata.getJSONArray("files");
+            if (files != null) {
+                for (int i=0; i<files.length(); i++) {
+                    String tag = files.getString(i);
+                    if (tag != null) {
+                        filesList.add(tag);
+                    }
+                }
+            }
+            this.files = filesList;
+        }
     }
 
     @Override
@@ -110,6 +125,14 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
             }
         }
         outer.put("chunks", chunks);
+
+        JSONArray files = new JSONArray();
+        if (this.files != null) {
+            for (String file : this.files) {
+                files.put(file);
+            }
+        }
+        outer.put("files", files);
 
         this.jsonString = outer.toString(2);
         LOGGER.trace("Transaction metadata: {}", this.jsonString);
@@ -154,6 +177,14 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
 
     public Category getCategory() {
         return this.category;
+    }
+
+    public void setFiles(List<String> files) {
+        this.files = files;
+    }
+
+    public List<String> getFiles() {
+        return this.files;
     }
 
     public boolean containsChunk(byte[] chunk) {

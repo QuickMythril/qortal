@@ -23,16 +23,13 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ArbitraryDataWriter {
 
@@ -50,6 +47,7 @@ public class ArbitraryDataWriter {
     private final String description;
     private final List<String> tags;
     private final Category category;
+    private List<String> files;
 
     private int chunkSize = ArbitraryDataFile.CHUNK_SIZE;
 
@@ -80,12 +78,14 @@ public class ArbitraryDataWriter {
         this.description = ArbitraryDataTransactionMetadata.limitDescription(description);
         this.tags = ArbitraryDataTransactionMetadata.limitTags(tags);
         this.category = category;
+        this.files = new ArrayList<>(); // Populated in buildFileList()
     }
 
     public void save() throws IOException, DataException, InterruptedException, MissingDataException {
         try {
             this.preExecute();
             this.validateService();
+            this.buildFileList();
             this.process();
             this.compress();
             this.encrypt();
@@ -140,6 +140,24 @@ public class ArbitraryDataWriter {
             if (result != Service.ValidationResult.OK) {
                 throw new DataException(String.format("Validation of %s failed: %s", this.service, result.toString()));
             }
+        }
+    }
+
+    private void buildFileList() throws IOException {
+        // Single file resources consist of a single element in the file list
+        boolean isSingleFile = this.filePath.toFile().isFile();
+        if (isSingleFile) {
+            this.files.add(this.filePath.getFileName().toString());
+            return;
+        }
+
+        // Multi file resources require a walk through the directory tree
+        try (Stream<Path> stream = Files.walk(this.filePath)) {
+            this.files = stream
+                    .filter(Files::isRegularFile)
+                    .map(p -> this.filePath.relativize(p).toString())
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
         }
     }
 
@@ -285,6 +303,7 @@ public class ArbitraryDataWriter {
             metadata.setTags(this.tags);
             metadata.setCategory(this.category);
             metadata.setChunks(this.arbitraryDataFile.chunkHashList());
+            metadata.setFiles(this.files);
             metadata.write();
 
             // Create an ArbitraryDataFile from the JSON file (we don't have a signature yet)

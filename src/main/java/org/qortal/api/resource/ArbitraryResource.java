@@ -719,7 +719,7 @@ public class ArbitraryResource {
 		try {
 			ArbitraryDataTransactionMetadata transactionMetadata = ArbitraryMetadataManager.getInstance().fetchMetadata(resource, false);
 			if (transactionMetadata != null) {
-				ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(transactionMetadata);
+				ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(transactionMetadata, true);
 				if (resourceMetadata != null) {
 					return resourceMetadata;
 				}
@@ -1128,7 +1128,7 @@ public class ArbitraryResource {
 			if (path == null) {
 				// See if we have a string instead
 				if (string != null) {
-					File tempFile = File.createTempFile("qortal-", ".tmp");
+					File tempFile = File.createTempFile("qortal-", "");
 					tempFile.deleteOnExit();
 					BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile.toPath().toString()));
 					writer.write(string);
@@ -1138,7 +1138,7 @@ public class ArbitraryResource {
 				}
 				// ... or base64 encoded raw data
 				else if (base64 != null) {
-					File tempFile = File.createTempFile("qortal-", ".tmp");
+					File tempFile = File.createTempFile("qortal-", "");
 					tempFile.deleteOnExit();
 					Files.write(tempFile.toPath(), Base64.decode(base64));
 					path = tempFile.toPath().toString();
@@ -1288,7 +1288,7 @@ public class ArbitraryResource {
 			ArbitraryDataResource resource = new ArbitraryDataResource(resourceInfo.name, ResourceIdType.NAME,
 					resourceInfo.service, resourceInfo.identifier);
 			ArbitraryDataTransactionMetadata transactionMetadata = resource.getLatestTransactionMetadata();
-			ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(transactionMetadata);
+			ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(transactionMetadata, false);
 			if (resourceMetadata != null) {
 				resourceInfo.metadata = resourceMetadata;
 			}

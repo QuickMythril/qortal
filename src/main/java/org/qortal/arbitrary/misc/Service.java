@@ -42,7 +42,8 @@ public enum Service {
                         return ValidationResult.DIRECTORIES_NOT_ALLOWED;
                     }
                     final String extension = FilenameUtils.getExtension(file.getName()).toLowerCase();
-                    final List<String> allowedExtensions = Arrays.asList("zip", "pdf", "txt", "odt", "ods", "doc", "docx", "xls", "xlsx", "ppt", "pptx");
+                    // We must allow blank file extensions because these are used by data published from a plaintext or base64-encoded string
+                    final List<String> allowedExtensions = Arrays.asList("zip", "pdf", "txt", "odt", "ods", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "");
                     if (extension == null || !allowedExtensions.contains(extension)) {
                         return ValidationResult.INVALID_FILE_EXTENSION;
                     }
