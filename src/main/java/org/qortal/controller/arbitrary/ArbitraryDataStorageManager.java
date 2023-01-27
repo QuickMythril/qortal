@@ -48,7 +48,6 @@ public class ArbitraryDataStorageManager extends Thread {
     private List<ArbitraryTransactionData> hostedTransactions;
 
     private String searchQuery;
-    private List<ArbitraryTransactionData> searchResultsTransactions;
 
     private static final long DIRECTORY_SIZE_CHECK_INTERVAL = 10 * 60 * 1000L; // 10 minutes
 
@@ -344,11 +343,6 @@ public class ArbitraryDataStorageManager extends Thread {
      */
 
     public List<ArbitraryTransactionData> searchHostedTransactions(Repository repository, String query, Integer limit, Integer offset) {
-        // Load from results cache if we can (results that exists for the same query), to avoid disk reads
-        if (this.searchResultsTransactions != null && this.searchQuery.equals(query.toLowerCase())) {
-            return ArbitraryTransactionUtils.limitOffsetTransactions(this.searchResultsTransactions, limit, offset);
-        }
-
         // Using cache if we can, to avoid disk reads
         if (this.hostedTransactions == null) {
             this.hostedTransactions = this.loadAllHostedTransactions(repository);
@@ -376,10 +370,7 @@ public class ArbitraryDataStorageManager extends Thread {
         // Sort by newest first
         searchResultsList.sort(Comparator.comparingLong(ArbitraryTransactionData::getTimestamp).reversed());
 
-        // Update cache
-        this.searchResultsTransactions = searchResultsList;
-
-        return ArbitraryTransactionUtils.limitOffsetTransactions(this.searchResultsTransactions, limit, offset);
+        return ArbitraryTransactionUtils.limitOffsetTransactions(searchResultsList, limit, offset);
     }
 
     /**

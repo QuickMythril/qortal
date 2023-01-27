@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +31,11 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 	private static final Logger LOGGER = LogManager.getLogger(ElectrumX.class);
 	private static final Random RANDOM = new Random();
 
+	// See: https://electrumx.readthedocs.io/en/latest/protocol-changes.html
 	private static final double MIN_PROTOCOL_VERSION = 1.2;
+	private static final double MAX_PROTOCOL_VERSION = 2.0; // Higher than current latest, for hopeful future-proofing
+	private static final String CLIENT_NAME = "Qortal";
+
 	private static final int BLOCK_HEADER_LENGTH = 80;
 
 	// "message": "daemon error: DaemonError({'code': -5, 'message': 'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'})"
@@ -679,6 +684,9 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 				this.scanner = new Scanner(this.socket.getInputStream());
 				this.scanner.useDelimiter("\n");
 
+				// All connections need to start with a version negotiation
+				this.connectedRpc("server.version");
+
 				// Check connection is suitable by asking for server features, including genesis block hash
 				JSONObject featuresJson = (JSONObject) this.connectedRpc("server.features");
 
@@ -725,6 +733,17 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 
 		JSONArray requestParams = new JSONArray();
 		requestParams.addAll(Arrays.asList(params));
+
+		// server.version needs additional params to negotiate a version
+		if (method.equals("server.version")) {
+			requestParams.add(CLIENT_NAME);
+			List<String> versions = new ArrayList<>();
+			DecimalFormat df = new DecimalFormat("#.#");
+			versions.add(df.format(MIN_PROTOCOL_VERSION));
+			versions.add(df.format(MAX_PROTOCOL_VERSION));
+			requestParams.add(versions);
+		}
+
 		requestJson.put("params", requestParams);
 
 		String request = requestJson.toJSONString() + "\n";
