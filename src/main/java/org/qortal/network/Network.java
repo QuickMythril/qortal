@@ -339,7 +339,7 @@ public class Network {
                 try {
                     if (!isConnected) {
                         // Add this signature to the list of pending requests for this peer
-                        LOGGER.info("Making connection to peer {} to request files for signature {}...", peerAddressString, Base58.encode(signature));
+                        LOGGER.debug("Making connection to peer {} to request files for signature {}...", peerAddressString, Base58.encode(signature));
                         Peer peer = new Peer(peerData);
                         peer.setIsDataPeer(true);
                         peer.addPendingSignatureRequest(signature);

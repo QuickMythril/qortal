@@ -60,6 +60,9 @@ public class ArbitraryDataReader {
     private int layerCount;
     private byte[] latestSignature;
 
+    // The resource being read
+    ArbitraryDataResource arbitraryDataResource = null;
+
     public ArbitraryDataReader(String resourceId, ResourceIdType resourceIdType, Service service, String identifier) {
         // Ensure names are always lowercase
         if (resourceIdType == ResourceIdType.NAME) {
@@ -116,6 +119,11 @@ public class ArbitraryDataReader {
         return new ArbitraryDataBuildQueueItem(this.resourceId, this.resourceIdType, this.service, this.identifier);
     }
 
+    private ArbitraryDataResource createArbitraryDataResource() {
+        return new ArbitraryDataResource(this.resourceId, this.resourceIdType, this.service, this.identifier);
+    }
+
+
     /**
      * loadAsynchronously
      *
@@ -162,6 +170,8 @@ public class ArbitraryDataReader {
                 this.filePath = this.uncompressedPath;
                 return;
             }
+
+            this.arbitraryDataResource = this.createArbitraryDataResource();
 
             this.preExecute();
             this.deleteExistingFiles();
@@ -436,7 +446,7 @@ public class ArbitraryDataReader {
         byte[] secret = this.secret58 != null ? Base58.decode(this.secret58) : null;
         if (secret != null && secret.length == Transformer.AES256_LENGTH) {
             try {
-                LOGGER.info("Decrypting using algorithm {}...", algorithm);
+                LOGGER.debug("Decrypting {} using algorithm {}...", this.arbitraryDataResource, algorithm);
                 Path unencryptedPath = Paths.get(this.workingPath.toString(), "zipped.zip");
                 SecretKey aesKey = new SecretKeySpec(secret, 0, secret.length, "AES");
                 AES.decryptFile(algorithm, aesKey, this.filePath.toString(), unencryptedPath.toString());
@@ -447,7 +457,7 @@ public class ArbitraryDataReader {
 
             } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchPaddingException
                     | BadPaddingException | IllegalBlockSizeException | IOException | InvalidKeyException e) {
-                LOGGER.info(String.format("Exception when decrypting using algorithm %s", algorithm), e);
+                LOGGER.info(String.format("Exception when decrypting %s using algorithm %s", this.arbitraryDataResource, algorithm), e);
                 throw new DataException(String.format("Unable to decrypt file at path %s using algorithm %s: %s", this.filePath, algorithm, e.getMessage()));
             }
         } else {

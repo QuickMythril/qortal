@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,9 +39,12 @@ import org.qortal.crypto.Crypto;
 import org.qortal.data.at.ATData;
 import org.qortal.data.crosschain.CrossChainTradeData;
 import org.qortal.data.crosschain.TradeBotData;
+import org.qortal.data.transaction.MessageTransactionData;
+import org.qortal.data.transaction.TransactionData;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
+import org.qortal.transaction.Transaction;
 import org.qortal.utils.Base58;
 import org.qortal.utils.NTP;
 
@@ -222,6 +226,17 @@ public class CrossChainTradeBotResource {
 
 			if (crossChainTradeData.mode != AcctMode.OFFERING)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
+
+			// Check if there is a buy or a cancel request in progress for this trade
+			List<Transaction.TransactionType> txTypes = List.of(Transaction.TransactionType.MESSAGE);
+			List<TransactionData> unconfirmed = repository.getTransactionRepository().getUnconfirmedTransactions(txTypes, null, 0, 0, false);
+			for (TransactionData  transactionData : unconfirmed) {
+				MessageTransactionData messageTransactionData = (MessageTransactionData) transactionData;
+				if (Objects.equals(messageTransactionData.getRecipient(), atAddress)) {
+					// There is a pending request for this trade, so block this buy attempt to reduce the risk of refunds
+					throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, "Trade has an existing buy request or is pending cancellation.");
+				}
+			}
 
 			AcctTradeBot.ResponseResult result = TradeBot.getInstance().startResponse(repository, atData, acct, crossChainTradeData,
 					tradeBotRespondRequest.foreignKey, tradeBotRespondRequest.receivingAddress);

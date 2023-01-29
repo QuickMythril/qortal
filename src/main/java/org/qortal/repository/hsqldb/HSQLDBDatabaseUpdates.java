@@ -988,6 +988,11 @@ public class HSQLDBDatabaseUpdates {
 					stmt.execute("CREATE INDEX ChatTransactionsChatReferenceIndex ON ChatTransactions (chat_reference)");
 					break;
 
+				case 46:
+					// We need to track the sale price when canceling a name sale, so it can be put back when orphaned
+					stmt.execute("ALTER TABLE CancelSellNameTransactions ADD sale_price QortalAmount");
+					break;
+
 				default:
 					// nothing to do
 					return false;

@@ -28,7 +28,6 @@ public class HSQLDBMessageRepository implements MessageRepository {
 		StringBuilder sql = new StringBuilder(1024);
 		sql.append("SELECT signature from MessageTransactions "
 				+ "JOIN Transactions USING (signature) "
-				+ "JOIN BlockTransactions ON transaction_signature = signature "
 				+ "WHERE ");
 
 		List<String> whereClauses = new ArrayList<>();

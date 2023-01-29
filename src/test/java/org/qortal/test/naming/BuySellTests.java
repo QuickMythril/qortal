@@ -166,6 +166,52 @@ public class BuySellTests extends Common {
 	}
 
 	@Test
+	public void testCancelSellNameAndRelist() throws DataException {
+		// Register-name and sell-name
+		testSellName();
+
+		// Cancel Sell-name
+		CancelSellNameTransactionData transactionData = new CancelSellNameTransactionData(TestTransaction.generateBase(alice), name);
+		TransactionUtils.signAndMint(repository, transactionData, alice);
+
+		NameData nameData;
+
+		// Check name is no longer for sale
+		nameData = repository.getNameRepository().fromName(name);
+		assertFalse(nameData.isForSale());
+		assertNull(nameData.getSalePrice());
+
+		// Re-sell-name
+		Long newPrice = random.nextInt(1000) * Amounts.MULTIPLIER;
+		SellNameTransactionData sellNameTransactionData = new SellNameTransactionData(TestTransaction.generateBase(alice), name, newPrice);
+		TransactionUtils.signAndMint(repository, sellNameTransactionData, alice);
+
+		// Check name is for sale
+		nameData = repository.getNameRepository().fromName(name);
+		assertTrue(nameData.isForSale());
+		assertEquals("price incorrect", newPrice, nameData.getSalePrice());
+
+		// Orphan sell-name
+		BlockUtils.orphanLastBlock(repository);
+
+		// Check name no longer for sale
+		nameData = repository.getNameRepository().fromName(name);
+		assertFalse(nameData.isForSale());
+		assertNull(nameData.getSalePrice());
+
+		// Orphan cancel-sell-name
+		BlockUtils.orphanLastBlock(repository);
+
+		// Check name is for sale (at original price)
+		nameData = repository.getNameRepository().fromName(name);
+		assertTrue(nameData.isForSale());
+		assertEquals("price incorrect", price, nameData.getSalePrice());
+
+		// Orphan sell-name and register-name
+		BlockUtils.orphanBlocks(repository, 2);
+	}
+
+	@Test
 	public void testBuyName() throws DataException {
 		// Register-name and sell-name
 		testSellName();

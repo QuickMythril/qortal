@@ -47,7 +47,8 @@ public class Dogecoin extends Bitcoiny {
 						// Servers chosen on NO BASIS WHATSOEVER from various sources!
 						new Server("electrum1.cipig.net", ConnectionType.SSL, 20060),
 						new Server("electrum2.cipig.net", ConnectionType.SSL, 20060),
-						new Server("electrum3.cipig.net", ConnectionType.SSL, 20060));
+						new Server("electrum3.cipig.net", ConnectionType.SSL, 20060),
+						new Server("161.97.137.235", ConnectionType.SSL, 50002));
 						// TODO: add more mainnet servers. It's too centralized.
 			}
 

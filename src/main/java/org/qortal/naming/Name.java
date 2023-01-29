@@ -180,8 +180,12 @@ public class Name {
 	}
 
 	public void cancelSell(CancelSellNameTransactionData cancelSellNameTransactionData) throws DataException {
-		// Mark not for-sale but leave price in case we want to orphan
+		// Update previous sale price in transaction data
+		cancelSellNameTransactionData.setSalePrice(this.nameData.getSalePrice());
+
+		// Mark not for-sale
 		this.nameData.setIsForSale(false);
+		this.nameData.setSalePrice(null);
 
 		// Save sale info into repository
 		this.repository.getNameRepository().save(this.nameData);
@@ -190,6 +194,7 @@ public class Name {
 	public void uncancelSell(CancelSellNameTransactionData cancelSellNameTransactionData) throws DataException {
 		// Mark as for-sale using existing price
 		this.nameData.setIsForSale(true);
+		this.nameData.setSalePrice(cancelSellNameTransactionData.getSalePrice());
 
 		// Save no-sale info into repository
 		this.repository.getNameRepository().save(this.nameData);

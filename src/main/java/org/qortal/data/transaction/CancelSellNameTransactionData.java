@@ -3,6 +3,7 @@ package org.qortal.data.transaction;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.qortal.transaction.Transaction.TransactionType;
 
@@ -19,6 +20,11 @@ public class CancelSellNameTransactionData extends TransactionData {
 	@Schema(description = "which name to cancel selling", example = "my-name")
 	private String name;
 
+	// For internal use when orphaning
+	@XmlTransient
+	@Schema(hidden = true)
+	private Long salePrice;
+
 	// Constructors
 
 	// For JAXB
@@ -30,11 +36,17 @@ public class CancelSellNameTransactionData extends TransactionData {
 		this.creatorPublicKey = this.ownerPublicKey;
 	}
 
-	public CancelSellNameTransactionData(BaseTransactionData baseTransactionData, String name) {
+	public CancelSellNameTransactionData(BaseTransactionData baseTransactionData, String name, Long salePrice) {
 		super(TransactionType.CANCEL_SELL_NAME, baseTransactionData);
 
 		this.ownerPublicKey = baseTransactionData.creatorPublicKey;
 		this.name = name;
+		this.salePrice = salePrice;
+	}
+
+	/** From network/API */
+	public CancelSellNameTransactionData(BaseTransactionData baseTransactionData, String name) {
+		this(baseTransactionData, name, null);
 	}
 
 	// Getters / setters
@@ -45,6 +57,14 @@ public class CancelSellNameTransactionData extends TransactionData {
 
 	public String getName() {
 		return this.name;
+	}
+
+	public Long getSalePrice() {
+		return this.salePrice;
+	}
+
+	public void setSalePrice(Long salePrice) {
+		this.salePrice = salePrice;
 	}
 
 }

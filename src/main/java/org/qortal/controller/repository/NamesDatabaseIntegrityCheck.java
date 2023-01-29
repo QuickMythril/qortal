@@ -102,6 +102,21 @@ public class NamesDatabaseIntegrityCheck {
                     }
                 }
 
+                // Process CANCEL_SELL_NAME transactions
+                if (currentTransaction.getType() == TransactionType.CANCEL_SELL_NAME) {
+                    CancelSellNameTransactionData cancelSellNameTransactionData = (CancelSellNameTransactionData) currentTransaction;
+                    Name nameObj = new Name(repository, cancelSellNameTransactionData.getName());
+                    if (nameObj != null && nameObj.getNameData() != null) {
+                        nameObj.cancelSell(cancelSellNameTransactionData);
+                        modificationCount++;
+                        LOGGER.trace("Processed CANCEL_SELL_NAME transaction for name {}", name);
+                    }
+                    else {
+                        // Something went wrong
+                        throw new DataException(String.format("Name data not found for name %s", cancelSellNameTransactionData.getName()));
+                    }
+                }
+
                 // Process BUY_NAME transactions
                 if (currentTransaction.getType() == TransactionType.BUY_NAME) {
                     BuyNameTransactionData buyNameTransactionData = (BuyNameTransactionData) currentTransaction;
@@ -128,7 +143,7 @@ public class NamesDatabaseIntegrityCheck {
     public int rebuildAllNames() {
         int modificationCount = 0;
         try (final Repository repository = RepositoryManager.getRepository()) {
-            List<String> names = this.fetchAllNames(repository);
+            List<String> names = this.fetchAllNames(repository); // TODO: de-duplicate, to speed up this process
             for (String name : names) {
                 modificationCount += this.rebuildName(name, repository);
             }
@@ -326,6 +341,10 @@ public class NamesDatabaseIntegrityCheck {
                 TransactionType.BUY_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
         signatures.addAll(buyNameTransactions);
 
+        List<byte[]> cancelSellNameTransactions = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
+                TransactionType.CANCEL_SELL_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
+        signatures.addAll(cancelSellNameTransactions);
+
         List<TransactionData> transactions = new ArrayList<>();
         for (byte[] signature : signatures) {
             TransactionData transactionData = repository.getTransactionRepository().fromSignature(signature);
@@ -388,6 +407,12 @@ public class NamesDatabaseIntegrityCheck {
                 SellNameTransactionData sellNameTransactionData = (SellNameTransactionData) transactionData;
                 if (!names.contains(sellNameTransactionData.getName())) {
                     names.add(sellNameTransactionData.getName());
+                }
+            }
+            if ((transactionData instanceof CancelSellNameTransactionData)) {
+                CancelSellNameTransactionData cancelSellNameTransactionData = (CancelSellNameTransactionData) transactionData;
+                if (!names.contains(cancelSellNameTransactionData.getName())) {
+                    names.add(cancelSellNameTransactionData.getName());
                 }
             }
         }
