@@ -383,6 +383,30 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		return balance;
 	}
 
+	/**
+	 * Returns unspent Bitcoin balance given 'm' BIP32 key.
+	 *
+	 * @param key58 BIP32/HD extended Bitcoin private/public key
+	 * @return unspent BTC balance, or null if unable to determine balance
+	 */
+	public Long getWalletBech32Balance(String key58) throws ForeignBlockchainException {
+		Long balance = 0L;
+
+		List<TransactionOutput> allUnspentOutputs = new ArrayList<>();
+		Set<String> walletAddresses = this.getWalletBech32Addresses(key58);
+		for (String address : walletAddresses) {
+			allUnspentOutputs.addAll(this.getUnspentOutputs(address));
+		}
+		for (TransactionOutput output : allUnspentOutputs) {
+			if (!output.isAvailableForSpending()) {
+				continue;
+			}
+			balance += output.getValue().value;
+		}
+		balance += this.getWalletBalance(key58);
+		return balance;
+	}
+
 	public Long getWalletBalanceFromBitcoinj(String key58) {
 		Context.propagate(bitcoinjContext);
 
@@ -546,6 +570,64 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		}
 	}
 
+	public Set<String> getWalletBech32Addresses(String key58) throws ForeignBlockchainException {
+		synchronized (this) {
+			Context.propagate(bitcoinjContext);
+
+			Wallet wallet = walletFromDeterministicKey58(key58);
+			DeterministicKeyChain keyChain = wallet.getActiveKeyChain();
+
+			keyChain.setLookaheadSize(Bitcoiny.WALLET_KEY_LOOKAHEAD_INCREMENT);
+			keyChain.maybeLookAhead();
+
+			List<DeterministicKey> keys = new ArrayList<>(keyChain.getLeafKeys());
+
+			Set<String> keySet = new HashSet<>();
+
+			int unusedCounter = 0;
+			int ki = 0;
+			do {
+				boolean areAllKeysUnused = true;
+
+				for (; ki < keys.size(); ++ki) {
+					DeterministicKey dKey = keys.get(ki);
+
+					// Check for transactions
+					Address address = Address.fromKey(this.params, dKey, ScriptType.P2WPKH);
+					keySet.add(address.toString());
+					byte[] script = ScriptBuilder.createOutputScript(address).getProgram();
+
+					// Ask for transaction history - if it's empty then key has never been used
+					List<TransactionHash> historicTransactionHashes = this.getAddressTransactions(script, false);
+
+					if (!historicTransactionHashes.isEmpty()) {
+						areAllKeysUnused = false;
+					}
+				}
+
+				if (areAllKeysUnused) {
+					// No transactions
+					if (unusedCounter >= Settings.getInstance().getGapLimit()) {
+						// ... and we've hit our search limit
+						break;
+					}
+					// We haven't hit our search limit yet so increment the counter and keep looking
+					unusedCounter += WALLET_KEY_LOOKAHEAD_INCREMENT;
+				} else {
+					// Some keys in this batch were used, so reset the counter
+					unusedCounter = 0;
+				}
+
+				// Generate some more keys
+				keys.addAll(generateMoreKeys(keyChain));
+
+				// Process new keys
+			} while (true);
+
+			return keySet;
+		}
+	}
+
 	protected SimpleTransaction convertToSimpleTransaction(BitcoinyTransaction t, Set<String> keySet) {
 		long amount = 0;
 		long total = 0L;
@@ -650,6 +732,81 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 
 				// Check unspent
 				Address address = Address.fromKey(this.params, dKey, ScriptType.P2PKH);
+				byte[] script = ScriptBuilder.createOutputScript(address).getProgram();
+
+				List<UnspentOutput> unspentOutputs = this.blockchainProvider.getUnspentOutputs(script, false);
+
+				/*
+				 * If there are no unspent outputs then either:
+				 * a) all the outputs have been spent
+				 * b) address has never been used
+				 *
+				 * For case (a) we want to remember not to check this address (key) again.
+				 */
+
+				if (unspentOutputs.isEmpty()) {
+					// If this is a known key that has been spent before, then we can skip asking for transaction history
+					if (this.spentKeys.contains(dKey)) {
+						wallet.getActiveKeyChain().markKeyAsUsed(dKey);
+						continue;
+					}
+
+					// Ask for transaction history - if it's empty then key has never been used
+					List<TransactionHash> historicTransactionHashes = this.blockchainProvider.getAddressTransactions(script, false);
+
+					if (!historicTransactionHashes.isEmpty()) {
+						// Fully spent key - case (a)
+						this.spentKeys.add(dKey);
+						wallet.getActiveKeyChain().markKeyAsUsed(dKey);
+						continue;
+					}
+
+					// Key never been used - case (b)
+					return address.toString();
+				}
+
+				// Key has unspent outputs, hence used, so no good to us
+				this.spentKeys.remove(dKey);
+			}
+
+			// Generate some more keys
+			keys.addAll(generateMoreKeys(keyChain));
+
+			// Process new keys
+		} while (true);
+	}
+
+	/**
+	 * Returns first unused receive address given 'm' BIP32 key.
+	 *
+	 * @param key58 BIP32/HD extended Bitcoin private/public key
+	 * @return P2WPKH address
+	 * @throws ForeignBlockchainException if something went wrong
+	 */
+	public String getUnusedReceiveBech32Address(String key58) throws ForeignBlockchainException {
+		Context.propagate(bitcoinjContext);
+
+		Wallet wallet = walletFromDeterministicKey58(key58);
+		DeterministicKeyChain keyChain = wallet.getActiveKeyChain();
+
+		keyChain.setLookaheadSize(Bitcoiny.WALLET_KEY_LOOKAHEAD_INCREMENT);
+		keyChain.maybeLookAhead();
+
+		final int keyChainPathSize = keyChain.getAccountPath().size();
+		List<DeterministicKey> keys = new ArrayList<>(keyChain.getLeafKeys());
+
+		int ki = 0;
+		do {
+			for (; ki < keys.size(); ++ki) {
+				DeterministicKey dKey = keys.get(ki);
+				List<ChildNumber> dKeyPath = dKey.getPath();
+
+				// If keyChain is based on 'm', then make sure dKey is m/0/ki - i.e. a 'receive' address, not 'change' (m/1/ki)
+				if (dKeyPath.size() != keyChainPathSize + 2 || dKeyPath.get(dKeyPath.size() - 2) != ChildNumber.ZERO)
+					continue;
+
+				// Check unspent
+				Address address = Address.fromKey(this.params, dKey, ScriptType.P2WPKH);
 				byte[] script = ScriptBuilder.createOutputScript(address).getProgram();
 
 				List<UnspentOutput> unspentOutputs = this.blockchainProvider.getUnspentOutputs(script, false);

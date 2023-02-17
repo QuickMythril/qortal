@@ -100,7 +100,7 @@ public class CrossChainLitecoinResource {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
 
 		try {
-			Long balance = litecoin.getWalletBalance(key58);
+			Long balance = litecoin.getWalletBech32Balance(key58);
 			if (balance == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 
@@ -184,6 +184,45 @@ public class CrossChainLitecoinResource {
 
 		try {
 			return litecoin.getUnusedReceiveAddress(key58);
+		} catch (ForeignBlockchainException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
+		}
+	}
+
+	@POST
+	@Path("/unusedbech32address")
+	@Operation(
+			summary = "Returns first unused Bech32 address for hierarchical, deterministic BIP32 wallet",
+			description = "Supply BIP32 'm' private/public key in base58, starting with 'xprv'/'xpub' for mainnet, 'tprv'/'tpub' for testnet",
+			requestBody = @RequestBody(
+					required = true,
+					content = @Content(
+							mediaType = MediaType.TEXT_PLAIN,
+							schema = @Schema(
+									type = "string",
+									description = "BIP32 'm' private/public key in base58",
+									example = "tpubD6NzVbkrYhZ4XTPc4btCZ6SMgn8CxmWkj6VBVZ1tfcJfMq4UwAjZbG8U74gGSypL9XBYk2R2BLbDBe8pcEyBKM1edsGQEPKXNbEskZozeZc"
+							)
+					)
+			),
+			responses = {
+					@ApiResponse(
+							content = @Content(array = @ArraySchema( schema = @Schema( implementation = SimpleTransaction.class ) ) )
+					)
+			}
+	)
+	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
+	@SecurityRequirement(name = "apiKey")
+	public String getUnusedLitecoinReceiveBech32Address(@HeaderParam(Security.API_KEY_HEADER) String apiKey, String key58) {
+		Security.checkApiCallAllowed(request);
+
+		Litecoin litecoin = Litecoin.getInstance();
+
+		if (!litecoin.isValidDeterministicKey(key58))
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
+
+		try {
+			return litecoin.getUnusedReceiveBech32Address(key58);
 		} catch (ForeignBlockchainException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 		}
