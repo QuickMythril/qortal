@@ -187,7 +187,7 @@ public class AES {
     public static String encryptPasswordBased(String plainText, SecretKey key, IvParameterSpec iv)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
             InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key, iv);
         return Base64.getEncoder()
                 .encodeToString(cipher.doFinal(plainText.getBytes()));
@@ -196,7 +196,7 @@ public class AES {
     public static String decryptPasswordBased(String cipherText, SecretKey key, IvParameterSpec iv)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
             InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, key, iv);
         return new String(cipher.doFinal(Base64.getDecoder()
                 .decode(cipherText)));
