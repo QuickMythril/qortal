@@ -1,0 +1,12 @@
+{
+  "isTestNet": true,
+  "bitcoinNet": "TEST3",
+  "repositoryPath": "db-testnet",
+  "blockchainConfig": "testchain.json",
+  "minBlockchainPeers": 1,
+  "apiDocumentationEnabled": true,
+  "apiRestricted": false,
+  "bootstrap": false,
+  "maxPeerConnectionTime": 999999999,
+  "localAuthBypassEnabled": true
+}
