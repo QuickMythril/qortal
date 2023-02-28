@@ -1,6 +1,10 @@
 {
   "isTestNet": true,
   "bitcoinNet": "TEST3",
+  "litecoinNet": "TEST3",
+  "dogecoinNet": "TEST3",
+  "digibyteNet": "TEST3",
+  "ravencoinNet": "TEST3",
   "repositoryPath": "db-testnet",
   "blockchainConfig": "testchain.json",
   "minBlockchainPeers": 1,
@@ -8,5 +12,21 @@
   "apiRestricted": false,
   "bootstrap": false,
   "maxPeerConnectionTime": 999999999,
-  "localAuthBypassEnabled": true
+  "localAuthBypassEnabled": true,
+  "bindAddress": "0.0.0.0",
+  "recoveryModeTimeout": 0,
+  "uiLocalServers": [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0/0",
+    "::/0"
+  ],
+  "apiKeyDisabled": true,
+  "qdnAuthBypassEnabled": true,
+  "apiWhitelist": [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0/0",
+    "::/0"
+  ]
 }

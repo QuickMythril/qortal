@@ -6,22 +6,24 @@
 	"maxBytesPerUnitFee": 1024,
 	"unitFee": "0.001",
 	"nameRegistrationUnitFees": [
-		{ "timestamp": 1651420800000, "fee": "1.25" }
+		{ "timestamp": 0, "fee": "1.25" }
 	],
 	"useBrokenMD160ForAddresses": false,
 	"requireGroupForApproval": false,
 	"defaultGroupId": 0,
 	"oneNamePerAccount": true,
-	"minAccountLevelToRewardShare": 5,
+	"minAccountLevelToMint": 1,
+	"minAccountLevelForBlockSubmissions": 1,
+	"minAccountLevelToRewardShare": 1,
 	"maxRewardSharesPerFounderMintingAccount": 6,
 	"maxRewardSharesByTimestamp": [
-		{ "timestamp": 0, "maxShares": 6 },
-		{ "timestamp": 1656671400000, "maxShares": 3 }
+		{ "timestamp": 0, "maxShares": 6 }
 	],
 	"founderEffectiveMintingLevel": 10,
-	"onlineAccountSignaturesMinLifetime": 2592000000,
-	"onlineAccountSignaturesMaxLifetime": 3196800000,
-	"onlineAccountsModulusV2Timestamp": 1659205800000,
+	"onlineAccountSignaturesMinLifetime": 43200000,
+	"onlineAccountSignaturesMaxLifetime": 86400000,
+	"onlineAccountsModulusV2Timestamp": 0,
+	"selfSponsorshipAlgoV1SnapshotTimestamp": 0,
 	"rewardsByHeight": [
 		{ "height": 1, "reward": 5.00 },
 		{ "height": 259201, "reward": 4.75 },
@@ -52,11 +54,12 @@
 		{ "id": 5, "levels": [ 9, 10 ], "share": 0.32 }
 	],
 	"qoraHoldersShareByHeight": [
-		{ "height": 1, "share": 0.20 },
-		{ "height": 9999999, "share": 0.01 }
+		{ "height": 1, "share": 0.01 }
 	],
 	"qoraPerQortReward": 250,
-	"blocksNeededByLevel": [ 7200, 64800, 129600, 172800, 244000, 345600, 518400, 691200, 864000, 1036800 ],
+	"minAccountsToActivateShareBin": 30,
+	"shareBinActivationMinLevel": 7,
+	"blocksNeededByLevel": [ 10, 64800, 129600, 172800, 244000, 345600, 518400, 691200, 864000, 1036800 ],
 	"blockTimingsByHeight": [
 		{ "height": 1, "target": 60000, "deviation": 30000, "power": 0.2 }
 	],
@@ -67,22 +70,24 @@
 		"minutesPerBlock": 1
 	},
 	"featureTriggers": {
-		"atFindNextTransactionFix": 0,
-		"newBlockSigHeight": 0,
-		"shareBinFix": 0,
-		"sharesByLevelV2Height": 9999999,
+		"atFindNextTransactionFix": 1,
+		"newBlockSigHeight": 1,
+		"shareBinFix": 1,
+		"sharesByLevelV2Height": 1,
 		"rewardShareLimitTimestamp": 0,
 		"calcChainWeightTimestamp": 0,
 		"transactionV5Timestamp": 0,
-		"transactionV6Timestamp": 0,
+		"transactionV6Timestamp": 9999999999999,
 		"disableReferenceTimestamp": 0,
-		"aggregateSignatureTimestamp": 0,
-		"chatReferenceTimestamp": 0,
-		"increaseOnlineAccountsDifficultyTimestamp": 9999999999999
+		"increaseOnlineAccountsDifficultyTimestamp": 9999999999999,
+		"onlineAccountMinterLevelValidationHeight": 1,
+		"selfSponsorshipAlgoV1Height": 1,
+		"feeValidationFixTimestamp": 0,
+		"chatReferenceTimestamp": 0
 	},
 	"genesisInfo": {
 		"version": 4,
-		"timestamp": "1667850648953",
+		"timestamp": "1593450000000",
 		"transactions": [
 			{ "type": "ISSUE_ASSET", "assetName": "QORT", "description": "QORTAL coin", "quantity": 0, "isDivisible": true, "data": "{}" },
 			{ "type": "ISSUE_ASSET", "assetName": "Legacy-QORA", "description": "Representative legacy QORA", "quantity": 0, "isDivisible": true, "data": "{}", "isUnspendable": true },

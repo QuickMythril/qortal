@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# There's no need to run as root, so don't allow it, for security reasons
-if [ "$USER" = "root" ]; then
-	echo "Please su to non-root user before running"
-	exit
-fi
-
 # Validate Java is installed and the minimum version is available
 MIN_JAVA_VER='11'
 
@@ -42,7 +36,7 @@ fi
 nohup nice -n 20 java \
 	-Djava.net.preferIPv4Stack=false \
 	${JVM_MEMORY_ARGS} \
-	-jar qortal.jar \
+	-jar qortal.jar settings-testnet.json \
 	1>run.log 2>&1 &
 
 # Save backgrounded process's PID
