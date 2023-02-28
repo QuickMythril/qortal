@@ -103,6 +103,10 @@
 			{ "type": "REWARD_SHARE", "minterPublicKey": "KBStPrMw84Fr84YJG5UQEZkeEzbCfRhKtvhq1kmhNJU", "recipient": "QP9y1CmZRyw3oKNSTTm7Q74FxWp2mEHc26", "rewardSharePublicKey": "6eW63qGsiz6JGfH4ga8wZStsYpU2H3w7qijHXr2JADFv", "sharePercent": 0 },
 			{ "type": "REWARD_SHARE", "minterPublicKey": "C9iuYc8GB9cVNNPr28v7pjY1macmsroFYX65CTVPjXLn", "recipient": "QNxfUZ9xgMYs3Gw6jG9Hqsg957yBJz2YEt", "rewardSharePublicKey": "4LvsURDbDhkR3f9zvnZun53GEtwERPsXLZas5CA4mBPH", "sharePercent": 0 },
 			{ "type": "REWARD_SHARE", "minterPublicKey": "DwcUnhxjamqppgfXCLgbYRx8H9XFPUc2qYRy3CEvQWEw", "recipient": "QbTDMss7NtRxxQaSqBZtSLSNdSYgvGaqFf", "rewardSharePublicKey": "CRvQXxFfUMfr4q3o1PcUZPA4aPCiubBsXkk47GzRo754", "sharePercent": 0 },
+			{ "type": "REWARD_SHARE", "minterPublicKey": "8ZHT347rPzCY8Jmk9R2MTEm1c2t6zLGjSU8nKQh4JgBt", "recipient": "QiTygNmENd8bjyiaK1WwgeX9EF1H8Kapfq", "rewardSharePublicKey": "BSatVDRBBzeSMwXfDU7ngjVLhUFfS3CTpdmBWb2wCSU", "sharePercent": 0 },
+			{ "type": "REWARD_SHARE", "minterPublicKey": "BqWV8eMDUxAJ7FEcjQZzCsNKi6TggwYd7yQHWtmYJLWd", "recipient": "QScfgds57u1zEPWyjL3GyKsZQ6PRbuVv2G", "rewardSharePublicKey": "AZBGQ6pVcH8KHBRuqNyBZSkFRedida8GdjoPJvDbgXtn", "sharePercent": 0 },
+			{ "type": "REWARD_SHARE", "minterPublicKey": "ELt8dgskQ9zfwF9dwVYwjq2zXFExstRJoPD4gCC4991d", "recipient": "QZm6GbBJuLJnTbftJAaJtw2ZJqXiDTu2pD", "rewardSharePublicKey": "C6aVBbUHy8nAS3wYQo6jdWFTBagmqrh3JhRo8VH5k1Bx", "sharePercent": 0 },
+			{ "type": "REWARD_SHARE", "minterPublicKey": "Btqz7ug1XEMMun8hXZHVZWctRZxMKYeExsax7ohgzGNE", "recipient": "Qb5rprTsoSoKaMcdwLFL7jP3eyhK3LGqNm", "rewardSharePublicKey": "CdVq4RwirHMjaRkM38PAtMvLNkokqYCiu2srQ3qf7znq", "sharePercent": 0 },
 
 			{ "type": "ACCOUNT_FLAGS", "target": "QY82MasqEH6ChwXaETH4piMtE8Pk4NBWD3", "andMask": -1, "orMask": 1, "xorMask": 0 },
 			{ "type": "ACCOUNT_FLAGS", "target": "QcPro2T97Q8cAfcVM4Pn4fv71Za4T6oeFD", "andMask": -1, "orMask": 1, "xorMask": 0 },
@@ -245,6 +249,16 @@
 			{ "type": "ACCOUNT_FLAGS", "target": "Qf5RGjWtSn8NSpYeLxKbamogxGST3iX3QY", "andMask": -1, "orMask": 1, "xorMask": 0 },
 			{ "type": "ACCOUNT_FLAGS", "target": "QYrytjgXZmWsGarsC3qAAVYdth8qpEjjni", "andMask": -1, "orMask": 1, "xorMask": 0 },
 			{ "type": "ACCOUNT_FLAGS", "target": "QbHqojw2kSmcsdcVaRUAcWF2svr9VPh1Lf", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QiTygNmENd8bjyiaK1WwgeX9EF1H8Kapfq", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QScfgds57u1zEPWyjL3GyKsZQ6PRbuVv2G", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QZm6GbBJuLJnTbftJAaJtw2ZJqXiDTu2pD", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "Qb5rprTsoSoKaMcdwLFL7jP3eyhK3LGqNm", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QbpZL12Lh7K2y6xPZure4pix5jH6ViVrF2", "andMask": -1, "orMask": 1, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QbmBdAbvmXqCya8bia8WaD5izumKkC9BrY", "andMask": -1, "orMask": 0, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QhPXuFFRa9s91Q2qYKpSN5LVCUTqYkgRLz", "andMask": -1, "orMask": 0, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QPFM4xX2826MuBEhMtdReW1QR3vRYrQff3", "andMask": -1, "orMask": 0, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QSJ5cDLWivGcn9ym21azufBfiqeuGH1maq", "andMask": -1, "orMask": 0, "xorMask": 0 },
+			{ "type": "ACCOUNT_FLAGS", "target": "QTx98gU8ErigXkViWkvRH5JfaMpk8b3bHe", "andMask": -1, "orMask": 0, "xorMask": 0 },
 
 			{ "type": "ACCOUNT_LEVEL", "target": "QagyUZdmnKJA9LyEqcxJFFf2ehmcqVZsKb", "level": 5 },
 			{ "type": "ACCOUNT_LEVEL", "target": "QcCYuXos5xBXXHbRg1RTfSdxiZEkGa3N2P", "level": 5 },
@@ -275,6 +289,11 @@
 			{ "type": "ACCOUNT_LEVEL", "target": "QMEL3mfTcS4NwMsR2hx9tx1HaqmjsFiji4", "level": 5 },
 			{ "type": "ACCOUNT_LEVEL", "target": "QXWCbFQ4fDdUVtcivCDySZmhbqSUw5CWKj", "level": 5 },
 			{ "type": "ACCOUNT_LEVEL", "target": "QYvML3UWBSwpx9SSQprJo12R2ZjLKXHY5e", "level": 5 },
+			{ "type": "ACCOUNT_LEVEL", "target": "QiTygNmENd8bjyiaK1WwgeX9EF1H8Kapfq", "level": 5 },
+			{ "type": "ACCOUNT_LEVEL", "target": "QScfgds57u1zEPWyjL3GyKsZQ6PRbuVv2G", "level": 5 },
+			{ "type": "ACCOUNT_LEVEL", "target": "QZm6GbBJuLJnTbftJAaJtw2ZJqXiDTu2pD", "level": 5 },
+			{ "type": "ACCOUNT_LEVEL", "target": "Qb5rprTsoSoKaMcdwLFL7jP3eyhK3LGqNm", "level": 5 },
+			{ "type": "ACCOUNT_LEVEL", "target": "QbpZL12Lh7K2y6xPZure4pix5jH6ViVrF2", "level": 5 },
 
 			{ "type": "ACCOUNT_LEVEL", "target": "QXsrAcNz93naQsBcyGTECMiB3heKmbZZNT", "level": 1 },
 			{ "type": "ACCOUNT_LEVEL", "target": "QN4NnUvf4UwCKz9U66NUEs6cQJtZiHzpsB", "level": 1 },
@@ -1371,7 +1390,7 @@
 			{ "type": "ACCOUNT_FLAGS", "target": "QSJ5cDLWivGcn9ym21azufBfiqeuGH1maq", "andMask": -1, "orMask": 0, "xorMask": 0 },
 			{ "type": "ACCOUNT_FLAGS", "target": "QTx98gU8ErigXkViWkvRH5JfaMpk8b3bHe", "andMask": -1, "orMask": 0, "xorMask": 0 },
 
-			{ "type": "CREATE_GROUP", "creatorPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "owner": "QbmBdAbvmXqCya8bia8WaD5izumKkC9BrY", "groupName": "dev-group", "description": "developer group", "isOpen": true, "approvalThreshold": "PCT40", "minimumBlockDelay": 10, "maximumBlockDelay": 1440 },
+			{ "type": "CREATE_GROUP", "creatorPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "owner": "QbmBdAbvmXqCya8bia8WaD5izumKkC9BrY", "groupName": "dev-group", "description": "developer group", "isOpen": true, "approvalThreshold": "ONE", "minimumBlockDelay": 10, "maximumBlockDelay": 1440 },
 
 
 			{ "type": "JOIN_GROUP", "joinerPublicKey": "2qRDBEKrarZGvePqWM8djfAsa8LMw3WCcG7UmGni42Rk", "groupId": 1 },
@@ -1392,8 +1411,19 @@
 			{ "type": "JOIN_GROUP", "joinerPublicKey": "2qRDBEKrarZGvePqWM8djfAsa8LMw3WCcG7UmGni42Rk", "groupId": 1 },
 			{ "type": "ADD_GROUP_ADMIN", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "member": "QYvML3UWBSwpx9SSQprJo12R2ZjLKXHY5e" },
 
+			{ "type": "JOIN_GROUP", "joinerPublicKey": "25jxnXz3xF3tK2WJHpUHwGx7DXR6yfjAHF1hFX5ice6H", "groupId": 1 },
+			{ "type": "ADD_GROUP_ADMIN", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "member": "QhPXuFFRa9s91Q2qYKpSN5LVCUTqYkgRLz" },
 
-			{ "type": "UPDATE_GROUP", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "newOwner": "QdSnUy6sUiEnaN87dWmE92g1uQjrvPgrWG", "newDescription": "developer group", "newIsOpen": false, "newApprovalThreshold": "ONE", "newMinimumBlockDelay": 10, "newMaximumBlockDelay": 1440 },
+			{ "type": "JOIN_GROUP", "joinerPublicKey": "4gzaBTL8is3efMqVVPpfVr6SuAw22zS7t7qh6tBBqnRW", "groupId": 1 },
+			{ "type": "ADD_GROUP_ADMIN", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "member": "QPFM4xX2826MuBEhMtdReW1QR3vRYrQff3" },
+
+			{ "type": "JOIN_GROUP", "joinerPublicKey": "2ZnSnZcpvMePw23f3AefANbRQHs7KjDyAyEzXc9dBMdn", "groupId": 1 },
+			{ "type": "ADD_GROUP_ADMIN", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "member": "QSJ5cDLWivGcn9ym21azufBfiqeuGH1maq" },
+
+			{ "type": "JOIN_GROUP", "joinerPublicKey": "Gqcfa6YGXnKTr4F3QMpDQkjxxLGBmsq83wXcYeZvES7i", "groupId": 1 },
+			{ "type": "ADD_GROUP_ADMIN", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "member": "QTx98gU8ErigXkViWkvRH5JfaMpk8b3bHe" },
+
+			{ "type": "UPDATE_GROUP", "ownerPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "groupId": 1, "newOwner": "QdSnUy6sUiEnaN87dWmE92g1uQjrvPgrWG", "newDescription": "developer group", "newIsOpen": false, "newApprovalThreshold": "PCT40", "minimumBlockDelay": 10, "maximumBlockDelay": 1440 },
 
 			{ "type": "JOIN_GROUP", "joinerPublicKey": "8q7oSa8YQqTSvPP7aC3P9TrSpXbqp7zdYxbiGCHzv5Wb", "groupId": 1 },
 			{ "type": "GROUP_INVITE", "adminPublicKey": "CVancqfgb2vWLXHjqZF8LtoQyB7Y5HtZUrFKvtwrTkNW", "invitee": "Qe2ZksqXbXgJQ5kSErszCunbAEp7q5BBEB", "groupId": 1 },
