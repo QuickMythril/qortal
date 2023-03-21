@@ -19,14 +19,13 @@ public class Ghost extends Bitcoiny {
 
 	public static final String CURRENCY_CODE = "GHOST";
 
-	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(1000000); // 0.01 GHOST per 1000 bytes
+	private static final Coin DEFAULT_FEE_PER_KB = Coin.valueOf(250000); // 0.0025 GHOST per 1000 bytes
 
-	private static final long MINIMUM_ORDER_AMOUNT = 100000000L; // 1 GHOST minimum order. See recommendations:
-	// https://github.com/ghost/ghost/blob/master/doc/fee-recommendation.md
+	private static final long MINIMUM_ORDER_AMOUNT = 1000000; // 0.01 GHOST minimum order.
 
 	// Temporary values until a dynamic fee system is written.
-	private static final long MAINNET_FEE = 100000L;
-	private static final long NON_MAINNET_FEE = 10000L; // TODO: calibrate this
+	private static final long MAINNET_FEE = 25000L;
+	private static final long NON_MAINNET_FEE = 2500L; // TODO: calibrate this
 
 	private static final Map<ConnectionType, Integer> DEFAULT_ELECTRUMX_PORTS = new EnumMap<>(ConnectionType.class);
 	static {
