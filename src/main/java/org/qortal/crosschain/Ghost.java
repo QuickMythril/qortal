@@ -4,8 +4,8 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.libdohj.params.GhostMainNetParams;
-//import org.libdohj.params.GhostRegTestParams;
-import org.libdohj.params.GhostTestNet3Params;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.qortal.crosschain.ElectrumX.Server;
 import org.qortal.crosschain.ElectrumX.Server.ConnectionType;
 import org.qortal.settings.Settings;
@@ -67,7 +67,7 @@ public class Ghost extends Bitcoiny {
 		TEST3 {
 			@Override
 			public NetworkParameters getParams() {
-				return GhostTestNet3Params.get();
+				return TestNet3Params.get();
 			}
 
 			@Override
@@ -88,7 +88,7 @@ public class Ghost extends Bitcoiny {
 		REGTEST {
 			@Override
 			public NetworkParameters getParams() {
-				return null; // TODO: GhostRegTestParams.get();
+				return RegTestParams.get();
 			}
 
 			@Override
