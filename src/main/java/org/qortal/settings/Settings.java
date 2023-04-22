@@ -30,6 +30,7 @@ import org.qortal.crosschain.Digibyte.DigibyteNet;
 import org.qortal.crosschain.Ravencoin.RavencoinNet;
 import org.qortal.crosschain.PirateChain.PirateChainNet;
 import org.qortal.crosschain.Namecoin.NamecoinNet;
+import org.qortal.crosschain.Dash.DashNet;
 import org.qortal.utils.EnumUtils;
 
 // All properties to be converted to JSON via JAXB
@@ -251,6 +252,7 @@ public class Settings {
 	private RavencoinNet ravencoinNet = RavencoinNet.MAIN;
 	private PirateChainNet pirateChainNet = PirateChainNet.MAIN;
 	private NamecoinNet namecoinNet = NamecoinNet.MAIN;
+	private DashNet dashNet = DashNet.MAIN;
 	// Also crosschain-related:
 	/** Whether to show SysTray pop-up notifications when trade-bot entries change state */
 	private boolean tradebotSystrayEnabled = false;
@@ -775,6 +777,10 @@ public class Settings {
 
 	public NamecoinNet getNamecoinNet() {
 		return this.namecoinNet;
+	}
+
+	public DashNet getDashNet() {
+		return this.dashNet;
 	}
 
 	public String getWalletsPath() {
