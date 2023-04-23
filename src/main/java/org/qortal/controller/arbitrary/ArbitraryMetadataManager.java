@@ -102,7 +102,14 @@ public class ArbitraryMetadataManager {
                 if (metadataFile.exists()) {
                     // Use local copy
                     ArbitraryDataTransactionMetadata transactionMetadata = new ArbitraryDataTransactionMetadata(metadataFile.getFilePath());
-                    transactionMetadata.read();
+                    try {
+                        transactionMetadata.read();
+                    } catch (DataException e) {
+                        // Invalid file, so delete it
+                        LOGGER.info("Deleting invalid metadata file due to exception: {}", e.getMessage());
+                        transactionMetadata.delete();
+                        return null;
+                    }
                     return transactionMetadata;
                 }
             }

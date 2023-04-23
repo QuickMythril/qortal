@@ -47,6 +47,10 @@ public enum Service {
             return ValidationResult.OK;
         }
     },
+    ATTACHMENT(130, false, null, true, null),
+    FILE(140, false, null, true, null),
+    FILES(150, false, null, false, null),
+    CHAIN_DATA(160, true, 239L, true, null),
     WEBSITE(200, true, null, false, null) {
         @Override
         public ValidationResult validate(Path path) throws IOException {
@@ -77,9 +81,11 @@ public enum Service {
     AUDIO(600, false, null, true, null),
     QCHAT_AUDIO(610, true, 10*1024*1024L, true, null),
     QCHAT_VOICE(620, true, 10*1024*1024L, true, null),
+    VOICE(630, true, 10*1024*1024L, true, null),
+    PODCAST(640, false, null, true, null),
     BLOG(700, false, null, false, null),
     BLOG_POST(777, false, null, true, null),
-    BLOG_COMMENT(778, false, null, true, null),
+    BLOG_COMMENT(778, true, 500*1024L, true, null),
     DOCUMENT(800, false, null, true, null),
     LIST(900, true, null, true, null),
     PLAYLIST(910, true, null, true, null),
@@ -139,7 +145,21 @@ public enum Service {
             }
             return ValidationResult.OK;
         }
-    };
+    },
+    STORE(1300, false, null, true, null),
+    PRODUCT(1310, false, null, true, null),
+    OFFER(1330, false, null, true, null),
+    COUPON(1340, false, null, true, null),
+    CODE(1400, false, null, true, null),
+    PLUGIN(1410, false, null, true, null),
+    EXTENSION(1420, false, null, true, null),
+    GAME(1500, false, null, false, null),
+    ITEM(1510, false, null, true, null),
+    NFT(1600, false, null, true, null),
+    DATABASE(1700, false, null, false, null),
+    SNAPSHOT(1710, false, null, false, null),
+    COMMENT(1800, true, 500*1024L, true, null),
+    CHAIN_COMMENT(1810, true, 239L, true, null);
 
     public final int value;
     private final boolean requiresValidation;

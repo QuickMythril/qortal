@@ -50,12 +50,16 @@ window.addEventListener("message", (event) => {
     switch (data.action) {
         case "GET_USER_ACCOUNT":
         case "PUBLISH_QDN_RESOURCE":
+        case "PUBLISH_MULTIPLE_QDN_RESOURCES":
         case "SEND_CHAT_MESSAGE":
         case "JOIN_GROUP":
         case "DEPLOY_AT":
         case "GET_WALLET_BALANCE":
         case "SEND_COIN":
-            const errorString = "Authentication was requested, but this is not yet supported when viewing via a gateway. To use interactive features, please access using the Qortal UI desktop app. More info at: https://qortal.org";
+        case "GET_LIST_ITEMS":
+        case "ADD_LIST_ITEMS":
+        case "DELETE_LIST_ITEM":
+            const errorString = "Interactive features were requested, but these are not yet supported when viewing via a gateway. To use interactive features, please access using the Qortal UI desktop app. More info at: https://qortal.org";
             response = "{\"error\": \"" + errorString + "\"}"
 
             const modalText = "This app is powered by the Qortal blockchain. You are viewing in read-only mode. To use interactive features, please access using the Qortal UI desktop app.";

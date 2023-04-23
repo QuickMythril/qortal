@@ -50,7 +50,7 @@ public class ArbitraryDataMetadata {
             this.readJson();
 
         } catch (JSONException e) {
-            throw new DataException(String.format("Unable to read JSON: %s", e.getMessage()));
+            throw new DataException(String.format("Unable to read JSON at path %s: %s", this.filePath, e.getMessage()));
         }
     }
 
@@ -62,6 +62,10 @@ public class ArbitraryDataMetadata {
         writer.write(this.jsonString);
         writer.newLine();
         writer.close();
+    }
+
+    public void delete() throws IOException {
+        Files.delete(this.filePath);
     }
 
 
