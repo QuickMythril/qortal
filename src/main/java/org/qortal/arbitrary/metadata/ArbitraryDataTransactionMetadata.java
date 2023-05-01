@@ -7,6 +7,7 @@ import org.qortal.arbitrary.misc.Category;
 import org.qortal.repository.DataException;
 import org.qortal.utils.Base58;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -217,6 +218,25 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
 
     // Static helper methods
 
+    public static String trimUTF8String(String string, int maxLength) {
+        byte[] inputBytes = string.getBytes(StandardCharsets.UTF_8);
+        int length = Math.min(inputBytes.length, maxLength);
+        byte[] outputBytes = new byte[length];
+
+        System.arraycopy(inputBytes, 0, outputBytes, 0, length);
+        String result = new String(outputBytes, StandardCharsets.UTF_8);
+
+        // check if last character is truncated
+        int lastIndex = result.length() - 1;
+
+        if (lastIndex > 0 && result.charAt(lastIndex) != string.charAt(lastIndex)) {
+            // last character is truncated so remove the last character
+            return result.substring(0, lastIndex);
+        }
+
+        return result;
+    }
+
     public static String limitTitle(String title) {
         if (title == null) {
             return null;
@@ -225,7 +245,7 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
             return null;
         }
 
-        return title.substring(0, Math.min(title.length(), MAX_TITLE_LENGTH));
+        return trimUTF8String(title, MAX_TITLE_LENGTH);
     }
 
     public static String limitDescription(String description) {
@@ -236,7 +256,7 @@ public class ArbitraryDataTransactionMetadata extends ArbitraryDataMetadata {
             return null;
         }
 
-        return description.substring(0, Math.min(description.length(), MAX_DESCRIPTION_LENGTH));
+        return trimUTF8String(description, MAX_DESCRIPTION_LENGTH);
     }
 
     public static List<String> limitTags(List<String> tags) {

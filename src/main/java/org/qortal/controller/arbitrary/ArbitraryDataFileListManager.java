@@ -124,29 +124,29 @@ public class ArbitraryDataFileListManager {
             }
         }
 
-        // Then allow another 3 attempts, each 5 minutes apart
-        if (timeSinceLastAttempt > 5 * 60 * 1000L) {
-            // We haven't tried for at least 5 minutes
+        // Then allow another 5 attempts, each 1 minute apart
+        if (timeSinceLastAttempt > 60 * 1000L) {
+            // We haven't tried for at least 1 minute
 
-            if (networkBroadcastCount < 6) {
-                // We've made less than 6 total attempts
+            if (networkBroadcastCount < 8) {
+                // We've made less than 8 total attempts
                 return true;
             }
         }
 
-        // Then allow another 4 attempts, each 30 minutes apart
-        if (timeSinceLastAttempt > 30 * 60 * 1000L) {
-            // We haven't tried for at least 5 minutes
+        // Then allow another 8 attempts, each 15 minutes apart
+        if (timeSinceLastAttempt > 15 * 60 * 1000L) {
+            // We haven't tried for at least 15 minutes
 
-            if (networkBroadcastCount < 10) {
-                // We've made less than 10 total attempts
+            if (networkBroadcastCount < 16) {
+                // We've made less than 16 total attempts
                 return true;
             }
         }
 
-        // From then on, only try once every 24 hours, to reduce network spam
-        if (timeSinceLastAttempt > 24 * 60 * 60 * 1000L) {
-            // We haven't tried for at least 24 hours
+        // From then on, only try once every 6 hours, to reduce network spam
+        if (timeSinceLastAttempt > 6 * 60 * 60 * 1000L) {
+            // We haven't tried for at least 6 hours
             return true;
         }
 

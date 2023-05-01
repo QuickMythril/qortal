@@ -1,4 +1,4 @@
-function httpGet(event, url) {
+function httpGet(url) {
     var request = new XMLHttpRequest();
     request.open("GET", url, false);
     request.send(null);
@@ -250,6 +250,11 @@ window.addEventListener("message", (event) => {
             url = "/arbitrary/resource/properties/" + data.service + "/" + data.name + "/" + identifier;
             return httpGetAsyncWithEvent(event, url);
 
+        case "GET_QDN_RESOURCE_METADATA":
+            identifier = (data.identifier != null) ? data.identifier : "default";
+            url = "/arbitrary/metadata/" + data.service + "/" + data.name + "/" + identifier;
+            return httpGetAsyncWithEvent(event, url);
+
         case "SEARCH_CHAT_MESSAGES":
             url = "/chat/messages?";
             if (data.before != null) url = url.concat("&before=" + data.before);
@@ -259,6 +264,7 @@ window.addEventListener("message", (event) => {
             if (data.reference != null) url = url.concat("&reference=" + data.reference);
             if (data.chatReference != null) url = url.concat("&chatreference=" + data.chatReference);
             if (data.hasChatReference != null) url = url.concat("&haschatreference=" + new Boolean(data.hasChatReference).toString());
+            if (data.encoding != null) url = url.concat("&encoding=" + data.encoding);
             if (data.limit != null) url = url.concat("&limit=" + data.limit);
             if (data.offset != null) url = url.concat("&offset=" + data.offset);
             if (data.reverse != null) url = url.concat("&reverse=" + new Boolean(data.reverse).toString());

@@ -9,6 +9,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,7 +82,7 @@ public class ResourceList {
         }
 
         try {
-            String jsonString = new String(Files.readAllBytes(path));
+            String jsonString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             this.list = ResourceList.listFromJSONString(jsonString);
         } catch (IOException e) {
             throw new IOException(String.format("Couldn't read contents from file %s", path.toString()));

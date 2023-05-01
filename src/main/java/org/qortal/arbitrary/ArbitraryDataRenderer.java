@@ -126,7 +126,8 @@ public class ArbitraryDataRenderer {
         try {
             String filename = this.getFilename(unzippedPath, inPath);
             Path filePath = Paths.get(unzippedPath, filename);
-
+            boolean usingCustomRouting = false;
+            
             // If the file doesn't exist, we may need to route the request elsewhere, or cleanup
             if (!Files.exists(filePath)) {
                 if (inPath.equals("/")) {
@@ -148,6 +149,7 @@ public class ArbitraryDataRenderer {
                             // Forward request to index file
                             filePath = indexPath;
                             filename = indexFile;
+                            usingCustomRouting = true;
                             break;
                         }
                     }
@@ -157,7 +159,7 @@ public class ArbitraryDataRenderer {
             if (HTMLParser.isHtmlFile(filename)) {
                 // HTML file - needs to be parsed
                 byte[] data = Files.readAllBytes(filePath); // TODO: limit file size that can be read into memory
-                HTMLParser htmlParser = new HTMLParser(resourceId, inPath, prefix, usePrefix, data, qdnContext, service, identifier, theme);
+                HTMLParser htmlParser = new HTMLParser(resourceId, inPath, prefix, usePrefix, data, qdnContext, service, identifier, theme, usingCustomRouting);
                 htmlParser.addAdditionalHeaderTags();
                 response.addHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval'; media-src 'self' data: blob:; img-src 'self' data: blob:;");
                 response.setContentType(context.getMimeType(filename));

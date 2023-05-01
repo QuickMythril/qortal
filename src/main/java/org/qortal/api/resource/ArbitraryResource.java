@@ -65,10 +65,7 @@ import org.qortal.transaction.Transaction.ValidationResult;
 import org.qortal.transform.TransformationException;
 import org.qortal.transform.transaction.ArbitraryTransactionTransformer;
 import org.qortal.transform.transaction.TransactionTransformer;
-import org.qortal.utils.ArbitraryTransactionUtils;
-import org.qortal.utils.Base58;
-import org.qortal.utils.NTP;
-import org.qortal.utils.ZipUtils;
+import org.qortal.utils.*;
 
 @Path("/arbitrary")
 @Tag(name = "Arbitrary")
@@ -721,12 +718,9 @@ public class ArbitraryResource {
 			}
 	)
 	@SecurityRequirement(name = "apiKey")
-	public ArbitraryResourceMetadata getMetadata(@HeaderParam(Security.API_KEY_HEADER) String apiKey,
-							  @PathParam("service") Service service,
-							  @PathParam("name") String name,
-							  @PathParam("identifier") String identifier) {
-		Security.checkApiCallAllowed(request);
-
+	public ArbitraryResourceMetadata getMetadata(@PathParam("service") Service service,
+							  					 @PathParam("name") String name,
+							  					 @PathParam("identifier") String identifier) {
 		ArbitraryDataResource resource = new ArbitraryDataResource(name, ResourceIdType.NAME, service, identifier);
 
 		try {
@@ -1327,20 +1321,50 @@ public class ArbitraryResource {
 				}
 			}
 
-			// TODO: limit file size that can be read into memory
 			java.nio.file.Path path = Paths.get(outputPath.toString(), filepath);
 			if (!Files.exists(path)) {
 				String message = String.format("No file exists at filepath: %s", filepath);
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, message);
 			}
 
-			byte[] data = Files.readAllBytes(path);
+			byte[] data;
+			int fileSize = (int)path.toFile().length();
+			int length = fileSize;
+
+			// Parse "Range" header
+			Integer rangeStart = null;
+			Integer rangeEnd = null;
+			String range = request.getHeader("Range");
+			if (range != null) {
+				range = range.replace("bytes=", "");
+				String[] parts = range.split("-");
+				rangeStart = (parts != null && parts.length > 0) ? Integer.parseInt(parts[0]) : null;
+				rangeEnd = (parts != null && parts.length > 1) ? Integer.parseInt(parts[1]) : fileSize;
+			}
+
+			if (rangeStart != null && rangeEnd != null) {
+				// We have a range, so update the requested length
+				length = rangeEnd - rangeStart;
+			}
+
+			if (length < fileSize && encoding == null) {
+				// Partial content requested, and not encoding the data
+				response.setStatus(206);
+				response.addHeader("Content-Range", String.format("bytes %d-%d/%d", rangeStart, rangeEnd-1, fileSize));
+				data = FilesystemUtils.readFromFile(path.toString(), rangeStart, length);
+			}
+			else {
+				// Full content requested (or encoded data)
+				response.setStatus(200);
+				data = Files.readAllBytes(path); // TODO: limit file size that can be read into memory
+			}
 
 			// Encode the data if requested
 			if (encoding != null && Objects.equals(encoding.toLowerCase(), "base64")) {
 				data = Base64.encode(data);
 			}
 
+			response.addHeader("Accept-Ranges", "bytes");
 			response.setContentType(context.getMimeType(path.toString()));
 			response.setContentLength(data.length);
 			response.getOutputStream().write(data);

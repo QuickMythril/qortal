@@ -249,6 +249,47 @@ public class ArbitraryTransactionMetadataTests extends Common {
     }
 
     @Test
+    public void testUTF8Metadata() throws DataException, IOException, MissingDataException {
+        try (final Repository repository = RepositoryManager.getRepository()) {
+            PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+            String publicKey58 = Base58.encode(alice.getPublicKey());
+            String name = "TEST"; // Can be anything for this test
+            String identifier = null; // Not used for this test
+            Service service = Service.ARBITRARY_DATA;
+            int chunkSize = 100;
+            int dataLength = 900; // Actual data length will be longer due to encryption
+
+            // Example (modified) strings from real world content
+            String title = "Доля юаня в трансграничных Доля юаня в трансграничных";
+            String description = "Когда рыночек порешал";
+            List<String> tags = Arrays.asList("Доля", "юаня", "трансграничных");
+            Category category = Category.OTHER;
+
+            // Register the name to Alice
+            RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, "");
+            transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+            TransactionUtils.signAndMint(repository, transactionData, alice);
+
+            // Create PUT transaction
+            Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    title, description, tags, category);
+
+            // Check the chunk count is correct
+            assertEquals(10, arbitraryDataFile.chunkCount());
+
+            // Check the metadata is correct
+            String expectedTrimmedTitle = "Доля юаня в трансграничных Доля юаня в тран";
+            assertEquals(expectedTrimmedTitle, arbitraryDataFile.getMetadata().getTitle());
+            assertEquals(description, arbitraryDataFile.getMetadata().getDescription());
+            assertEquals(tags, arbitraryDataFile.getMetadata().getTags());
+            assertEquals(category, arbitraryDataFile.getMetadata().getCategory());
+            assertEquals("text/plain", arbitraryDataFile.getMetadata().getMimeType());
+        }
+    }
+
+    @Test
     public void testMetadataLengths() throws DataException, IOException, MissingDataException {
         try (final Repository repository = RepositoryManager.getRepository()) {
             PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");

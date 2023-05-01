@@ -240,6 +240,9 @@ Here is a list of currently supported actions:
 - SEARCH_QDN_RESOURCES
 - GET_QDN_RESOURCE_STATUS
 - GET_QDN_RESOURCE_PROPERTIES
+- GET_QDN_RESOURCE_METADATA
+- GET_QDN_RESOURCE_URL
+- LINK_TO_QDN_RESOURCE
 - FETCH_QDN_RESOURCE
 - PUBLISH_QDN_RESOURCE
 - PUBLISH_MULTIPLE_QDN_RESOURCES
@@ -258,8 +261,6 @@ Here is a list of currently supported actions:
 - FETCH_BLOCK_RANGE
 - SEARCH_TRANSACTIONS
 - GET_PRICE
-- GET_QDN_RESOURCE_URL
-- LINK_TO_QDN_RESOURCE
 - GET_LIST_ITEMS
 - ADD_LIST_ITEMS
 - DELETE_LIST_ITEM
@@ -420,6 +421,16 @@ let res = await qortalRequest({
 // Returns: filename, size, mimeType (where available)
 ```
 
+### Get QDN resource metadata
+```
+let res = await qortalRequest({
+    action: "GET_QDN_RESOURCE_METADATA",
+    name: "QortalDemo",
+    service: "THUMBNAIL",
+    identifier: "qortal_avatar" // Optional
+});
+```
+
 ### Publish a single file to QDN
 _Requires user approval_.<br />
 Note: this publishes a single, base64-encoded file. Multi-file resource publishing (such as a WEBSITE or GIF_REPOSITORY) is not yet supported via a Q-App. It will be added in a future update.
@@ -528,6 +539,7 @@ let res = await qortalRequest({
     // reference: "reference", // Optional
     // chatReference: "chatreference", // Optional
     // hasChatReference: true, // Optional
+    encoding: "BASE64", // Optional (defaults to BASE58 if omitted)
     limit: 100,
     offset: 0,
     reverse: true
