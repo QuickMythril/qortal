@@ -14,6 +14,8 @@ public interface NameRepository {
 
 	public boolean reducedNameExists(String reducedName) throws DataException;
 
+	public List<NameData> searchNames(String query, Integer limit, Integer offset, Boolean reverse) throws DataException;
+
 	public List<NameData> getAllNames(Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	public default List<NameData> getAllNames() throws DataException {

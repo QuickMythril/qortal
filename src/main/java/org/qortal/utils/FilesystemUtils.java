@@ -228,12 +228,18 @@ public class FilesystemUtils {
      * @throws IOException
      */
     public static byte[] getSingleFileContents(Path path) throws IOException {
+        return getSingleFileContents(path, null);
+    }
+
+    public static byte[] getSingleFileContents(Path path, Integer maxLength) throws IOException {
         byte[] data = null;
         // TODO: limit the file size that can be loaded into memory
 
         // If the path is a file, read the contents directly
         if (path.toFile().isFile()) {
-            data = Files.readAllBytes(path);
+            int fileSize = (int)path.toFile().length();
+            maxLength = maxLength != null ? Math.min(maxLength, fileSize) : fileSize;
+            data = FilesystemUtils.readFromFile(path.toString(), 0, maxLength);
         }
 
         // Or if it's a directory, only load file contents if there is a single file inside it
@@ -242,7 +248,9 @@ public class FilesystemUtils {
             if (files.length == 1) {
                 Path filePath = Paths.get(path.toString(), files[0]);
                 if (filePath.toFile().isFile()) {
-                    data = Files.readAllBytes(filePath);
+                    int fileSize = (int)filePath.toFile().length();
+                    maxLength = maxLength != null ? Math.min(maxLength, fileSize) : fileSize;
+                    data = FilesystemUtils.readFromFile(filePath.toString(), 0, maxLength);
                 }
             }
         }

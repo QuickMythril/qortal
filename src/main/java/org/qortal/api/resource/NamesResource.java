@@ -155,6 +155,38 @@ public class NamesResource {
 		}
 	}
 
+	@GET
+	@Path("/search")
+	@Operation(
+			summary = "Search registered names",
+			responses = {
+					@ApiResponse(
+							description = "registered name info",
+							content = @Content(
+									mediaType = MediaType.APPLICATION_JSON,
+									array = @ArraySchema(schema = @Schema(implementation = NameData.class))
+							)
+					)
+			}
+	)
+	@ApiErrors({ApiError.NAME_UNKNOWN, ApiError.REPOSITORY_ISSUE})
+	public List<NameData> searchNames(@QueryParam("query") String query,
+									  @Parameter(ref = "limit") @QueryParam("limit") Integer limit,
+									  @Parameter(ref = "offset") @QueryParam("offset") Integer offset,
+									  @Parameter(ref="reverse") @QueryParam("reverse") Boolean reverse) {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			if (query == null) {
+				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, "Missing query");
+			}
+
+			return repository.getNameRepository().searchNames(query, limit, offset, reverse);
+		} catch (ApiException e) {
+			throw e;
+		} catch (DataException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
+		}
+	}
+
 
 	@POST
 	@Path("/register")

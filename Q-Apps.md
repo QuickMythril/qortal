@@ -42,6 +42,9 @@ A "default" resource refers to one without an identifier. For example, when a we
 
 Here is a list of currently available services that can be used in Q-Apps:
 
+### Public services ###
+The services below are intended to be used for publicly accessible data.
+
 IMAGE,
 THUMBNAIL,
 VIDEO,
@@ -82,6 +85,20 @@ QCHAT_ATTACHMENT,
 QCHAT_IMAGE,
 QCHAT_AUDIO,
 QCHAT_VOICE
+
+### Private services ###
+For the services below, data is encrypted for a single recipient, and can only be decrypted using the private key of the recipient's wallet.
+
+QCHAT_ATTACHMENT_PRIVATE,
+ATTACHMENT_PRIVATE,
+FILE_PRIVATE,
+IMAGE_PRIVATE,
+VIDEO_PRIVATE,
+AUDIO_PRIVATE,
+VOICE_PRIVATE,
+DOCUMENT_PRIVATE,
+MAIL_PRIVATE,
+MESSAGE_PRIVATE
 
 
 ## Single vs multi-file resources
@@ -246,6 +263,8 @@ Here is a list of currently supported actions:
 - FETCH_QDN_RESOURCE
 - PUBLISH_QDN_RESOURCE
 - PUBLISH_MULTIPLE_QDN_RESOURCES
+- DECRYPT_DATA
+- SAVE_FILE
 - GET_WALLET_BALANCE
 - GET_BALANCE
 - SEND_COIN
@@ -406,7 +425,8 @@ let res = await qortalRequest({
     action: "GET_QDN_RESOURCE_STATUS",
     name: "QortalDemo",
     service: "THUMBNAIL",
-    identifier: "qortal_avatar" // Optional
+    identifier: "qortal_avatar", // Optional
+    build: true // Optional - request that the resource is fetched & built in the background
 });
 ```
 
@@ -435,7 +455,7 @@ let res = await qortalRequest({
 _Requires user approval_.<br />
 Note: this publishes a single, base64-encoded file. Multi-file resource publishing (such as a WEBSITE or GIF_REPOSITORY) is not yet supported via a Q-App. It will be added in a future update.
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "PUBLISH_QDN_RESOURCE",
     name: "Demo", // Publisher must own the registered name - use GET_ACCOUNT_NAMES for a list
     service: "IMAGE",
@@ -449,7 +469,9 @@ await qortalRequest({
     // tag2: "strings", // Optional
     // tag3: "can", // Optional
     // tag4: "go", // Optional
-    // tag5: "here" // Optional
+    // tag5: "here", // Optional
+    // encrypt: true, // Optional - to be used with a private service
+    // recipientPublicKey: "publickeygoeshere" // Only required if `encrypt` is set to true
 });
 ```
 
@@ -457,7 +479,7 @@ await qortalRequest({
 _Requires user approval_.<br />
 Note: each resource being published consists of a single, base64-encoded file, each in its own transaction. Useful for publishing two or more related things, such as a video and a video thumbnail.
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "PUBLISH_MULTIPLE_QDN_RESOURCES",
     resources: [
         name: "Demo", // Publisher must own the registered name - use GET_ACCOUNT_NAMES for a list
@@ -472,7 +494,9 @@ await qortalRequest({
         // tag2: "strings", // Optional
         // tag3: "can", // Optional
         // tag4: "go", // Optional
-        // tag5: "here" // Optional
+        // tag5: "here", // Optional
+        // encrypt: true, // Optional - to be used with a private service
+        // recipientPublicKey: "publickeygoeshere" // Only required if `encrypt` is set to true
     ],
     [
         ... more resources here if needed ...
@@ -480,10 +504,32 @@ await qortalRequest({
 });
 ```
 
+### Decrypt encrypted/private data
+```
+let res = await qortalRequest({
+    action: "DECRYPT_DATA",
+    encryptedData: 'qortalEncryptedDatabMx4fELNTV+ifJxmv4+GcuOIJOTo+3qAvbWKNY2L1r',
+    publicKey: 'publickeygoeshere'
+});
+// Returns base64 encoded string of plaintext data
+```
+
+### Prompt user to save a file to disk
+Note: mimeType not required but recommended. If not specified, saving will fail if the mimeType is unable to be derived from the Blob.
+```
+let res = await qortalRequest({
+    action: "SAVE_FILE",
+    blob: dataBlob,
+    filename: "myfile.pdf",
+    mimeType: "application/pdf" // Optional but recommended
+});
+```
+
+
 ### Get wallet balance (QORT)
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "GET_WALLET_BALANCE",
     coin: "QORT"
 });
@@ -508,7 +554,7 @@ let res = await qortalRequest({
 ### Send QORT to address
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "SEND_COIN",
     coin: "QORT",
     destinationAddress: "QZLJV7wbaFyxaoZQsjm6rb9MWMiDzWsqM2",
@@ -519,7 +565,7 @@ await qortalRequest({
 ### Send foreign coin to address
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "SEND_COIN",
     coin: "LTC",
     destinationAddress: "LSdTvMHRm8sScqwCi6x9wzYQae8JeZhx6y",
@@ -549,7 +595,7 @@ let res = await qortalRequest({
 ### Send a group chat message
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "SEND_CHAT_MESSAGE",
     groupId: 0,
     message: "Test"
@@ -559,7 +605,7 @@ await qortalRequest({
 ### Send a private chat message
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "SEND_CHAT_MESSAGE",
     destinationAddress: "QZLJV7wbaFyxaoZQsjm6rb9MWMiDzWsqM2",
     message: "Test"
@@ -579,7 +625,7 @@ let res = await qortalRequest({
 ### Join a group
 _Requires user approval_
 ```
-await qortalRequest({
+let res = await qortalRequest({
     action: "JOIN_GROUP",
     groupId: 100
 });
@@ -770,6 +816,9 @@ let res = await qortalRequest({
 
 
 # Section 4: Examples
+
+Some example projects can be found [here](https://github.com/Qortal/Q-Apps). These can be cloned and modified, or used as a reference when creating a new app.
+
 
 ## Sample App
 

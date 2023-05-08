@@ -346,6 +346,10 @@ public class ArbitraryDataCleanupManager extends Thread {
 	/**
 	 * Iteratively walk through given directory and delete a single random file
 	 *
+	 * TODO: public data should be prioritized over private data
+	 * (unless this node is part of a data market contract for that data).
+	 * See: Service.privateServices() for a list of services containing private data.
+	 *
 	 * @param directory - the base directory
 	 * @return boolean - whether a file was deleted
 	 */

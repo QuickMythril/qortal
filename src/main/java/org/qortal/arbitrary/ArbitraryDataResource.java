@@ -150,6 +150,9 @@ public class ArbitraryDataResource {
 
             for (ArbitraryTransactionData transactionData : transactionDataList) {
                 ArbitraryDataFile arbitraryDataFile = ArbitraryDataFile.fromTransactionData(transactionData);
+                if (arbitraryDataFile == null) {
+                    continue;
+                }
 
                 // Delete any chunks or complete files from each transaction
                 arbitraryDataFile.deleteAll(deleteMetadata);

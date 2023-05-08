@@ -54,10 +54,6 @@ public class ArbitraryDataBuilder {
     /**
      * Process transactions, but do not build anything
      * This is useful for checking the status of a given resource
-     *
-     * @throws DataException
-     * @throws IOException
-     * @throws MissingDataException
      */
     public void process() throws DataException, IOException, MissingDataException {
         this.fetchTransactions();
@@ -69,10 +65,6 @@ public class ArbitraryDataBuilder {
 
     /**
      * Build the latest state of a given resource
-     *
-     * @throws DataException
-     * @throws IOException
-     * @throws MissingDataException
      */
     public void build() throws DataException, IOException, MissingDataException {
         this.process();

@@ -504,110 +504,118 @@ public class OnlineAccountsManager {
         computeOurAccountsForTimestamp(onlineAccountsTimestamp);
     }
 
-    private boolean computeOurAccountsForTimestamp(long onlineAccountsTimestamp) {
-        List<MintingAccountData> mintingAccounts;
-        try (final Repository repository = RepositoryManager.getRepository()) {
-            mintingAccounts = repository.getAccountRepository().getMintingAccounts();
+    private boolean computeOurAccountsForTimestamp(Long onlineAccountsTimestamp) {
+        if (onlineAccountsTimestamp != null) {
+            List<MintingAccountData> mintingAccounts;
+            try (final Repository repository = RepositoryManager.getRepository()) {
+                mintingAccounts = repository.getAccountRepository().getMintingAccounts();
 
-            // We have no accounts to send
-            if (mintingAccounts.isEmpty())
+                // We have no accounts to send
+                if (mintingAccounts.isEmpty())
+                    return false;
+
+                // Only active reward-shares allowed
+                Iterator<MintingAccountData> iterator = mintingAccounts.iterator();
+                int i = 0;
+                while (iterator.hasNext()) {
+                    MintingAccountData mintingAccountData = iterator.next();
+
+                    RewardShareData rewardShareData = repository.getAccountRepository().getRewardShare(mintingAccountData.getPublicKey());
+                    if (rewardShareData == null) {
+                        // Reward-share doesn't even exist - probably not a good sign
+                        iterator.remove();
+                        continue;
+                    }
+
+                    Account mintingAccount = new Account(repository, rewardShareData.getMinter());
+                    if (!mintingAccount.canMint()) {
+                        // Minting-account component of reward-share can no longer mint - disregard
+                        iterator.remove();
+                        continue;
+                    }
+
+                    if (++i > 1 + 1) {
+                        iterator.remove();
+                        continue;
+                    }
+                }
+            } catch (DataException e) {
+                LOGGER.warn(String.format("Repository issue trying to fetch minting accounts: %s", e.getMessage()));
                 return false;
+            }
 
-            // Only active reward-shares allowed
-            Iterator<MintingAccountData> iterator = mintingAccounts.iterator();
-            while (iterator.hasNext()) {
-                MintingAccountData mintingAccountData = iterator.next();
+            byte[] timestampBytes = Longs.toByteArray(onlineAccountsTimestamp);
+            List<OnlineAccountData> ourOnlineAccounts = new ArrayList<>();
 
-                RewardShareData rewardShareData = repository.getAccountRepository().getRewardShare(mintingAccountData.getPublicKey());
-                if (rewardShareData == null) {
-                    // Reward-share doesn't even exist - probably not a good sign
-                    iterator.remove();
+            int remaining = mintingAccounts.size();
+            for (MintingAccountData mintingAccountData : mintingAccounts) {
+                remaining--;
+                byte[] privateKey = mintingAccountData.getPrivateKey();
+                byte[] publicKey = Crypto.toPublicKey(privateKey);
+
+                // We don't want to compute the online account nonce and signature again if it already exists
+                Set<OnlineAccountData> onlineAccounts = this.currentOnlineAccounts.computeIfAbsent(onlineAccountsTimestamp, k -> ConcurrentHashMap.newKeySet());
+                boolean alreadyExists = onlineAccounts.stream().anyMatch(a -> Arrays.equals(a.getPublicKey(), publicKey));
+                if (alreadyExists) {
+                    this.hasOurOnlineAccounts = true;
+
+                    if (remaining > 0) {
+                        // Move on to next account
+                        continue;
+                    } else {
+                        // Everything exists, so return true
+                        return true;
+                    }
+                }
+
+                // Generate bytes for mempow
+                byte[] mempowBytes;
+                try {
+                    mempowBytes = this.getMemoryPoWBytes(publicKey, onlineAccountsTimestamp);
+                } catch (IOException e) {
+                    LOGGER.info("Unable to create bytes for MemoryPoW. Moving on to next account...");
                     continue;
                 }
 
-                Account mintingAccount = new Account(repository, rewardShareData.getMinter());
-                if (!mintingAccount.canMint()) {
-                    // Minting-account component of reward-share can no longer mint - disregard
-                    iterator.remove();
-                    continue;
-                }
-            }
-        } catch (DataException e) {
-            LOGGER.warn(String.format("Repository issue trying to fetch minting accounts: %s", e.getMessage()));
-            return false;
-        }
-
-        byte[] timestampBytes = Longs.toByteArray(onlineAccountsTimestamp);
-        List<OnlineAccountData> ourOnlineAccounts = new ArrayList<>();
-
-        int remaining = mintingAccounts.size();
-        for (MintingAccountData mintingAccountData : mintingAccounts) {
-            remaining--;
-            byte[] privateKey = mintingAccountData.getPrivateKey();
-            byte[] publicKey = Crypto.toPublicKey(privateKey);
-
-            // We don't want to compute the online account nonce and signature again if it already exists
-            Set<OnlineAccountData> onlineAccounts = this.currentOnlineAccounts.computeIfAbsent(onlineAccountsTimestamp, k -> ConcurrentHashMap.newKeySet());
-            boolean alreadyExists = onlineAccounts.stream().anyMatch(a -> Arrays.equals(a.getPublicKey(), publicKey));
-            if (alreadyExists) {
-                this.hasOurOnlineAccounts = true;
-
-                if (remaining > 0) {
-                    // Move on to next account
-                    continue;
-                }
-                else {
-                    // Everything exists, so return true
-                    return true;
-                }
-            }
-
-            // Generate bytes for mempow
-            byte[] mempowBytes;
-            try {
-                mempowBytes = this.getMemoryPoWBytes(publicKey, onlineAccountsTimestamp);
-            }
-            catch (IOException e) {
-                LOGGER.info("Unable to create bytes for MemoryPoW. Moving on to next account...");
-                continue;
-            }
-
-            // Compute nonce
-            Integer nonce;
-            try {
-                nonce = this.computeMemoryPoW(mempowBytes, publicKey, onlineAccountsTimestamp);
-                if (nonce == null) {
-                    // A nonce is required
+                // Compute nonce
+                Integer nonce;
+                try {
+                    nonce = this.computeMemoryPoW(mempowBytes, publicKey, onlineAccountsTimestamp);
+                    if (nonce == null) {
+                        // A nonce is required
+                        return false;
+                    }
+                } catch (TimeoutException e) {
+                    LOGGER.info(String.format("Timed out computing nonce for account %.8s", Base58.encode(publicKey)));
                     return false;
                 }
-            } catch (TimeoutException e) {
-                LOGGER.info(String.format("Timed out computing nonce for account %.8s", Base58.encode(publicKey)));
+
+                byte[] signature = Qortal25519Extras.signForAggregation(privateKey, timestampBytes);
+
+                // Our account is online
+                OnlineAccountData ourOnlineAccountData = new OnlineAccountData(onlineAccountsTimestamp, signature, publicKey, nonce);
+
+                // Make sure to verify before adding
+                if (verifyMemoryPoW(ourOnlineAccountData, null)) {
+                    ourOnlineAccounts.add(ourOnlineAccountData);
+                }
+            }
+
+            this.hasOurOnlineAccounts = !ourOnlineAccounts.isEmpty();
+
+            boolean hasInfoChanged = addAccounts(ourOnlineAccounts);
+
+            if (!hasInfoChanged)
                 return false;
-            }
 
-            byte[] signature = Qortal25519Extras.signForAggregation(privateKey, timestampBytes);
+            Network.getInstance().broadcast(peer -> new OnlineAccountsV3Message(ourOnlineAccounts));
 
-            // Our account is online
-            OnlineAccountData ourOnlineAccountData = new OnlineAccountData(onlineAccountsTimestamp, signature, publicKey, nonce);
+            LOGGER.debug("Broadcasted {} online account{} with timestamp {}", ourOnlineAccounts.size(), (ourOnlineAccounts.size() != 1 ? "s" : ""), onlineAccountsTimestamp);
 
-            // Make sure to verify before adding
-            if (verifyMemoryPoW(ourOnlineAccountData, null)) {
-                ourOnlineAccounts.add(ourOnlineAccountData);
-            }
+            return true;
         }
 
-        this.hasOurOnlineAccounts = !ourOnlineAccounts.isEmpty();
-
-        boolean hasInfoChanged = addAccounts(ourOnlineAccounts);
-
-        if (!hasInfoChanged)
-            return false;
-
-        Network.getInstance().broadcast(peer -> new OnlineAccountsV3Message(ourOnlineAccounts));
-
-        LOGGER.debug("Broadcasted {} online account{} with timestamp {}", ourOnlineAccounts.size(), (ourOnlineAccounts.size() != 1 ? "s" : ""), onlineAccountsTimestamp);
-
-        return true;
+        return false;
     }
 
 

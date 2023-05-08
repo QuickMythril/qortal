@@ -16,7 +16,6 @@ import org.qortal.arbitrary.misc.Service;
 import org.qortal.controller.Controller;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.data.transaction.TransactionData;
-import org.qortal.list.ResourceListManager;
 import org.qortal.network.Network;
 import org.qortal.network.Peer;
 import org.qortal.repository.DataException;

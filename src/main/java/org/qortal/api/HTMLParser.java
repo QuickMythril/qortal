@@ -55,12 +55,15 @@ public class HTMLParser {
             }
 
             // Escape and add vars
-            String service = this.service.toString().replace("\"","\\\"");
-            String name = this.resourceId != null ? this.resourceId.replace("\"","\\\"") : "";
-            String identifier = this.identifier != null ? this.identifier.replace("\"","\\\"") : "";
-            String path = this.path != null ? this.path.replace("\"","\\\"") : "";
-            String theme = this.theme != null ? this.theme.replace("\"","\\\"") : "";
-            String qdnContextVar = String.format("<script>var _qdnContext=\"%s\"; var _qdnTheme=\"%s\"; var _qdnService=\"%s\"; var _qdnName=\"%s\"; var _qdnIdentifier=\"%s\"; var _qdnPath=\"%s\"; var _qdnBase=\"%s\"; var _qdnBaseWithPath=\"%s\";</script>", this.qdnContext, theme, service, name, identifier, path, this.qdnBase, this.qdnBaseWithPath);
+            String qdnContext = this.qdnContext != null ? this.qdnContext.replace("\\", "").replace("\"","\\\"") : "";
+            String service = this.service.toString().replace("\\", "").replace("\"","\\\"");
+            String name = this.resourceId != null ? this.resourceId.replace("\\", "").replace("\"","\\\"") : "";
+            String identifier = this.identifier != null ? this.identifier.replace("\\", "").replace("\"","\\\"") : "";
+            String path = this.path != null ? this.path.replace("\\", "").replace("\"","\\\"") : "";
+            String theme = this.theme != null ? this.theme.replace("\\", "").replace("\"","\\\"") : "";
+            String qdnBase = this.qdnBase != null ? this.qdnBase.replace("\\", "").replace("\"","\\\"") : "";
+            String qdnBaseWithPath = this.qdnBaseWithPath != null ? this.qdnBaseWithPath.replace("\\", "").replace("\"","\\\"") : "";
+            String qdnContextVar = String.format("<script>var _qdnContext=\"%s\"; var _qdnTheme=\"%s\"; var _qdnService=\"%s\"; var _qdnName=\"%s\"; var _qdnIdentifier=\"%s\"; var _qdnPath=\"%s\"; var _qdnBase=\"%s\"; var _qdnBaseWithPath=\"%s\";</script>", qdnContext, theme, service, name, identifier, path, qdnBase, qdnBaseWithPath);
             head.get(0).prepend(qdnContextVar);
 
             // Add base href tag

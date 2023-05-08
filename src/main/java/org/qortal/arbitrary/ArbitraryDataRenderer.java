@@ -67,8 +67,8 @@ public class ArbitraryDataRenderer {
     }
 
     public HttpServletResponse render() {
-        if (!inPath.startsWith(File.separator)) {
-            inPath = File.separator + inPath;
+        if (!inPath.startsWith("/")) {
+            inPath = "/" + inPath;
         }
 
         // Don't render data if QDN is disabled

@@ -1,16 +1,23 @@
 #!/usr/bin/env perl
 
+# v4.0.2
+
 use JSON;
 use warnings;
 use strict;
 
 use Getopt::Std;
 use File::Basename;
+use Digest::SHA qw( sha256 sha256_hex );
+use Crypt::RIPEMD160;
 
 our %opt;
 getopts('dpst', \%opt);
 
 my $proc = basename($0);
+my $dirname = dirname($0);
+my $OPENSSL_SIGN = "${dirname}/openssl-sign.sh";
+my $OPENSSL_PRIV_TO_PUB = index(`$ENV{SHELL} -i -c 'openssl version;exit' 2>/dev/null`, 'OpenSSL 3.') != -1;
 
 if (@ARGV < 1) {
 	print STDERR "usage: $proc [-d] [-p] [-s] [-t] <tx-type> <privkey> <values> [<key-value pairs>]\n";
@@ -24,7 +31,15 @@ if (@ARGV < 1) {
 	exit 2;
 }
 
-our $BASE_URL = $ENV{BASE_URL} || $opt{t} ? 'http://localhost:62391' : 'http://localhost:12391';
+our @b58 = qw{
+      1 2 3 4 5 6 7 8 9
+    A B C D E F G H   J K L M N   P Q R S T U V W X Y Z
+    a b c d e f g h i j k   m n o p q r s t u v w x y z
+};
+our %b58 = map { $b58[$_] => $_ } 0 .. 57;
+our %reverseb58 = reverse %b58;
+
+our $BASE_URL = $ENV{BASE_URL} || ($opt{t} ? 'http://localhost:62391' : 'http://localhost:12391');
 our $DEFAULT_FEE = 0.001;
 
 our %TRANSACTION_TYPES = (
@@ -42,6 +57,7 @@ our %TRANSACTION_TYPES = (
 	create_group => {
 		url => 'groups/create',
 		required => [qw(groupName description isOpen approvalThreshold)],
+		defaults => { minimumBlockDelay => 10, maximumBlockDelay => 30 },
 		key_name => 'creatorPublicKey',
 	},
 	update_group => {
@@ -75,10 +91,10 @@ our %TRANSACTION_TYPES = (
 		key_name => 'ownerPublicKey',
 	},
 	remove_group_admin => {
-        url => 'groups/removeadmin',
-        required => [qw(groupId txGroupId admin)],
-        key_name => 'ownerPublicKey',
-    },
+		url => 'groups/removeadmin',
+		required => [qw(groupId txGroupId member)],
+		key_name => 'ownerPublicKey',
+	},
 	group_approval => {
 		url => 'groups/approval',
 		required => [qw(pendingSignature approval)],
@@ -113,7 +129,7 @@ our %TRANSACTION_TYPES = (
 	},
 	update_name => {
 		url => 'names/update',
-		required => [qw(newName newData)],
+		required => [qw(name newName newData)],
 		key_name => 'ownerPublicKey',
 	},
 	# reward-shares
@@ -144,13 +160,21 @@ our %TRANSACTION_TYPES = (
 		key_name => 'senderPublicKey',
 		pow_url => 'addresses/publicize/compute',
 	},
-	# Cross-chain trading
-	build_trade => {
-		url => 'crosschain/build',
-		required => [qw(initialQortAmount finalQortAmount fundingQortAmount secretHash bitcoinAmount)],
-		optional => [qw(tradeTimeout)],
+	# AT
+	deploy_at => {
+		url => 'at',
+		required => [qw(name description aTType tags creationBytes amount)],
+		optional => [qw(assetId)],
 		key_name => 'creatorPublicKey',
-		defaults => { tradeTimeout => 10800 },
+		defaults => { assetId => 0 },
+	},
+	# Cross-chain trading
+	create_trade => {
+		url => 'crosschain/tradebot/create',
+		required => [qw(qortAmount fundingQortAmount foreignAmount receivingAddress)],
+		optional => [qw(tradeTimeout foreignBlockchain)],
+		key_name => 'creatorPublicKey',
+		defaults => { tradeTimeout => 1440, foreignBlockchain => 'LITECOIN' },
 	},
 	trade_recipient => {
 		url => 'crosschain/tradeoffer/recipient',
@@ -196,7 +220,7 @@ if (@ARGV < @required + 1) {
 
 my $priv_key = shift @ARGV;
 
-my $account = account($priv_key);
+my $account;
 my $raw;
 
 if ($tx_type ne 'sign') {
@@ -215,6 +239,8 @@ if ($tx_type ne 'sign') {
 
 	%extras = (%extras, @ARGV);
 
+	$account = account($priv_key, %extras);
+
 	$raw = build_raw($tx_type, $account, %extras);
 	printf "Raw: %s\n", $raw if $opt{d} || (!$opt{s} && !$opt{p});
 
@@ -229,7 +255,7 @@ if ($tx_type ne 'sign') {
 }
 
 if ($opt{s}) {
-	my $signed = sign($account->{private}, $raw);
+	my $signed = sign($priv_key, $raw);
 	printf "Signed: %s\n", $signed if $opt{d} || $tx_type eq 'sign';
 
 	if ($opt{p}) {
@@ -246,13 +272,23 @@ if ($opt{s}) {
 }
 
 sub account {
-	my ($creator) = @_;
+	my ($privkey, %extras) = @_;
 
-	my $account = { private => $creator };
-	$account->{public} = api('utils/publickey', $creator);
-	$account->{address} = api('addresses/convert/{publickey}', '', '{publickey}', $account->{public});
+	my $account = { private => $privkey };
+	$account->{public} = $extras{publickey} || priv_to_pub($privkey);
+	$account->{address} = $extras{address} || pubkey_to_address($account->{public}); # api('addresses/convert/{publickey}', '', '{publickey}', $account->{public});
 
 	return $account;
+}
+
+sub priv_to_pub {
+	my ($privkey) = @_;
+
+	if ($OPENSSL_PRIV_TO_PUB) {
+		return openssl_priv_to_pub($privkey);
+	} else {
+		return api('utils/publickey', $privkey);
+	}
 }
 
 sub build_raw {
@@ -306,6 +342,21 @@ sub build_raw {
 sub sign {
 	my ($private, $raw) = @_;
 
+	if (-x "$OPENSSL_SIGN") {
+		my $private_hex = decode_base58($private);
+		chomp $private_hex;
+
+		my $raw_hex = decode_base58($raw);
+		chomp $raw_hex;
+
+		my $sig = `${OPENSSL_SIGN} ${private_hex} ${raw_hex}`;
+		chomp $sig;
+
+		my $sig58 = encode_base58(${raw_hex} . ${sig});
+		chomp $sig58;
+		return $sig58;
+	}
+
 	my $json = <<"	__JSON__";
 	{
 		"privateKey": "$private",
@@ -344,7 +395,14 @@ sub api {
 	my $curl = "curl --silent --output - --url '$BASE_URL/$url'";
 	if (defined $postdata && $postdata ne '') {
 		$postdata =~ tr|\n| |s;
-		$curl .= " --header 'Content-Type: application/json' --data-binary '$postdata'";
+
+		if ($postdata =~ /^\s*\{/so) {
+			$curl .= " --header 'Content-Type: application/json'";
+		} else {
+			$curl .= " --header 'Content-Type: text/plain'";
+		}
+
+		$curl .= " --data-binary '$postdata'";
 		$method = 'POST';
 	}
 	my $response = `$curl 2>/dev/null`; 
@@ -355,4 +413,88 @@ sub api {
 	}
 
 	return $response;
+}
+
+sub encode_base58 {
+    use integer;
+    my @in = map { hex($_) } ($_[0] =~ /(..)/g);
+    my $bzeros = length($1) if join('', @in) =~ /^(0*)/;
+    my @out;
+    my $size = 2 * scalar @in;
+    for my $c (@in) {
+        for (my $j = $size; $j--; ) {
+            $c += 256 * ($out[$j] // 0);
+            $out[$j] = $c % 58;
+            $c /= 58;
+        }
+    }
+    my $out = join('', map { $reverseb58{$_} } @out);
+    return $1 if $out =~ /(1{$bzeros}[^1].*)/;
+    return $1 if $out =~ /(1{$bzeros})/;
+    die "Invalid base58!\n";
+}
+
+
+sub decode_base58 {
+    use integer;
+    my @out;
+    my $azeros = length($1) if $_[0] =~ /^(1*)/;
+    for my $c ( map { $b58{$_} } $_[0] =~ /./g ) {
+	die("Invalid character!\n") unless defined $c;
+        for (my $j = length($_[0]); $j--; ) {
+            $c += 58 * ($out[$j] // 0);
+            $out[$j] = $c % 256;
+            $c /= 256;
+        }
+    }
+    shift @out while @out && $out[0] == 0;
+    unshift(@out, (0) x $azeros);
+    return sprintf('%02x' x @out, @out);
+}
+
+sub openssl_priv_to_pub {
+	my ($privkey) = @_;
+
+	my $privkey_hex = decode_base58($privkey);
+
+	my $key_type = "04"; # hex
+	my $length = "20"; # hex
+
+	my $asn1 = <<"__ASN1__";
+asn1=SEQUENCE:private_key
+
+[private_key]
+version=INTEGER:0
+included=SEQUENCE:key_info
+raw=FORMAT:HEX,OCTETSTRING:${key_type}${length}${privkey_hex}
+
+[key_info]
+type=OBJECT:ED25519
+
+__ASN1__
+
+	my $output = `echo "${asn1}" | openssl asn1parse -i -genconf - -out - | openssl pkey -in - -inform der -noout -text_pub`;
+
+	# remove colons
+	my $pubkey = '';
+	$pubkey .= $1 while $output =~ m/([0-9a-f]{2})(?::|$)/g;
+
+	return encode_base58($pubkey);
+}
+
+sub pubkey_to_address {
+	my ($pubkey) = @_;
+
+	my $pubkey_hex = decode_base58($pubkey);
+	my $pubkey_raw = pack('H*', $pubkey_hex);
+
+	my $pkh_hex = Crypt::RIPEMD160->hexhash(sha256($pubkey_raw));
+	$pkh_hex =~ tr/ //ds;
+
+	my $version = '3a'; # hex
+
+	my $raw = pack('H*', $version . $pkh_hex);
+	my $chksum = substr(sha256_hex(sha256($raw)), 0, 8);
+
+	return encode_base58($version . $pkh_hex . $chksum);
 }

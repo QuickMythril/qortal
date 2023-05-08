@@ -120,6 +120,75 @@ public class ChatResource {
 	}
 
 	@GET
+	@Path("/messages/count")
+	@Operation(
+			summary = "Count chat messages",
+			description = "Returns count of CHAT messages that match criteria. Must provide EITHER 'txGroupId' OR two 'involving' addresses.",
+			responses = {
+					@ApiResponse(
+							description = "count of messages",
+							content = @Content(
+									mediaType = MediaType.TEXT_PLAIN,
+									schema = @Schema(
+											type = "integer"
+									)
+							)
+					)
+			}
+	)
+	@ApiErrors({ApiError.INVALID_CRITERIA, ApiError.INVALID_ADDRESS, ApiError.REPOSITORY_ISSUE})
+	public int countChatMessages(@QueryParam("before") Long before, @QueryParam("after") Long after,
+										@QueryParam("txGroupId") Integer txGroupId,
+										@QueryParam("involving") List<String> involvingAddresses,
+										@QueryParam("reference") String reference,
+										@QueryParam("chatreference") String chatReference,
+										@QueryParam("haschatreference") Boolean hasChatReference,
+										@QueryParam("sender") String sender,
+										@QueryParam("encoding") Encoding encoding,
+										@Parameter(ref = "limit") @QueryParam("limit") Integer limit,
+										@Parameter(ref = "offset") @QueryParam("offset") Integer offset,
+										@Parameter(ref = "reverse") @QueryParam("reverse") Boolean reverse) {
+		// Check args meet expectations
+		if ((txGroupId == null && involvingAddresses.size() != 2)
+				|| (txGroupId != null && !involvingAddresses.isEmpty()))
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
+
+		// Check any provided addresses are valid
+		if (involvingAddresses.stream().anyMatch(address -> !Crypto.isValidAddress(address)))
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ADDRESS);
+
+		if (before != null && before < 1500000000000L)
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
+
+		if (after != null && after < 1500000000000L)
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA);
+
+		byte[] referenceBytes = null;
+		if (reference != null)
+			referenceBytes = Base58.decode(reference);
+
+		byte[] chatReferenceBytes = null;
+		if (chatReference != null)
+			chatReferenceBytes = Base58.decode(chatReference);
+
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			return repository.getChatRepository().getMessagesMatchingCriteria(
+					before,
+					after,
+					txGroupId,
+					referenceBytes,
+					chatReferenceBytes,
+					hasChatReference,
+					involvingAddresses,
+					sender,
+					encoding,
+					limit, offset, reverse).size();
+		} catch (DataException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
+		}
+	}
+
+	@GET
 	@Path("/message/{signature}")
 	@Operation(
 			summary = "Find chat message by signature",

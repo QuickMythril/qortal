@@ -1173,7 +1173,11 @@ public class ArbitraryResource {
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, error);
 			}
 
-			final Long minLatestBlockTimestamp = NTP.getTime() - (60 * 60 * 1000L);
+			final Long now = NTP.getTime();
+			if (now == null) {
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.NO_TIME_SYNC);
+			}
+			final Long minLatestBlockTimestamp = now - (60 * 60 * 1000L);
 			if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp)) {
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCKCHAIN_NEEDS_SYNC);
 			}
@@ -1231,7 +1235,7 @@ public class ArbitraryResource {
 					// The actual data will be in a randomly-named subfolder of tempDirectory
 					// Remove hidden folders, i.e. starting with "_", as some systems can add them, e.g. "__MACOSX"
 					String[] files = tempDirectory.toFile().list((parent, child) -> !child.startsWith("_"));
-					if (files.length == 1) { // Single directory or file only
+					if (files != null && files.length == 1) { // Single directory or file only
 						path = Paths.get(tempDirectory.toString(), files[0]).toString();
 					}
 				}
@@ -1263,7 +1267,8 @@ public class ArbitraryResource {
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_DATA, e.getMessage());
 			}
 
-		} catch (DataException | IOException e) {
+		} catch (Exception e) {
+			LOGGER.info("Exception when publishing data: ", e);
 			throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.REPOSITORY_ISSUE, e.getMessage());
 		}
 	}
@@ -1311,7 +1316,7 @@ public class ArbitraryResource {
 			if (filepath == null || filepath.isEmpty()) {
 				// No file path supplied - so check if this is a single file resource
 				String[] files = ArrayUtils.removeElement(outputPath.toFile().list(), ".qortal");
-				if (files.length == 1) {
+				if (files != null && files.length == 1) {
 					// This is a single file resource
 					filepath = files[0];
 				}

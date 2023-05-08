@@ -9,7 +9,6 @@ import org.qortal.utils.FilesystemUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -20,9 +19,9 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 
 public enum Service {
-    AUTO_UPDATE(1, false, null, false, null),
-    ARBITRARY_DATA(100, false, null, false, null),
-    QCHAT_ATTACHMENT(120, true, 1024*1024L, true, null) {
+    AUTO_UPDATE(1, false, null, false, false, null),
+    ARBITRARY_DATA(100, false, null, false, false, null),
+    QCHAT_ATTACHMENT(120, true, 1024*1024L, true, false, null) {
         @Override
         public ValidationResult validate(Path path) throws IOException {
             ValidationResult superclassResult = super.validate(path);
@@ -47,11 +46,14 @@ public enum Service {
             return ValidationResult.OK;
         }
     },
-    ATTACHMENT(130, false, null, true, null),
-    FILE(140, false, null, true, null),
-    FILES(150, false, null, false, null),
-    CHAIN_DATA(160, true, 239L, true, null),
-    WEBSITE(200, true, null, false, null) {
+    QCHAT_ATTACHMENT_PRIVATE(121, true, 1024*1024L, true, true, null),
+    ATTACHMENT(130, false, 50*1024*1024L, true, false, null),
+    ATTACHMENT_PRIVATE(131, true, 50*1024*1024L, true, true, null),
+    FILE(140, false, null, true, false, null),
+    FILE_PRIVATE(141, true, null, true, true, null),
+    FILES(150, false, null, false, false, null),
+    CHAIN_DATA(160, true, 239L, true, false, null),
+    WEBSITE(200, true, null, false, false, null) {
         @Override
         public ValidationResult validate(Path path) throws IOException {
             ValidationResult superclassResult = super.validate(path);
@@ -73,25 +75,30 @@ public enum Service {
             return ValidationResult.MISSING_INDEX_FILE;
         }
     },
-    GIT_REPOSITORY(300, false, null, false, null),
-    IMAGE(400, true, 10*1024*1024L, true, null),
-    THUMBNAIL(410, true, 500*1024L, true, null),
-    QCHAT_IMAGE(420, true, 500*1024L, true, null),
-    VIDEO(500, false, null, true, null),
-    AUDIO(600, false, null, true, null),
-    QCHAT_AUDIO(610, true, 10*1024*1024L, true, null),
-    QCHAT_VOICE(620, true, 10*1024*1024L, true, null),
-    VOICE(630, true, 10*1024*1024L, true, null),
-    PODCAST(640, false, null, true, null),
-    BLOG(700, false, null, false, null),
-    BLOG_POST(777, false, null, true, null),
-    BLOG_COMMENT(778, true, 500*1024L, true, null),
-    DOCUMENT(800, false, null, true, null),
-    LIST(900, true, null, true, null),
-    PLAYLIST(910, true, null, true, null),
-    APP(1000, true, 50*1024*1024L, false, null),
-    METADATA(1100, false, null, true, null),
-    JSON(1110, true, 25*1024L, true, null) {
+    GIT_REPOSITORY(300, false, null, false, false, null),
+    IMAGE(400, true, 10*1024*1024L, true, false, null),
+    IMAGE_PRIVATE(401, true, 10*1024*1024L, true, true, null),
+    THUMBNAIL(410, true, 500*1024L, true, false, null),
+    QCHAT_IMAGE(420, true, 500*1024L, true, false, null),
+    VIDEO(500, false, null, true, false, null),
+    VIDEO_PRIVATE(501, true, null, true, true, null),
+    AUDIO(600, false, null, true, false, null),
+    AUDIO_PRIVATE(601, true, null, true, true, null),
+    QCHAT_AUDIO(610, true, 10*1024*1024L, true, false, null),
+    QCHAT_VOICE(620, true, 10*1024*1024L, true, false, null),
+    VOICE(630, true, 10*1024*1024L, true, false, null),
+    VOICE_PRIVATE(631, true, 10*1024*1024L, true, true, null),
+    PODCAST(640, false, null, true, false, null),
+    BLOG(700, false, null, false, false, null),
+    BLOG_POST(777, false, null, true, false, null),
+    BLOG_COMMENT(778, true, 500*1024L, true, false, null),
+    DOCUMENT(800, false, null, true, false, null),
+    DOCUMENT_PRIVATE(801, true, null, true, true, null),
+    LIST(900, true, null, true, false, null),
+    PLAYLIST(910, true, null, true, false, null),
+    APP(1000, true, 50*1024*1024L, false, false, null),
+    METADATA(1100, false, null, true, false, null),
+    JSON(1110, true, 25*1024L, true, false, null) {
         @Override
         public ValidationResult validate(Path path) throws IOException {
             ValidationResult superclassResult = super.validate(path);
@@ -100,7 +107,7 @@ public enum Service {
             }
 
             // Require valid JSON
-            byte[] data = FilesystemUtils.getSingleFileContents(path);
+            byte[] data = FilesystemUtils.getSingleFileContents(path, 25*1024);
             String json = new String(data, StandardCharsets.UTF_8);
             try {
                 objectMapper.readTree(json);
@@ -110,7 +117,7 @@ public enum Service {
             }
         }
     },
-    GIF_REPOSITORY(1200, true, 25*1024*1024L, false, null) {
+    GIF_REPOSITORY(1200, true, 25*1024*1024L, false, false, null) {
         @Override
         public ValidationResult validate(Path path) throws IOException {
             ValidationResult superclassResult = super.validate(path);
@@ -146,27 +153,30 @@ public enum Service {
             return ValidationResult.OK;
         }
     },
-    STORE(1300, false, null, true, null),
-    PRODUCT(1310, false, null, true, null),
-    OFFER(1330, false, null, true, null),
-    COUPON(1340, false, null, true, null),
-    CODE(1400, false, null, true, null),
-    PLUGIN(1410, false, null, true, null),
-    EXTENSION(1420, false, null, true, null),
-    GAME(1500, false, null, false, null),
-    ITEM(1510, false, null, true, null),
-    NFT(1600, false, null, true, null),
-    DATABASE(1700, false, null, false, null),
-    SNAPSHOT(1710, false, null, false, null),
-    COMMENT(1800, true, 500*1024L, true, null),
-    CHAIN_COMMENT(1810, true, 239L, true, null),
-    MAIL(1900, true, 1024*1024L, true, null),
-    MESSAGE(1910, true, 1024*1024L, true, null);
+    STORE(1300, false, null, true, false, null),
+    PRODUCT(1310, false, null, true, false, null),
+    OFFER(1330, false, null, true, false, null),
+    COUPON(1340, false, null, true, false, null),
+    CODE(1400, false, null, true, false, null),
+    PLUGIN(1410, false, null, true, false, null),
+    EXTENSION(1420, false, null, true, false, null),
+    GAME(1500, false, null, false, false, null),
+    ITEM(1510, false, null, true, false, null),
+    NFT(1600, false, null, true, false, null),
+    DATABASE(1700, false, null, false, false, null),
+    SNAPSHOT(1710, false, null, false, false, null),
+    COMMENT(1800, true, 500*1024L, true, false, null),
+    CHAIN_COMMENT(1810, true, 239L, true, false, null),
+    MAIL(1900, true, 1024*1024L, true, false, null),
+    MAIL_PRIVATE(1901, true, 1024*1024L, true, true, null),
+    MESSAGE(1910, true, 1024*1024L, true, false, null),
+    MESSAGE_PRIVATE(1911, true, 1024*1024L, true, true, null);
 
     public final int value;
     private final boolean requiresValidation;
     private final Long maxSize;
     private final boolean single;
+    private final boolean isPrivate;
     private final List<String> requiredKeys;
 
     private static final Map<Integer, Service> map = stream(Service.values())
@@ -175,11 +185,14 @@ public enum Service {
     // For JSON validation
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    Service(int value, boolean requiresValidation, Long maxSize, boolean single, List<String> requiredKeys) {
+    private static final String encryptedDataPrefix = "qortalEncryptedData";
+
+    Service(int value, boolean requiresValidation, Long maxSize, boolean single, boolean isPrivate, List<String> requiredKeys) {
         this.value = value;
         this.requiresValidation = requiresValidation;
         this.maxSize = maxSize;
         this.single = single;
+        this.isPrivate = isPrivate;
         this.requiredKeys = requiredKeys;
     }
 
@@ -188,7 +201,9 @@ public enum Service {
             return ValidationResult.OK;
         }
 
-        byte[] data = FilesystemUtils.getSingleFileContents(path);
+        // Load the first 25KB of data. This only needs to be long enough to check the prefix
+        // and also to allow for possible additional future validation of smaller files.
+        byte[] data = FilesystemUtils.getSingleFileContents(path, 25*1024);
         long size = FilesystemUtils.getDirectorySize(path);
 
         // Validate max size if needed
@@ -201,6 +216,17 @@ public enum Service {
         // Validate file count if needed
         if (this.single && data == null) {
             return ValidationResult.INVALID_FILE_COUNT;
+        }
+
+        // Validate private data for single file resources
+        if (this.single) {
+            String dataString = new String(data, StandardCharsets.UTF_8);
+            if (this.isPrivate && !dataString.startsWith(encryptedDataPrefix)) {
+                return ValidationResult.DATA_NOT_ENCRYPTED;
+            }
+            if (!this.isPrivate && dataString.startsWith(encryptedDataPrefix)) {
+                return ValidationResult.DATA_ENCRYPTED;
+            }
         }
 
         // Validate required keys if needed
@@ -221,7 +247,12 @@ public enum Service {
     }
 
     public boolean isValidationRequired() {
-        return this.requiresValidation;
+        // We must always validate single file resources, to ensure they are actually a single file
+        return this.requiresValidation || this.single;
+    }
+
+    public boolean isPrivate() {
+        return this.isPrivate;
     }
 
     public static Service valueOf(int value) {
@@ -233,6 +264,37 @@ public enum Service {
         return new JSONObject(dataString);
     }
 
+    public static List<Service> publicServices() {
+        List<Service> privateServices = new ArrayList<>();
+        for (Service service : Service.values()) {
+            if (!service.isPrivate) {
+                privateServices.add(service);
+            }
+        }
+        return privateServices;
+    }
+
+    /**
+     * Fetch a list of Service objects that require encrypted data.
+     *
+     * These can ultimately be used to help inform the cleanup manager
+     * on the best order to delete files when the node runs out of space.
+     * Public data should be given priority over private data (unless
+     * this node is part of a data market contract for that data - this
+     * isn't developed yet).
+     *
+     * @return a list of Service objects that require encrypted data.
+     */
+    public static List<Service> privateServices() {
+        List<Service> privateServices = new ArrayList<>();
+        for (Service service : Service.values()) {
+            if (service.isPrivate) {
+                privateServices.add(service);
+            }
+        }
+        return privateServices;
+    }
+
     public enum ValidationResult {
         OK(1),
         MISSING_KEYS(2),
@@ -242,7 +304,9 @@ public enum Service {
         INVALID_FILE_EXTENSION(6),
         MISSING_DATA(7),
         INVALID_FILE_COUNT(8),
-        INVALID_CONTENT(9);
+        INVALID_CONTENT(9),
+        DATA_NOT_ENCRYPTED(10),
+        DATA_ENCRYPTED(10);
 
         public final int value;
 

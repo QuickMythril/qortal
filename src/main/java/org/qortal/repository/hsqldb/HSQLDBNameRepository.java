@@ -103,6 +103,57 @@ public class HSQLDBNameRepository implements NameRepository {
 		}
 	}
 
+	public List<NameData> searchNames(String query, Integer limit, Integer offset, Boolean reverse) throws DataException {
+		StringBuilder sql = new StringBuilder(512);
+		List<Object> bindParams = new ArrayList<>();
+
+		sql.append("SELECT name, reduced_name, owner, data, registered_when, updated_when, "
+				+ "is_for_sale, sale_price, reference, creation_group_id FROM Names "
+				+ "WHERE LCASE(name) LIKE ? ORDER BY name");
+
+		bindParams.add(String.format("%%%s%%", query.toLowerCase()));
+
+		if (reverse != null && reverse)
+			sql.append(" DESC");
+
+		HSQLDBRepository.limitOffsetSql(sql, limit, offset);
+
+		List<NameData> names = new ArrayList<>();
+
+		try (ResultSet resultSet = this.repository.checkedExecute(sql.toString(), bindParams.toArray())) {
+			if (resultSet == null)
+				return names;
+
+			do {
+				String name = resultSet.getString(1);
+				String reducedName = resultSet.getString(2);
+				String owner = resultSet.getString(3);
+				String data = resultSet.getString(4);
+				long registered = resultSet.getLong(5);
+
+				// Special handling for possibly-NULL "updated" column
+				Long updated = resultSet.getLong(6);
+				if (updated == 0 && resultSet.wasNull())
+					updated = null;
+
+				boolean isForSale = resultSet.getBoolean(7);
+
+				Long salePrice = resultSet.getLong(8);
+				if (salePrice == 0 && resultSet.wasNull())
+					salePrice = null;
+
+				byte[] reference = resultSet.getBytes(9);
+				int creationGroupId = resultSet.getInt(10);
+
+				names.add(new NameData(name, reducedName, owner, data, registered, updated, isForSale, salePrice, reference, creationGroupId));
+			} while (resultSet.next());
+
+			return names;
+		} catch (SQLException e) {
+			throw new DataException("Unable to search names in repository", e);
+		}
+	}
+
 	@Override
 	public List<NameData> getAllNames(Integer limit, Integer offset, Boolean reverse) throws DataException {
 		StringBuilder sql = new StringBuilder(256);
