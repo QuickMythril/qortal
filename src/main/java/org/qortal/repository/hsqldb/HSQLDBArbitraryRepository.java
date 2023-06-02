@@ -290,7 +290,10 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 		StringBuilder sql = new StringBuilder(512);
 		List<Object> bindParams = new ArrayList<>();
 
-		sql.append("SELECT name, service, identifier, MAX(size) AS max_size FROM ArbitraryTransactions WHERE 1=1");
+		sql.append("SELECT name, service, identifier, MAX(size) AS max_size, MIN(created_when) AS date_created, MAX(created_when) AS date_updated " +
+				"FROM ArbitraryTransactions " +
+				"JOIN Transactions USING (signature) " +
+				"WHERE 1=1");
 
 		if (service != null) {
 			sql.append(" AND service = ");
@@ -370,6 +373,8 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 				Service serviceResult = Service.valueOf(resultSet.getInt(2));
 				String identifierResult = resultSet.getString(3);
 				Integer sizeResult = resultSet.getInt(4);
+				long dateCreated = resultSet.getLong(5);
+				long dateUpdated = resultSet.getLong(6);
 
 				// We should filter out resources without names
 				if (nameResult == null) {
@@ -381,6 +386,8 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 				arbitraryResourceInfo.service = serviceResult;
 				arbitraryResourceInfo.identifier = identifierResult;
 				arbitraryResourceInfo.size = Longs.valueOf(sizeResult);
+				arbitraryResourceInfo.created = dateCreated;
+				arbitraryResourceInfo.updated = dateUpdated;
 
 				arbitraryResources.add(arbitraryResourceInfo);
 			} while (resultSet.next());
