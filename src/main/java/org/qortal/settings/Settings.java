@@ -219,7 +219,7 @@ public class Settings {
 	public long recoveryModeTimeout = 24 * 60 * 60 * 1000L;
 
 	/** Minimum peer version number required in order to sync with them */
-	private String minPeerVersion = "4.1.1";
+	private String minPeerVersion = "4.1.2";
 	/** Whether to allow connections with peers below minPeerVersion
 	 * If true, we won't sync with them but they can still sync with us, and will show in the peers list
 	 * If false, sync will be blocked both ways, and they will not appear in the peers list */

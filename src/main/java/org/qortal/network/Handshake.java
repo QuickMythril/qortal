@@ -265,7 +265,7 @@ public enum Handshake {
 	private static final long PEER_VERSION_131 = 0x0100030001L;
 
 	/** Minimum peer version that we are allowed to communicate with */
-	private static final String MIN_PEER_VERSION = "4.0.0";
+	private static final String MIN_PEER_VERSION = "4.1.1";
 
 	private static final int POW_BUFFER_SIZE_PRE_131 = 8 * 1024 * 1024; // bytes
 	private static final int POW_DIFFICULTY_PRE_131 = 8; // leading zero bits

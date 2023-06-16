@@ -472,6 +472,10 @@ function getDefaultTimeout(action) {
                 // Allow extra time for other actions that create transactions, even if there is no PoW
                 return 5 * 60 * 1000;
 
+            case "GET_WALLET_BALANCE":
+                // Getting a wallet balance can take a while, if there are many transactions
+                return 2 * 60 * 1000;
+
             default:
                 break;
         }

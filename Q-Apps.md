@@ -583,14 +583,15 @@ let res = await qortalRequest({
 ```
 
 ### Send foreign coin to address
-_Requires user approval_
+_Requires user approval_<br />
+Note: default fees can be found [here](https://github.com/Qortal/qortal-ui/blob/master/plugins/plugins/core/qdn/browser/browser.src.js#L205-L209).
 ```
 let res = await qortalRequest({
     action: "SEND_COIN",
     coin: "LTC",
     destinationAddress: "LSdTvMHRm8sScqwCi6x9wzYQae8JeZhx6y",
     amount: 1.00000000, // 1 LTC
-    fee: 0.00000020 // fee per byte
+    fee: 0.00000020 // Optional fee per byte (default fee used if omitted, recommended) - not used for QORT or ARRR
 });
 ```
 
