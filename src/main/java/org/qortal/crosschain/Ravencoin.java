@@ -43,19 +43,19 @@ public class Ravencoin extends Bitcoiny {
 			@Override
 			public Collection<Server> getServers() {
 				return Arrays.asList(
-						// Servers chosen on NO BASIS WHATSOEVER from various sources!
-						// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=rvn
-						//CLOSED new Server("aethyn.com", ConnectionType.SSL, 50002),
-						//CLOSED new Server("electrum2.rvn.rocks", ConnectionType.SSL, 50002),
-						//BEHIND new Server("electrum3.rvn.rocks", ConnectionType.SSL, 50002),
-						new Server("electrum.qortal.link", Server.ConnectionType.SSL, 56002),
-						new Server("electrum-rvn.qortal.online", ConnectionType.SSL, 50002),
-						new Server("electrum1-rvn.qortal.online", ConnectionType.SSL, 50002),
-						new Server("electrum1.cipig.net", ConnectionType.SSL, 20051),
-						new Server("electrum2.cipig.net", ConnectionType.SSL, 20051),
-						new Server("electrum3.cipig.net", ConnectionType.SSL, 20051),
-						new Server("rvn-dashboard.com", ConnectionType.SSL, 50002),
-						new Server("rvn4lyfe.com", ConnectionType.SSL, 50002));
+					// Servers chosen on NO BASIS WHATSOEVER from various sources!
+					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=rvn
+					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 56002),
+					new Server("electrum1-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
+					new Server("electrum2-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
+					new Server("electrum3-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
+					new Server("electrum4-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
+					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20051),
+					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20051),
+					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20051),
+					new Server("rvn-dashboard.com", Server.ConnectionType.SSL, 50002),
+					new Server("rvn4lyfe.com", Server.ConnectionType.SSL, 50002)
+				);
 			}
 
 			@Override
@@ -99,8 +99,9 @@ public class Ravencoin extends Bitcoiny {
 			@Override
 			public Collection<Server> getServers() {
 				return Arrays.asList(
-						new Server("localhost", ConnectionType.TCP, 50001),
-						new Server("localhost", ConnectionType.SSL, 50002));
+					new Server("localhost", Server.ConnectionType.TCP, 50001),
+					new Server("localhost", Server.ConnectionType.SSL, 50002)
+				);
 			}
 
 			@Override

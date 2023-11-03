@@ -3,8 +3,12 @@
 	"transactionExpiryPeriod": 86400000,
 	"maxBlockSize": 2097152,
 	"maxBytesPerUnitFee": 1024,
-	"unitFee": "0.001",
+	"unitFees": [
+		{ "timestamp": 0, "fee": "0.001" },
+		{ "timestamp": 1692118800000, "fee": "0.01" }
+	],
 	"nameRegistrationUnitFees": [
+		{ "timestamp": 0, "fee": "0.001" },
 		{ "timestamp": 1645372800000, "fee": "5" },
 		{ "timestamp": 1651420800000, "fee": "1.25" }
 	],
@@ -18,13 +22,15 @@
 	"maxRewardSharesPerFounderMintingAccount": 6,
 	"maxRewardSharesByTimestamp": [
 		{ "timestamp": 0, "maxShares": 6 },
-		{ "timestamp": 1657382400000, "maxShares": 3 }
+		{ "timestamp": 1657382400000, "maxShares": 3 },
+		{ "timestamp": 1698508800000, "maxShares": 2 }
 	],
 	"founderEffectiveMintingLevel": 10,
 	"onlineAccountSignaturesMinLifetime": 43200000,
 	"onlineAccountSignaturesMaxLifetime": 86400000,
 	"onlineAccountsModulusV2Timestamp": 1659801600000,
 	"selfSponsorshipAlgoV1SnapshotTimestamp": 1670230000000,
+	"mempowTransactionUpdatesTimestamp": 1693558800000,
 	"rewardsByHeight": [
 		{ "height": 1, "reward": 5.00 },
 		{ "height": 259201, "reward": 4.75 },

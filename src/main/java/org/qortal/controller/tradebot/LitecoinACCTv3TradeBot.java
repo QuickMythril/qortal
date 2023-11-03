@@ -325,15 +325,24 @@ public class LitecoinACCTv3TradeBot implements AcctTradeBot {
 					PrivateKeyAccount sender = new PrivateKeyAccount(threadsRepository, tradeBotData.getTradePrivateKey());
 					MessageTransaction messageTransaction = MessageTransaction.build(threadsRepository, sender, Group.NO_GROUP, messageRecipient, messageData, false, false);
 
+					LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", messageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
 					messageTransaction.computeNonce();
+					MessageTransactionData newMessageTransactionData = (MessageTransactionData) messageTransaction.getTransactionData();
+					LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), messageTransaction.getPoWDifficulty());
 					messageTransaction.sign(sender);
 
 					// reset repository state to prevent deadlock
 					threadsRepository.discardChanges();
-					ValidationResult result = messageTransaction.importAsUnconfirmed();
 
-					if (result != ValidationResult.OK) {
-						LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, result.name()));
+					if (messageTransaction.isSignatureValid()) {
+						ValidationResult result = messageTransaction.importAsUnconfirmed();
+
+						if (result != ValidationResult.OK) {
+							LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, result.name()));
+						}
+					}
+					else {
+						LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: signature invalid", messageRecipient));
 					}
 				} catch (DataException e) {
 					LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, e.getMessage()));
@@ -556,15 +565,25 @@ public class LitecoinACCTv3TradeBot implements AcctTradeBot {
 				PrivateKeyAccount sender = new PrivateKeyAccount(repository, tradeBotData.getTradePrivateKey());
 				MessageTransaction outgoingMessageTransaction = MessageTransaction.build(repository, sender, Group.NO_GROUP, messageRecipient, outgoingMessageData, false, false);
 
+				LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", outgoingMessageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
 				outgoingMessageTransaction.computeNonce();
+				MessageTransactionData newMessageTransactionData = (MessageTransactionData) outgoingMessageTransaction.getTransactionData();
+				LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), outgoingMessageTransaction.getPoWDifficulty());
 				outgoingMessageTransaction.sign(sender);
 
 				// reset repository state to prevent deadlock
 				repository.discardChanges();
-				ValidationResult result = outgoingMessageTransaction.importAsUnconfirmed();
 
-				if (result != ValidationResult.OK) {
-					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+				if (outgoingMessageTransaction.isSignatureValid()) {
+					ValidationResult result = outgoingMessageTransaction.importAsUnconfirmed();
+
+					if (result != ValidationResult.OK) {
+						LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+						return;
+					}
+				}
+				else {
+					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: signature invalid", messageRecipient));
 					return;
 				}
 			}
@@ -676,15 +695,25 @@ public class LitecoinACCTv3TradeBot implements AcctTradeBot {
 			PrivateKeyAccount sender = new PrivateKeyAccount(repository, tradeBotData.getTradePrivateKey());
 			MessageTransaction messageTransaction = MessageTransaction.build(repository, sender, Group.NO_GROUP, messageRecipient, messageData, false, false);
 
+			LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", messageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
 			messageTransaction.computeNonce();
+			MessageTransactionData newMessageTransactionData = (MessageTransactionData) messageTransaction.getTransactionData();
+			LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), messageTransaction.getPoWDifficulty());
 			messageTransaction.sign(sender);
 
 			// Reset repository state to prevent deadlock
 			repository.discardChanges();
-			ValidationResult result = messageTransaction.importAsUnconfirmed();
 
-			if (result != ValidationResult.OK) {
-				LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+			if (messageTransaction.isSignatureValid()) {
+				ValidationResult result = messageTransaction.importAsUnconfirmed();
+
+				if (result != ValidationResult.OK) {
+					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+					return;
+				}
+			}
+			else {
+				LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: signature invalid", messageRecipient));
 				return;
 			}
 		}

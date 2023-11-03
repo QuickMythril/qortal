@@ -562,6 +562,9 @@ public class BlockMinter extends Thread {
 			// Sign to create block's signature
 			newBlock.sign();
 
+			// Ensure online accounts are fully re-validated in this final check
+			newBlock.clearOnlineAccountsValidationCache();
+
 			// Is newBlock still valid?
 			ValidationResult validationResult = newBlock.isValid();
 			if (validationResult != ValidationResult.OK)

@@ -229,13 +229,6 @@ public class Synchronizer extends Thread {
 		peers.removeIf(Controller.hasOldVersion);
 
 		checkRecoveryModeForPeers(peers);
-		if (recoveryMode) {
-			// Needs a mutable copy of the unmodifiableList
-			peers = new ArrayList<>(Network.getInstance().getImmutableHandshakedPeers());
-			peers.removeIf(Controller.hasOnlyGenesisBlock);
-			peers.removeIf(Controller.hasMisbehaved);
-			peers.removeIf(Controller.hasOldVersion);
-		}
 
 		// Check we have enough peers to potentially synchronize
 		if (peers.size() < Settings.getInstance().getMinBlockchainPeers())
@@ -262,10 +255,7 @@ public class Synchronizer extends Thread {
 		peers.removeIf(Controller.hasInferiorChainTip);
 
 		// Remove any peers that are no longer on a recent block since the last check
-		// Except for times when we're in recovery mode, in which case we need to keep them
-		if (!recoveryMode) {
-			peers.removeIf(Controller.hasNoRecentBlock);
-		}
+		peers.removeIf(Controller.hasNoRecentBlock);
 
 		final int peersRemoved = peersBeforeComparison - peers.size();
 		if (peersRemoved > 0 && peers.size() > 0)
@@ -1340,8 +1330,8 @@ public class Synchronizer extends Thread {
 				return SynchronizationResult.INVALID_DATA;
 			}
 
-			// Final check to make sure the peer isn't out of date (except for when we're in recovery mode)
-			if (!recoveryMode && peer.getChainTipData() != null) {
+			// Final check to make sure the peer isn't out of date
+			if (peer.getChainTipData() != null) {
 				final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
 				final Long peerLastBlockTimestamp = peer.getChainTipData().getTimestamp();
 				if (peerLastBlockTimestamp == null || peerLastBlockTimestamp < minLatestBlockTimestamp) {

@@ -48,9 +48,6 @@ public class BlockChain {
 	/** Transaction expiry period, starting from transaction's timestamp, in milliseconds. */
 	private long transactionExpiryPeriod;
 
-	@XmlJavaTypeAdapter(value = org.qortal.api.AmountTypeAdapter.class)
-	private long unitFee;
-
 	private int maxBytesPerUnitFee;
 
 	/** Maximum acceptable timestamp disagreement offset in milliseconds. */
@@ -89,6 +86,7 @@ public class BlockChain {
 		@XmlJavaTypeAdapter(value = org.qortal.api.AmountTypeAdapter.class)
 		public long fee;
 	}
+	private List<UnitFeesByTimestamp> unitFees;
 	private List<UnitFeesByTimestamp> nameRegistrationUnitFees;
 
 	/** Map of which blockchain features are enabled when (height/timestamp) */
@@ -210,6 +208,9 @@ public class BlockChain {
 
 	/** Snapshot timestamp for self sponsorship algo V1 */
 	private long selfSponsorshipAlgoV1SnapshotTimestamp;
+
+	/** Feature-trigger timestamp to modify behaviour of various transactions that support mempow */
+	private long mempowTransactionUpdatesTimestamp;
 
 	/** Max reward shares by block height */
 	public static class MaxRewardSharesByTimestamp {
@@ -346,10 +347,6 @@ public class BlockChain {
 		return this.isTestChain;
 	}
 
-	public long getUnitFee() {
-		return this.unitFee;
-	}
-
 	public int getMaxBytesPerUnitFee() {
 		return this.maxBytesPerUnitFee;
 	}
@@ -374,6 +371,11 @@ public class BlockChain {
 	// Self sponsorship algo
 	public long getSelfSponsorshipAlgoV1SnapshotTimestamp() {
 		return this.selfSponsorshipAlgoV1SnapshotTimestamp;
+	}
+
+	// Feature-trigger timestamp to modify behaviour of various transactions that support mempow
+	public long getMemPoWTransactionUpdatesTimestamp() {
+		return this.mempowTransactionUpdatesTimestamp;
 	}
 
 	/** Returns true if approval-needing transaction types require a txGroupId other than NO_GROUP. */
@@ -547,13 +549,22 @@ public class BlockChain {
 		throw new IllegalStateException(String.format("No block timing info available for height %d", ourHeight));
 	}
 
+	public long getUnitFeeAtTimestamp(long ourTimestamp) {
+		for (int i = unitFees.size() - 1; i >= 0; --i)
+			if (unitFees.get(i).timestamp <= ourTimestamp)
+				return unitFees.get(i).fee;
+
+		// Shouldn't happen, but set a sensible default just in case
+		return 100000;
+	}
+
 	public long getNameRegistrationUnitFeeAtTimestamp(long ourTimestamp) {
 		for (int i = nameRegistrationUnitFees.size() - 1; i >= 0; --i)
 			if (nameRegistrationUnitFees.get(i).timestamp <= ourTimestamp)
 				return nameRegistrationUnitFees.get(i).fee;
 
-		// Default to system-wide unit fee
-		return this.getUnitFee();
+		// Shouldn't happen, but set a sensible default just in case
+		return 100000;
 	}
 
 	public int getMaxRewardSharesAtTimestamp(long ourTimestamp) {

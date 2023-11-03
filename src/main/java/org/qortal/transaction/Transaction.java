@@ -13,6 +13,7 @@ import org.qortal.account.PublicKeyAccount;
 import org.qortal.asset.Asset;
 import org.qortal.block.BlockChain;
 import org.qortal.controller.Controller;
+import org.qortal.controller.TransactionImporter;
 import org.qortal.crypto.Crypto;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.group.GroupApprovalData;
@@ -247,7 +248,8 @@ public abstract class Transaction {
 		GROUP_APPROVAL_REQUIRED(98),
 		ACCOUNT_NOT_TRANSFERABLE(99),
 		INVALID_BUT_OK(999),
-		NOT_YET_RELEASED(1000);
+		NOT_YET_RELEASED(1000),
+		NOT_SUPPORTED(1001);
 
 		public final int value;
 
@@ -377,7 +379,7 @@ public abstract class Transaction {
 	 * @return
 	 */
 	public long getUnitFee(Long timestamp) {
-		return BlockChain.getInstance().getUnitFee();
+		return BlockChain.getInstance().getUnitFeeAtTimestamp(timestamp);
 	}
 
 	/**
@@ -617,7 +619,10 @@ public abstract class Transaction {
 	}
 
 	private int countUnconfirmedByCreator(PublicKeyAccount creator) throws DataException {
-		List<TransactionData> unconfirmedTransactions = repository.getTransactionRepository().getUnconfirmedTransactions();
+		List<TransactionData> unconfirmedTransactions = TransactionImporter.getInstance().unconfirmedTransactionsCache;
+		if (unconfirmedTransactions == null) {
+			unconfirmedTransactions = repository.getTransactionRepository().getUnconfirmedTransactions();
+		}
 
 		// We exclude CHAT transactions as they never get included into blocks and
 		// have spam/DoS prevention by requiring proof of work
@@ -632,7 +637,7 @@ public abstract class Transaction {
 	}
 
 	/**
-	 * Returns sorted, unconfirmed transactions, excluding invalid.
+	 * Returns sorted, unconfirmed transactions, excluding invalid and unconfirmable.
 	 * 
 	 * @return sorted, unconfirmed transactions
 	 * @throws DataException
@@ -650,7 +655,8 @@ public abstract class Transaction {
 			TransactionData transactionData = unconfirmedTransactionsIterator.next();
 			Transaction transaction = Transaction.fromData(repository, transactionData);
 
-			if (transaction.isStillValidUnconfirmed(latestBlockData.getTimestamp()) != ValidationResult.OK)
+			// Must be confirmable and valid
+			if (!transaction.isConfirmable() || transaction.isStillValidUnconfirmed(latestBlockData.getTimestamp()) != ValidationResult.OK)
 				unconfirmedTransactionsIterator.remove();
 		}
 
@@ -886,6 +892,17 @@ public abstract class Transaction {
 	 */
 	protected void onImportAsUnconfirmed() throws DataException {
 		/* To be optionally overridden */
+	}
+
+	/**
+	 * Returns whether transaction is 'confirmable' - i.e. is of a type that
+	 * can be included in a block. Some transactions are 'unconfirmable'
+	 * and therefore must remain in the mempool until they expire.
+	 * @return
+	 */
+	public boolean isConfirmable() {
+		/* To be optionally overridden */
+		return true;
 	}
 
 	/**

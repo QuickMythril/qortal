@@ -33,7 +33,9 @@ public class MessageTransaction extends Transaction {
 
 	public static final int MAX_DATA_SIZE = 4000;
 	public static final int POW_BUFFER_SIZE = 8 * 1024 * 1024; // bytes
-	public static final int POW_DIFFICULTY = 14; // leading zero bits
+	public static final int POW_DIFFICULTY_V1 = 14; // leading zero bits
+	public static final int POW_DIFFICULTY_V2_CONFIRMABLE = 16; // leading zero bits
+	public static final int POW_DIFFICULTY_V2_UNCONFIRMABLE = 12; // leading zero bits
 
 	// Properties
 
@@ -109,7 +111,17 @@ public class MessageTransaction extends Transaction {
 		MessageTransactionTransformer.clearNonce(transactionBytes);
 
 		// Calculate nonce
-		this.messageTransactionData.setNonce(MemoryPoW.compute2(transactionBytes, POW_BUFFER_SIZE, POW_DIFFICULTY));
+		this.messageTransactionData.setNonce(MemoryPoW.compute2(transactionBytes, POW_BUFFER_SIZE, getPoWDifficulty()));
+	}
+
+	public int getPoWDifficulty() {
+		// The difficulty changes at the "mempow transactions updates" timestamp
+		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+			// If this message is confirmable then require a higher difficulty
+			return this.isConfirmable() ? POW_DIFFICULTY_V2_CONFIRMABLE : POW_DIFFICULTY_V2_UNCONFIRMABLE;
+		}
+		// Before feature trigger timestamp, so use existing difficulty value
+		return POW_DIFFICULTY_V1;
 	}
 
 	/**
@@ -184,6 +196,18 @@ public class MessageTransaction extends Transaction {
 	}
 
 	@Override
+	public boolean isConfirmable() {
+		// After feature trigger timestamp, only messages to an AT address can confirm
+		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+			if (this.messageTransactionData.getRecipient() == null || !this.messageTransactionData.getRecipient().toUpperCase().startsWith("A")) {
+				// Message isn't to an AT address, so this transaction is unconfirmable
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
 	public ValidationResult isValid() throws DataException {
 		// Nonce checking is done via isSignatureValid() as that method is only called once per import
 
@@ -235,7 +259,7 @@ public class MessageTransaction extends Transaction {
 		MessageTransactionTransformer.clearNonce(transactionBytes);
 
 		// Check nonce
-		return MemoryPoW.verify2(transactionBytes, POW_BUFFER_SIZE, POW_DIFFICULTY, nonce);
+		return MemoryPoW.verify2(transactionBytes, POW_BUFFER_SIZE, getPoWDifficulty(), nonce);
 	}
 
 	@Override
@@ -256,6 +280,11 @@ public class MessageTransaction extends Transaction {
 
 	@Override
 	public void process() throws DataException {
+		// Only certain MESSAGE transactions are able to confirm
+		if (!this.isConfirmable()) {
+			throw new DataException("Unconfirmable MESSAGE transactions should never be processed");
+		}
+
 		// If we have no amount then there's nothing to do
 		if (this.messageTransactionData.getAmount() == 0L)
 			return;
@@ -280,6 +309,11 @@ public class MessageTransaction extends Transaction {
 
 	@Override
 	public void orphan() throws DataException {
+		// Only certain MESSAGE transactions are able to confirm
+		if (!this.isConfirmable()) {
+			throw new DataException("Unconfirmable MESSAGE transactions should never be orphaned");
+		}
+
 		// If we have no amount then there's nothing to do
 		if (this.messageTransactionData.getAmount() == 0L)
 			return;

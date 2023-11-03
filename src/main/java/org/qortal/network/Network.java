@@ -8,7 +8,6 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.qortal.block.BlockChain;
 import org.qortal.controller.Controller;
 import org.qortal.controller.arbitrary.ArbitraryDataFileListManager;
-import org.qortal.controller.arbitrary.ArbitraryDataManager;
 import org.qortal.crypto.Crypto;
 import org.qortal.data.block.BlockData;
 import org.qortal.data.block.BlockSummaryData;
@@ -121,6 +120,22 @@ public class Network {
     private final List<Peer> outboundHandshakedPeers = Collections.synchronizedList(new ArrayList<>());
     private List<Peer> immutableOutboundHandshakedPeers = Collections.emptyList(); // always rebuilt from mutable, synced list above
 
+
+    /**
+     * Count threads per message type in order to enforce limits
+     */
+    private final Map<MessageType, Integer> threadsPerMessageType = Collections.synchronizedMap(new HashMap<>());
+
+    /**
+     * Keep track of total thread count, to warn when the thread pool is getting low
+     */
+    private int totalThreadCount = 0;
+
+    /**
+     * Thresholds at which to warn about the number of active threads
+     */
+    private final int threadCountWarningThreshold = (int) (Settings.getInstance().getMaxNetworkThreadPoolSize() * 0.9f);
+    private final Integer threadCountPerMessageTypeWarningThreshold = Settings.getInstance().getThreadCountPerMessageTypeWarningThreshold();
 
     private final List<PeerAddress> selfPeers = new ArrayList<>();
 
@@ -238,6 +253,16 @@ public class Network {
 
     private static class SingletonContainer {
         private static final Network INSTANCE = new Network();
+    }
+
+    public Map<MessageType, Integer> getThreadsPerMessageType() {
+        return this.threadsPerMessageType;
+    }
+
+    public int getTotalThreadCount() {
+        synchronized (this) {
+            return this.totalThreadCount;
+        }
     }
 
     public static Network getInstance() {
@@ -952,6 +977,37 @@ public class Network {
 
         // Should be non-handshaking messages from now on
 
+        // Limit threads per message type and discard if there are already too many
+        Integer maxThreadsForMessageType = Settings.getInstance().getMaxThreadsForMessageType(message.getType());
+        if (maxThreadsForMessageType != null) {
+            Integer threadCount = threadsPerMessageType.get(message.getType());
+            if (threadCount != null && threadCount >= maxThreadsForMessageType) {
+                LOGGER.trace("Discarding {} message as there are already {} active threads", message.getType().name(), threadCount);
+                return;
+            }
+        }
+
+        // Warn if necessary
+        if (threadCountPerMessageTypeWarningThreshold != null) {
+            Integer threadCount = threadsPerMessageType.get(message.getType());
+            if (threadCount != null && threadCount > threadCountPerMessageTypeWarningThreshold) {
+                LOGGER.info("Warning: high thread count for {} message type: {}", message.getType().name(), threadCount);
+            }
+        }
+
+        // Add to per-message thread count (first initializing to 0 if not already present)
+        threadsPerMessageType.computeIfAbsent(message.getType(), key -> 0);
+        threadsPerMessageType.computeIfPresent(message.getType(), (key, value) -> value + 1);
+        
+        // Add to total thread count
+        synchronized (this) {
+            totalThreadCount++;
+
+            if (totalThreadCount >= threadCountWarningThreshold) {
+                LOGGER.info("Warning: high total thread count: {} / {}", totalThreadCount, Settings.getInstance().getMaxNetworkThreadPoolSize());
+            }
+        }
+
         // Ordered by message type value
         switch (message.getType()) {
             case GET_PEERS:
@@ -978,6 +1034,15 @@ public class Network {
                 // Bump up to controller for possible action
                 Controller.getInstance().onNetworkMessage(peer, message);
                 break;
+        }
+
+        // Remove from per-message thread count (first initializing to 0 if not already present)
+        threadsPerMessageType.computeIfAbsent(message.getType(), key -> 0);
+        threadsPerMessageType.computeIfPresent(message.getType(), (key, value) -> value - 1);
+
+        // Remove from total thread count
+        synchronized (this) {
+            totalThreadCount--;
         }
     }
 

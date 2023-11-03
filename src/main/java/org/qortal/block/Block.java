@@ -84,6 +84,7 @@ public class Block {
 		TRANSACTION_PROCESSING_FAILED(53),
 		TRANSACTION_ALREADY_PROCESSED(54),
 		TRANSACTION_NEEDS_APPROVAL(55),
+		TRANSACTION_NOT_CONFIRMABLE(56),
 		AT_STATES_MISMATCH(61),
 		ONLINE_ACCOUNTS_INVALID(70),
 		ONLINE_ACCOUNT_UNKNOWN(71),
@@ -129,6 +130,9 @@ public class Block {
 	protected List<ATStateData> ourAtStates;
 	/** Locally-generated AT fees */
 	protected long ourAtFees; // Generated locally
+
+	/** Cached online accounts validation decision, to avoid revalidating when true */
+	private boolean onlineAccountsAlreadyValid = false;
 
 	@FunctionalInterface
 	private interface BlockRewardDistributor {
@@ -562,6 +566,13 @@ public class Block {
 		}
 	}
 
+
+	/**
+	 * Force online accounts to be revalidated, e.g. at final stage of block minting.
+	 */
+	public void clearOnlineAccountsValidationCache() {
+		this.onlineAccountsAlreadyValid = false;
+	}
 
 	// More information
 
@@ -1043,6 +1054,10 @@ public class Block {
 		if (this.blockData.getHeight() != null && this.blockData.getHeight() == 1)
 			return ValidationResult.OK;
 
+		// Don't bother revalidating if accounts have already been validated in this block
+		if (this.onlineAccountsAlreadyValid)
+			return ValidationResult.OK;
+
 		// Expand block's online accounts indexes into actual accounts
 		ConciseSet accountIndexes = BlockTransformer.decodeOnlineAccounts(this.blockData.getEncodedOnlineAccounts());
 		// We use count of online accounts to validate decoded account indexes
@@ -1129,6 +1144,9 @@ public class Block {
 
 		// All online accounts valid, so save our list of online accounts for potential later use
 		this.cachedOnlineRewardShares = onlineRewardShares;
+
+		// Remember that the accounts are valid, to speed up subsequent checks
+		this.onlineAccountsAlreadyValid = true;
 
 		return ValidationResult.OK;
 	}
@@ -1233,6 +1251,13 @@ public class Block {
 				if (transactionData.getTimestamp() > this.blockData.getTimestamp()
 						|| transaction.getDeadline() <= this.blockData.getTimestamp())
 					return ValidationResult.TRANSACTION_TIMESTAMP_INVALID;
+
+				// After feature trigger, check that this transaction is confirmable
+				if (transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+					if (!transaction.isConfirmable()) {
+						return ValidationResult.TRANSACTION_NOT_CONFIRMABLE;
+					}
+				}
 
 				// Check transaction isn't already included in a block
 				if (this.repository.getTransactionRepository().isConfirmed(transactionData.getSignature()))

@@ -44,7 +44,7 @@ public class BuySellTests extends Common {
 		bob = Common.getTestAccount(repository, "bob");
 
 		name = "test name" + " " + random.nextInt(1_000_000);
-		price = random.nextInt(1000) * Amounts.MULTIPLIER;
+		price = (random.nextInt(1000) + 1) * Amounts.MULTIPLIER;
 	}
 
 	@After

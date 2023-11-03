@@ -40,7 +40,7 @@ our %b58 = map { $b58[$_] => $_ } 0 .. 57;
 our %reverseb58 = reverse %b58;
 
 our $BASE_URL = $ENV{BASE_URL} || ($opt{t} ? 'http://localhost:62391' : 'http://localhost:12391');
-our $DEFAULT_FEE = 0.001;
+our $DEFAULT_FEE = 0.01;
 
 our %TRANSACTION_TYPES = (
 	payment => {
@@ -92,7 +92,7 @@ our %TRANSACTION_TYPES = (
 	},
 	remove_group_admin => {
 		url => 'groups/removeadmin',
-		required => [qw(groupId txGroupId member)],
+		required => [qw(groupId txGroupId admin)],
 		key_name => 'ownerPublicKey',
 	},
 	group_approval => {

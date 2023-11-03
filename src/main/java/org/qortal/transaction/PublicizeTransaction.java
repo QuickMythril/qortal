@@ -7,6 +7,7 @@ import org.qortal.account.Account;
 import org.qortal.account.PublicKeyAccount;
 import org.qortal.api.resource.TransactionsResource.ConfirmationStatus;
 import org.qortal.asset.Asset;
+import org.qortal.block.BlockChain;
 import org.qortal.crypto.MemoryPoW;
 import org.qortal.data.transaction.PublicizeTransactionData;
 import org.qortal.data.transaction.TransactionData;
@@ -89,6 +90,12 @@ public class PublicizeTransaction extends Transaction {
 
 	@Override
 	public ValidationResult isValid() throws DataException {
+		// Disable completely after feature-trigger timestamp, at the same time that mempow difficulties are being increased.
+		// It could be enabled again in the future, but preferably with an enforced minimum fee instead of allowing a mempow nonce.
+		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+			return ValidationResult.NOT_SUPPORTED;
+		}
+
 		// There can be only one
 		List<byte[]> signatures = this.repository.getTransactionRepository().getSignaturesMatchingCriteria(
 				TransactionType.PUBLICIZE,

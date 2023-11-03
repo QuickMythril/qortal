@@ -3,57 +3,53 @@ package org.qortal.test.crosschain;
 import cash.z.wallet.sdk.rpc.CompactFormats.*;
 import com.google.common.hash.HashCode;
 import com.google.common.primitives.Bytes;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.store.BlockStoreException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.qortal.controller.tradebot.TradeBot;
 import org.qortal.crosschain.*;
 import org.qortal.crypto.Crypto;
-import org.qortal.repository.DataException;
-import org.qortal.test.common.Common;
 import org.qortal.transform.TransformationException;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.qortal.crosschain.BitcoinyHTLC.Status.*;
 
-public class PirateChainTests extends Common {
+public class PirateChainTests extends BitcoinyTests {
 
-	private PirateChain pirateChain;
-
-	@Before
-	public void beforeTest() throws DataException {
-		Common.useDefaultSettings();
-		pirateChain = PirateChain.getInstance();
+	@Override
+	protected String getCoinName() {
+		return "PirateChain";
 	}
 
-	@After
-	public void afterTest() {
+	@Override
+	protected String getCoinSymbol() {
+		return "ARRR";
+	}
+
+	@Override
+	protected Bitcoiny getCoin() {
+		return PirateChain.getInstance();
+	}
+
+	@Override
+	protected void resetCoinForTesting() {
 		Litecoin.resetForTesting();
-		pirateChain = null;
 	}
 
-	@Test
-	public void testGetMedianBlockTime() throws BlockStoreException, ForeignBlockchainException {
-		long before = System.currentTimeMillis();
-		System.out.println(String.format("Pirate Chain median blocktime: %d", pirateChain.getMedianBlockTime()));
-		long afterFirst = System.currentTimeMillis();
+	@Override
+	protected String getDeterministicKey58() {
+		return null;
+	}
 
-		System.out.println(String.format("Pirate Chain median blocktime: %d", pirateChain.getMedianBlockTime()));
-		long afterSecond = System.currentTimeMillis();
+	@Override
+	protected String getRecipient() {
+		return null;
+	}
 
-		long firstPeriod = afterFirst - before;
-		long secondPeriod = afterSecond - afterFirst;
-
-		System.out.println(String.format("1st call: %d ms, 2nd call: %d ms", firstPeriod, secondPeriod));
-
-		assertTrue("1st call should take less than 5 seconds", firstPeriod < 5000L);
-		assertTrue("2nd call should take less than 5 seconds", secondPeriod < 5000L);
+	public void makeGetMedianBlockTimeAssertions(long firstPeriod, long secondPeriod) {
+			assertTrue("1st call should take less than 5 seconds", firstPeriod < 5000L);
+			assertTrue("2nd call should take less than 5 seconds", secondPeriod < 5000L);
 	}
 
 	@Test
@@ -62,7 +58,7 @@ public class PirateChainTests extends Common {
 		int count = 20;
 
 		long before = System.currentTimeMillis();
-		List<CompactBlock> compactBlocks = pirateChain.getCompactBlocks(startHeight, count);
+		List<CompactBlock> compactBlocks = ((PirateChain) bitcoiny).getCompactBlocks(startHeight, count);
 		long after = System.currentTimeMillis();
 
 		System.out.println(String.format("Retrieval took: %d ms", after-before));
@@ -82,7 +78,7 @@ public class PirateChainTests extends Common {
 		Bytes.reverse(txBytes);
 		String txHashBE = HashCode.fromBytes(txBytes).toString();
 
-		byte[] rawTransaction = pirateChain.getBlockchainProvider().getRawTransaction(txHashBE);
+		byte[] rawTransaction = bitcoiny.getBlockchainProvider().getRawTransaction(txHashBE);
 		assertNotNull(rawTransaction);
 	}
 
@@ -121,7 +117,7 @@ public class PirateChainTests extends Common {
 		String p2shAddress = "ba6Q5HWrWtmfU2WZqQbrFdRYsafA45cUAt";
 		long p2shFee = 10000;
 		final long minimumAmount = 10000 + p2shFee;
-		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(pirateChain.getBlockchainProvider(), p2shAddress, minimumAmount);
+		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(bitcoiny.getBlockchainProvider(), p2shAddress, minimumAmount);
 		assertEquals(FUNDED, htlcStatus);
 	}
 
@@ -130,7 +126,7 @@ public class PirateChainTests extends Common {
 		String p2shAddress = "bYZrzSSgGp8aEGvihukoMGU8sXYrx19Wka";
 		long p2shFee = 10000;
 		final long minimumAmount = 10000 + p2shFee;
-		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(pirateChain.getBlockchainProvider(), p2shAddress, minimumAmount);
+		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(bitcoiny.getBlockchainProvider(), p2shAddress, minimumAmount);
 		assertEquals(REDEEMED, htlcStatus);
 	}
 
@@ -139,14 +135,14 @@ public class PirateChainTests extends Common {
 		String p2shAddress = "bE49izfVxz8odhu8c2BcUaVFUnt7NLFRgv";
 		long p2shFee = 10000;
 		final long minimumAmount = 10000 + p2shFee;
-		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(pirateChain.getBlockchainProvider(), p2shAddress, minimumAmount);
+		BitcoinyHTLC.Status htlcStatus = PirateChainHTLC.determineHtlcStatus(bitcoiny.getBlockchainProvider(), p2shAddress, minimumAmount);
 		assertEquals(REFUNDED, htlcStatus);
 	}
 
 	@Test
 	public void testGetTxidForUnspentAddress() throws ForeignBlockchainException {
 		String p2shAddress = "ba6Q5HWrWtmfU2WZqQbrFdRYsafA45cUAt";
-		String txid = PirateChainHTLC.getFundingTxid(pirateChain.getBlockchainProvider(), p2shAddress);
+		String txid = PirateChainHTLC.getFundingTxid(bitcoiny.getBlockchainProvider(), p2shAddress);
 
 		// Reverse the byte order of the txid used by block explorers, to get to big-endian form
 		byte[] expectedTxidLE = HashCode.fromString("fea4b0c1abcf8f0f3ddc2fa2f9438501ee102aad62a9ff18a5ce7d08774755c0").asBytes();
@@ -161,7 +157,7 @@ public class PirateChainTests extends Common {
 		String p2shAddress = "ba6Q5HWrWtmfU2WZqQbrFdRYsafA45cUAt";
 		long p2shFee = 10000;
 		final long minimumAmount = 10000 + p2shFee;
-		String txid = PirateChainHTLC.getUnspentFundingTxid(pirateChain.getBlockchainProvider(), p2shAddress, minimumAmount);
+		String txid = PirateChainHTLC.getUnspentFundingTxid(bitcoiny.getBlockchainProvider(), p2shAddress, minimumAmount);
 
 		// Reverse the byte order of the txid used by block explorers, to get to big-endian form
 		byte[] expectedTxidLE = HashCode.fromString("fea4b0c1abcf8f0f3ddc2fa2f9438501ee102aad62a9ff18a5ce7d08774755c0").asBytes();
@@ -174,7 +170,7 @@ public class PirateChainTests extends Common {
 	@Test
 	public void testGetTxidForSpentAddress() throws ForeignBlockchainException {
 		String p2shAddress = "bE49izfVxz8odhu8c2BcUaVFUnt7NLFRgv"; //"t3KtVxeEb8srJofo6atMEpMpEP6TjEi8VqA";
-		String txid = PirateChainHTLC.getFundingTxid(pirateChain.getBlockchainProvider(), p2shAddress);
+		String txid = PirateChainHTLC.getFundingTxid(bitcoiny.getBlockchainProvider(), p2shAddress);
 
 		// Reverse the byte order of the txid used by block explorers, to get to big-endian form
 		byte[] expectedTxidLE = HashCode.fromString("fb386fc8eea0fbf3ea37047726b92c39441652b32d8d62a274331687f7a1eca8").asBytes();
@@ -187,7 +183,7 @@ public class PirateChainTests extends Common {
 	@Test
 	public void testGetTransactionsForAddress() throws ForeignBlockchainException {
 		String p2shAddress = "bE49izfVxz8odhu8c2BcUaVFUnt7NLFRgv"; //"t3KtVxeEb8srJofo6atMEpMpEP6TjEi8VqA";
-		List<BitcoinyTransaction> transactions = pirateChain.getBlockchainProvider()
+		List<BitcoinyTransaction> transactions = bitcoiny.getBlockchainProvider()
 				.getAddressBitcoinyTransactions(p2shAddress, false);
 
 		assertEquals(2, transactions.size());
@@ -232,66 +228,17 @@ public class PirateChainTests extends Common {
 
 	@Test
 	@Ignore(value = "Doesn't work, to be fixed later")
-	public void testFindHtlcSecret() throws ForeignBlockchainException {
-		// This actually exists on TEST3 but can take a while to fetch
-		String p2shAddress = "2N8WCg52ULCtDSMjkgVTm5mtPdCsUptkHWE";
-
-		byte[] expectedSecret = "This string is exactly 32 bytes!".getBytes();
-		byte[] secret = BitcoinyHTLC.findHtlcSecret(pirateChain, p2shAddress);
-
-		assertNotNull("secret not found", secret);
-		assertTrue("secret incorrect", Arrays.equals(expectedSecret, secret));
-	}
+	public void testFindHtlcSecret() {}
 
 	@Test
 	@Ignore(value = "Needs adapting for Pirate Chain")
-	public void testBuildSpend() {
-		String xprv58 = "tprv8ZgxMBicQKsPdahhFSrCdvC1bsWyzHHZfTneTVqUXN6s1wEtZLwAkZXzFP6TYLg2aQMecZLXLre5bTVGajEB55L1HYJcawpdFG66STVAWPJ";
-
-		String recipient = "2N8WCg52ULCtDSMjkgVTm5mtPdCsUptkHWE";
-		long amount = 1000L;
-
-		Transaction transaction = pirateChain.buildSpend(xprv58, recipient, amount);
-		assertNotNull("insufficient funds", transaction);
-
-		// Check spent key caching doesn't affect outcome
-
-		transaction = pirateChain.buildSpend(xprv58, recipient, amount);
-		assertNotNull("insufficient funds", transaction);
-	}
+	public void testBuildSpend() {}
 
 	@Test
 	@Ignore(value = "Needs adapting for Pirate Chain")
-	public void testGetWalletBalance() throws ForeignBlockchainException {
-		String xprv58 = "tprv8ZgxMBicQKsPdahhFSrCdvC1bsWyzHHZfTneTVqUXN6s1wEtZLwAkZXzFP6TYLg2aQMecZLXLre5bTVGajEB55L1HYJcawpdFG66STVAWPJ";
-
-		Long balance = pirateChain.getWalletBalance(xprv58);
-
-		assertNotNull(balance);
-
-		System.out.println(pirateChain.format(balance));
-
-		// Check spent key caching doesn't affect outcome
-
-		Long repeatBalance = pirateChain.getWalletBalance(xprv58);
-
-		assertNotNull(repeatBalance);
-
-		System.out.println(pirateChain.format(repeatBalance));
-
-		assertEquals(balance, repeatBalance);
-	}
+	public void testGetWalletBalance() {}
 
 	@Test
 	@Ignore(value = "Needs adapting for Pirate Chain")
-	public void testGetUnusedReceiveAddress() throws ForeignBlockchainException {
-		String xprv58 = "tprv8ZgxMBicQKsPdahhFSrCdvC1bsWyzHHZfTneTVqUXN6s1wEtZLwAkZXzFP6TYLg2aQMecZLXLre5bTVGajEB55L1HYJcawpdFG66STVAWPJ";
-
-		String address = pirateChain.getUnusedReceiveAddress(xprv58);
-
-		assertNotNull(address);
-
-		System.out.println(address);
-	}
-
+	public void testGetUnusedReceiveAddress() {}
 }

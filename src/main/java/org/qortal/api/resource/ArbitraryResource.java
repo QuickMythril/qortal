@@ -706,7 +706,7 @@ public class ArbitraryResource {
 		ArbitraryDataResource resource = new ArbitraryDataResource(name, ResourceIdType.NAME, service, identifier);
 
 		try {
-			ArbitraryDataTransactionMetadata transactionMetadata = ArbitraryMetadataManager.getInstance().fetchMetadata(resource, false);
+			ArbitraryDataTransactionMetadata transactionMetadata = ArbitraryMetadataManager.getInstance().fetchMetadata(resource, true);
 			if (transactionMetadata != null) {
 				ArbitraryResourceMetadata resourceMetadata = ArbitraryResourceMetadata.fromTransactionMetadata(transactionMetadata, true);
 				if (resourceMetadata != null) {

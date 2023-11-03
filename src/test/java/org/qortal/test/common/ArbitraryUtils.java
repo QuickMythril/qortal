@@ -5,10 +5,12 @@ import org.qortal.arbitrary.ArbitraryDataFile;
 import org.qortal.arbitrary.ArbitraryDataTransactionBuilder;
 import org.qortal.arbitrary.misc.Category;
 import org.qortal.arbitrary.misc.Service;
+import org.qortal.block.BlockChain;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.transaction.Transaction;
+import org.qortal.utils.NTP;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -20,16 +22,15 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-
 public class ArbitraryUtils {
 
     public static ArbitraryDataFile createAndMintTxn(Repository repository, String publicKey58, Path path, String name, String identifier,
                                                      ArbitraryTransactionData.Method method, Service service, PrivateKeyAccount account,
                                                      int chunkSize) throws DataException {
 
+        long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
         return ArbitraryUtils.createAndMintTxn(repository, publicKey58, path, name, identifier, method, service,
-                account, chunkSize, 0L, true, null, null, null, null);
+                account, chunkSize, fee, false, null, null, null, null);
     }
 
     public static ArbitraryDataFile createAndMintTxn(Repository repository, String publicKey58, Path path, String name, String identifier,
@@ -47,7 +48,9 @@ public class ArbitraryUtils {
         }
         ArbitraryTransactionData transactionData = txnBuilder.getArbitraryTransactionData();
         Transaction.ValidationResult result = TransactionUtils.signAndImport(repository, transactionData, account);
-        assertEquals(Transaction.ValidationResult.OK, result);
+        if (result != Transaction.ValidationResult.OK) {
+            throw new DataException(String.format("Arbitrary transaction invalid: %s", result.toString()));
+        }
         BlockUtils.mintBlock(repository);
 
         // We need a new ArbitraryDataFile instance because the files will have been moved to the signature's folder

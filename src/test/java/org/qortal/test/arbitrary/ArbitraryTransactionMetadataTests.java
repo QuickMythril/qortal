@@ -11,6 +11,7 @@ import org.qortal.arbitrary.ArbitraryDataReader;
 import org.qortal.arbitrary.exception.MissingDataException;
 import org.qortal.arbitrary.misc.Category;
 import org.qortal.arbitrary.misc.Service;
+import org.qortal.block.BlockChain;
 import org.qortal.controller.arbitrary.ArbitraryDataManager;
 import org.qortal.data.arbitrary.ArbitraryResourceMetadata;
 import org.qortal.data.transaction.ArbitraryTransactionData;
@@ -24,6 +25,7 @@ import org.qortal.test.common.TransactionUtils;
 import org.qortal.test.common.transaction.TestTransaction;
 import org.qortal.transaction.RegisterNameTransaction;
 import org.qortal.utils.Base58;
+import org.qortal.utils.NTP;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -106,8 +108,9 @@ public class ArbitraryTransactionMetadataTests extends Common {
 
             // Create PUT transaction
             Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
             ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
-                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, fee, false,
                     title, description, tags, category);
 
             // Check the chunk count is correct
@@ -157,8 +160,9 @@ public class ArbitraryTransactionMetadataTests extends Common {
 
             // Create PUT transaction
             Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
             ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
-                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, fee, false,
                     title, description, tags, category);
 
             // Check the chunk count is correct
@@ -220,8 +224,9 @@ public class ArbitraryTransactionMetadataTests extends Common {
 
             // Create PUT transaction
             Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
             ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
-                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, fee, false,
                     title, description, tags, category);
 
             // Check the chunk count is correct
@@ -272,8 +277,9 @@ public class ArbitraryTransactionMetadataTests extends Common {
 
             // Create PUT transaction
             Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
             ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
-                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, fee, false,
                     title, description, tags, category);
 
             // Check the chunk count is correct
@@ -316,8 +322,9 @@ public class ArbitraryTransactionMetadataTests extends Common {
 
             // Create PUT transaction
             Path path1 = ArbitraryUtils.generateRandomDataPath(dataLength);
+            long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(NTP.getTime());
             ArbitraryDataFile arbitraryDataFile = ArbitraryUtils.createAndMintTxn(repository, publicKey58, path1, name,
-                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, 0L, true,
+                    identifier, ArbitraryTransactionData.Method.PUT, service, alice, chunkSize, fee, false,
                     title, description, tags, category);
 
             // Check the metadata is correct

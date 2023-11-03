@@ -16,11 +16,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,7 +33,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.qortal.account.Account;
 import org.qortal.account.PrivateKeyAccount;
 import org.qortal.api.*;
@@ -269,7 +263,7 @@ public class AdminResource {
 	@GET
 	@Path("/summary")
 	@Operation(
-		summary = "Summary of activity since midnight, UTC",
+		summary = "Summary of activity past 24 hours",
 		responses = {
 			@ApiResponse(
 				content = @Content(schema = @Schema(implementation = ActivitySummary.class))
@@ -282,23 +276,21 @@ public class AdminResource {
 		Security.checkApiCallAllowed(request);
 
 		ActivitySummary summary = new ActivitySummary();
-
-		LocalDate date = LocalDate.now();
-		LocalTime time = LocalTime.of(0, 0);
-		ZoneOffset offset = ZoneOffset.UTC;
-		long start = OffsetDateTime.of(date, time, offset).toInstant().toEpochMilli();
+		
+		long now = NTP.getTime();
+		long oneday = now - 24 * 60 * 60 * 1000L;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			int startHeight = repository.getBlockRepository().getHeightFromTimestamp(start);
+			int startHeight = repository.getBlockRepository().getHeightFromTimestamp(oneday);
 			int endHeight = repository.getBlockRepository().getBlockchainHeight();
 
 			summary.setBlockCount(endHeight - startHeight);
 
 			summary.setTransactionCountByType(repository.getTransactionRepository().getTransactionSummary(startHeight + 1, endHeight));
 
-			summary.setAssetsIssued(repository.getAssetRepository().getRecentAssetIds(start).size());
+			summary.setAssetsIssued(repository.getAssetRepository().getRecentAssetIds(oneday).size());
 
-			summary.setNamesRegistered (repository.getNameRepository().getRecentNames(start).size());
+			summary.setNamesRegistered (repository.getNameRepository().getRecentNames(oneday).size());
 
 			return summary;
 		} catch (DataException e) {

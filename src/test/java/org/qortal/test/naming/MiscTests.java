@@ -20,6 +20,7 @@ import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
 import org.qortal.test.common.*;
 import org.qortal.test.common.transaction.TestTransaction;
+import org.qortal.transaction.PaymentTransaction;
 import org.qortal.transaction.RegisterNameTransaction;
 import org.qortal.transaction.Transaction;
 import org.qortal.transaction.Transaction.ValidationResult;
@@ -329,15 +330,19 @@ public class MiscTests extends Common {
 	public void testRegisterNameFeeIncrease() throws Exception {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 
-			// Set nameRegistrationUnitFeeTimestamp to a time far in the future
+			// Add original fee to nameRegistrationUnitFees
+			UnitFeesByTimestamp originalFee = new UnitFeesByTimestamp();
+			originalFee.timestamp = 0L;
+			originalFee.fee = new AmountTypeAdapter().unmarshal("0.1");
+
+			// Add a time far in the future to nameRegistrationUnitFees
 			UnitFeesByTimestamp futureFeeIncrease = new UnitFeesByTimestamp();
 			futureFeeIncrease.timestamp = 9999999999999L; // 20 Nov 2286
 			futureFeeIncrease.fee = new AmountTypeAdapter().unmarshal("5");
-			FieldUtils.writeField(BlockChain.getInstance(), "nameRegistrationUnitFees", Arrays.asList(futureFeeIncrease), true);
+			FieldUtils.writeField(BlockChain.getInstance(), "nameRegistrationUnitFees", Arrays.asList(originalFee, futureFeeIncrease), true);
 			assertEquals(futureFeeIncrease.fee, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(futureFeeIncrease.timestamp));
 
 			// Validate unit fees pre and post timestamp
-			assertEquals(10000000, BlockChain.getInstance().getUnitFee()); // 0.1 QORT
 			assertEquals(10000000, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(futureFeeIncrease.timestamp - 1)); // 0.1 QORT
 			assertEquals(500000000, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(futureFeeIncrease.timestamp)); // 5 QORT
 
@@ -362,7 +367,7 @@ public class MiscTests extends Common {
 			futureFeeIncrease.timestamp = now + (60 * 60 * 1000L); // 1 hour in the future
 			futureFeeIncrease.fee = new AmountTypeAdapter().unmarshal("10");
 
-			FieldUtils.writeField(BlockChain.getInstance(), "nameRegistrationUnitFees", Arrays.asList(pastFeeIncrease, futureFeeIncrease), true);
+			FieldUtils.writeField(BlockChain.getInstance(), "nameRegistrationUnitFees", Arrays.asList(originalFee, pastFeeIncrease, futureFeeIncrease), true);
 			assertEquals(pastFeeIncrease.fee, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(pastFeeIncrease.timestamp));
 			assertEquals(futureFeeIncrease.fee, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(futureFeeIncrease.timestamp));
 
@@ -384,6 +389,126 @@ public class MiscTests extends Common {
 			transaction.sign(alice);
 			result = transaction.importAsUnconfirmed();
 			assertTrue("Transaction should be valid", ValidationResult.OK == result);
+		}
+	}
+
+	// test reading the name registration fee schedule from blockchain.json / test-chain-v2.json
+	@Test
+	public void testRegisterNameFeeScheduleInTestchainData() throws Exception {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+
+			final long expectedFutureFeeIncreaseTimestamp = 9999999999999L; // 20 Nov 2286, as per test-chain-v2.json
+			final long expectedFutureFeeIncreaseValue = new AmountTypeAdapter().unmarshal("5");
+
+			assertEquals(expectedFutureFeeIncreaseValue, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp));
+
+			// Validate unit fees pre and post timestamp
+			assertEquals(10000000, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp - 1)); // 0.1 QORT
+			assertEquals(500000000, BlockChain.getInstance().getNameRegistrationUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp)); // 5 QORT
+
+			// Register-name
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			String name = "test-name";
+			String data = "{\"age\":30}";
+
+			RegisterNameTransactionData transactionData = new RegisterNameTransactionData(TestTransaction.generateBase(alice), name, data);
+			transactionData.setFee(new RegisterNameTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+			assertEquals(10000000L, transactionData.getFee().longValue());
+			TransactionUtils.signAndMint(repository, transactionData, alice);
+		}
+	}
+
+
+
+	// test general unit fee increase
+	@Test
+	public void testUnitFeeIncrease() throws Exception {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+
+			// Add original fee to unitFees
+			UnitFeesByTimestamp originalFee = new UnitFeesByTimestamp();
+			originalFee.timestamp = 0L;
+			originalFee.fee = new AmountTypeAdapter().unmarshal("0.1");
+
+			// Add a time far in the future to unitFees
+			UnitFeesByTimestamp futureFeeIncrease = new UnitFeesByTimestamp();
+			futureFeeIncrease.timestamp = 9999999999999L; // 20 Nov 2286
+			futureFeeIncrease.fee = new AmountTypeAdapter().unmarshal("1");
+			FieldUtils.writeField(BlockChain.getInstance(), "unitFees", Arrays.asList(originalFee, futureFeeIncrease), true);
+			assertEquals(futureFeeIncrease.fee, BlockChain.getInstance().getUnitFeeAtTimestamp(futureFeeIncrease.timestamp));
+
+			// Validate unit fees pre and post timestamp
+			assertEquals(10000000, BlockChain.getInstance().getUnitFeeAtTimestamp(futureFeeIncrease.timestamp - 1)); // 0.1 QORT
+			assertEquals(100000000, BlockChain.getInstance().getUnitFeeAtTimestamp(futureFeeIncrease.timestamp)); // 1 QORT
+
+			// Payment
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+			PrivateKeyAccount chloe = Common.getTestAccount(repository, "chloe");
+
+			PaymentTransactionData transactionData = new PaymentTransactionData(TestTransaction.generateBase(alice), bob.getAddress(), 100000);
+			transactionData.setFee(new PaymentTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+			assertEquals(10000000L, transactionData.getFee().longValue());
+			TransactionUtils.signAndMint(repository, transactionData, alice);
+
+			// Set fee increase to a time in the past
+			Long now = NTP.getTime();
+			UnitFeesByTimestamp pastFeeIncrease = new UnitFeesByTimestamp();
+			pastFeeIncrease.timestamp = now - 1000L; // 1 second ago
+			pastFeeIncrease.fee = new AmountTypeAdapter().unmarshal("3");
+
+			// Set another increase in the future
+			futureFeeIncrease = new UnitFeesByTimestamp();
+			futureFeeIncrease.timestamp = now + (60 * 60 * 1000L); // 1 hour in the future
+			futureFeeIncrease.fee = new AmountTypeAdapter().unmarshal("10");
+
+			FieldUtils.writeField(BlockChain.getInstance(), "unitFees", Arrays.asList(originalFee, pastFeeIncrease, futureFeeIncrease), true);
+			assertEquals(originalFee.fee, BlockChain.getInstance().getUnitFeeAtTimestamp(originalFee.timestamp));
+			assertEquals(pastFeeIncrease.fee, BlockChain.getInstance().getUnitFeeAtTimestamp(pastFeeIncrease.timestamp));
+			assertEquals(futureFeeIncrease.fee, BlockChain.getInstance().getUnitFeeAtTimestamp(futureFeeIncrease.timestamp));
+
+			// Send another payment transaction
+			// Fee should be determined automatically
+			transactionData = new PaymentTransactionData(TestTransaction.generateBase(alice), bob.getAddress(), 50000);
+			assertEquals(300000000L, transactionData.getFee().longValue());
+			Transaction transaction = Transaction.fromData(repository, transactionData);
+			transaction.sign(alice);
+			ValidationResult result = transaction.importAsUnconfirmed();
+			assertEquals("Transaction should be valid", ValidationResult.OK, result);
+
+			// Now try fetching and setting fee manually
+			transactionData = new PaymentTransactionData(TestTransaction.generateBase(alice), chloe.getAddress(), 50000);
+			transactionData.setFee(new PaymentTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+			assertEquals(300000000L, transactionData.getFee().longValue());
+			transaction = Transaction.fromData(repository, transactionData);
+			transaction.sign(alice);
+			result = transaction.importAsUnconfirmed();
+			assertEquals("Transaction should be valid", ValidationResult.OK, result);
+		}
+	}
+
+	// test reading the fee schedule from blockchain.json / test-chain-v2.json
+	@Test
+	public void testFeeScheduleInTestchainData() throws Exception {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+
+			final long expectedFutureFeeIncreaseTimestamp = 9999999999999L; // 20 Nov 2286, as per test-chain-v2.json
+			final long expectedFutureFeeIncreaseValue = new AmountTypeAdapter().unmarshal("1");
+
+			assertEquals(expectedFutureFeeIncreaseValue, BlockChain.getInstance().getUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp));
+
+			// Validate unit fees pre and post timestamp
+			assertEquals(10000000, BlockChain.getInstance().getUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp - 1)); // 0.1 QORT
+			assertEquals(100000000, BlockChain.getInstance().getUnitFeeAtTimestamp(expectedFutureFeeIncreaseTimestamp)); // 1 QORT
+
+			// Payment
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			PaymentTransactionData transactionData = new PaymentTransactionData(TestTransaction.generateBase(alice), bob.getAddress(), 100000);
+			transactionData.setFee(new PaymentTransaction(null, null).getUnitFee(transactionData.getTimestamp()));
+			assertEquals(10000000L, transactionData.getFee().longValue());
+			TransactionUtils.signAndMint(repository, transactionData, alice);
 		}
 	}
 

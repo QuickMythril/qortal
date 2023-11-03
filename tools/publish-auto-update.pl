@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use POSIX;
 use Getopt::Std;
+use File::Slurp;
 
 sub usage() {
 	die("usage: $0 [-p api-port] dev-private-key [short-commit-hash]\n");
@@ -33,6 +34,8 @@ while (<POM>) {
 	}
 }
 close(POM);
+
+my $apikey = read_file('apikey.txt');
 
 # Do we need to determine commit hash?
 unless ($commit_hash) {
@@ -84,9 +87,16 @@ my $data_hex = sprintf "%016x%s%s", $timestamp, $update_hash, $sha256;
 printf "\nARBITRARY transaction data payload: %s\n", $data_hex;
 
 my $n_payments = 0;
-my $is_raw = 1; # RAW_DATA
+my $data_type = 1; # RAW_DATA
 my $data_length = length($data_hex) / 2; # two hex chars per byte
-my $fee = 0.001 * 1e8;
+my $fee = 0.01 * 1e8;
+my $nonce = 0;
+my $name_length = 0;
+my $identifier_length = 0;
+my $method = 0; # PUT
+my $secret_length = 0;
+my $compression = 0; # None
+my $metadata_hash_length = 0;
 
 die("Something's wrong: data length is not 60 bytes!\n") if $data_length != 60;
 
@@ -110,16 +120,16 @@ my $reference_hex = `curl --silent --url http://localhost:${port}/utils/frombase
 die("Can't convert base58 reference to hex:\n$reference_hex\n") unless $reference_hex =~ m/^[A-Za-z0-9]{128}$/;
 printf "Last reference hex: %s\n", $reference_hex;
 
-my $raw_tx_hex = sprintf("%08x%016x%08x%s%s%08x%08x%02x%08x%s%016x", $tx_type, $tx_timestamp, $tx_group_id, $reference_hex, $pubkey_hex, $n_payments, $service, $is_raw, $data_length, $data_hex, $fee);
+my $raw_tx_hex = sprintf("%08x%016x%08x%s%s%08x%08x%08x%08x%08x%08x%08x%08x%02x%08x%s%08x%08x%016x", $tx_type, $tx_timestamp, $tx_group_id, $reference_hex, $pubkey_hex, $nonce, $name_length, $identifier_length, $method, $secret_length, $compression, $n_payments, $service, $data_type, $data_length, $data_hex, $data_length, $metadata_hash_length, $fee);
 printf "\nRaw transaction hex:\n%s\n", $raw_tx_hex;
 
 my $raw_tx = `curl --silent --url http://localhost:${port}/utils/tobase58/${raw_tx_hex}`;
-die("Can't convert raw transaction hex to base58:\n$raw_tx\n") unless $raw_tx =~ m/^\w{255,265}$/; # Roughly 255 to 265 base58 chars
+die("Can't convert raw transaction hex to base58:\n$raw_tx\n") unless $raw_tx =~ m/^\w{300,320}$/; # Roughly 305 to 320 base58 chars
 printf "\nRaw transaction (base58):\n%s\n", $raw_tx;
 
 my $sign_data = qq|' { "privateKey": "${privkey}", "transactionBytes": "${raw_tx}" } '|;
 my $signed_tx = `curl --silent -H "accept: text/plain" -H "Content-Type: application/json" --url http://localhost:${port}/transactions/sign --data ${sign_data}`;
-die("Can't sign raw transaction:\n$signed_tx\n") unless $signed_tx =~ m/^\w{345,355}$/; # +90ish longer than $raw_tx
+die("Can't sign raw transaction:\n$signed_tx\n") unless $signed_tx =~ m/^\w{390,410}$/; # +90ish longer than $raw_tx
 printf "\nSigned transaction:\n%s\n", $signed_tx;
 
 # Check we can actually fetch update

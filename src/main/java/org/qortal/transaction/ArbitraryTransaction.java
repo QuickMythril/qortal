@@ -99,8 +99,14 @@ public class ArbitraryTransaction extends Transaction {
 		if (this.transactionData.getFee() < 0)
 			return ValidationResult.NEGATIVE_FEE;
 
-		// After the feature trigger, we require the fee to be sufficient if it's not 0.
-		// If the fee is zero, then the nonce is validated in isSignatureValid() as an alternative to a fee
+		// As of the mempow transaction updates timestamp, a nonce is no longer supported, so a valid fee must be included
+		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+			// Validate the fee
+			return super.isFeeValid();
+		}
+
+		// After the earlier "optional fee" feature trigger, we required the fee to be sufficient if it wasn't 0.
+		// If the fee was zero, then the nonce was validated in isSignatureValid() as an alternative to a fee
 		if (this.arbitraryTransactionData.getTimestamp() >= BlockChain.getInstance().getArbitraryOptionalFeeTimestamp() && this.arbitraryTransactionData.getFee() != 0L) {
 			return super.isFeeValid();
 		}
@@ -225,7 +231,13 @@ public class ArbitraryTransaction extends Transaction {
 			// Clear nonce from transactionBytes
 			ArbitraryTransactionTransformer.clearNonce(transactionBytes);
 
-			// As of feature-trigger timestamp, we only require a nonce when the fee is zero
+			// As of the mempow transaction updates timestamp, a nonce is no longer supported, so a fee must be included
+			if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
+				// Require that the fee is a positive number. Fee checking itself is performed in isFeeValid()
+				return (this.arbitraryTransactionData.getFee() > 0L);
+			}
+
+			// As of the earlier "optional fee" feature-trigger timestamp, we only required a nonce when the fee was zero
 			boolean beforeFeatureTrigger = this.arbitraryTransactionData.getTimestamp() < BlockChain.getInstance().getArbitraryOptionalFeeTimestamp();
 			if (beforeFeatureTrigger || this.arbitraryTransactionData.getFee() == 0L) {
 				// We only need to check nonce for recent transactions due to PoW verification overhead

@@ -1057,5 +1057,4 @@ public class HSQLDBDatabaseUpdates {
 		LOGGER.info(() -> String.format("HSQLDB repository updated to version %d", databaseVersion + 1));
 		return true;
 	}
-
 }

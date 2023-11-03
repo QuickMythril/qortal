@@ -75,6 +75,9 @@ public abstract class TransactionData {
 	@Schema(description = "groupID for this transaction")
 	protected int txGroupId;
 
+	@Schema(description = "recipient for this transaction")
+	protected String recipient;
+
 	// Not always present
 	@Schema(accessMode = AccessMode.READ_ONLY, hidden = true, description = "height of block containing transaction")
 	protected Integer blockHeight;
@@ -105,7 +108,7 @@ public abstract class TransactionData {
 	/** Constructor for use by transaction subclasses. */
 	protected TransactionData(TransactionType type, BaseTransactionData baseTransactionData) {
 		this.type = type;
-
+		this.recipient = baseTransactionData.recipient;
 		this.timestamp = baseTransactionData.timestamp;
 		this.txGroupId = baseTransactionData.txGroupId;
 		this.reference = baseTransactionData.reference;
@@ -134,6 +137,10 @@ public abstract class TransactionData {
 
 	public int getTxGroupId() {
 		return this.txGroupId;
+	}
+
+	public String getRecipient() {
+		return this.recipient;
 	}
 
 	public void setTxGroupId(int txGroupId) {
@@ -250,5 +257,4 @@ public abstract class TransactionData {
 
 		return Arrays.equals(this.signature, otherTransactionData.signature);
 	}
-
 }

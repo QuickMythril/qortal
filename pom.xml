@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.qortal</groupId>
 	<artifactId>qortal</artifactId>
-	<version>4.2.2</version>
+	<version>4.3.1</version>
 	<packaging>jar</packaging>
 	<properties>
 		<skipTests>true</skipTests>
@@ -11,32 +11,52 @@
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<bouncycastle.version>1.69</bouncycastle.version>
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
-		<ciyam-at.version>1.4.0</ciyam-at.version>
-		<commons-net.version>3.6</commons-net.version>
-		<commons-text.version>1.8</commons-text.version>
-		<commons-io.version>2.6</commons-io.version>
-		<commons-compress.version>1.21</commons-compress.version>
-		<commons-lang3.version>3.12.0</commons-lang3.version>
+		<ciyam-at.version>1.4.1</ciyam-at.version>
+		<commons-net.version>3.8.0</commons-net.version>
+		<commons-text.version>1.10.0</commons-text.version>
+		<commons-io.version>2.11.0</commons-io.version>
+		<commons-compress.version>1.24.0</commons-compress.version>
+		<commons-lang3.version>3.13.0</commons-lang3.version>
 		<xz.version>1.9</xz.version>
 		<dagger.version>1.2.2</dagger.version>
-		<guava.version>28.1-jre</guava.version>
+		<guava.version>32.1.3-jre</guava.version>
 		<hsqldb.version>2.5.1</hsqldb.version>
 		<homoglyph.version>1.2.1</homoglyph.version>
-		<icu4j.version>70.1</icu4j.version>
+		<icu4j.version>73.2</icu4j.version>
 		<upnp.version>1.1</upnp.version>
-		<jersey.version>2.29.1</jersey.version>
-		<jetty.version>9.4.29.v20200521</jetty.version>
-		<log4j.version>2.17.1</log4j.version>
+		<jaxb-runtime.version>2.3.3</jaxb-runtime.version>
+		<jersey.version>2.40</jersey.version>
+		<jetty.version>9.4.53.v20231009</jetty.version>
+		<log4j.version>2.20.0</log4j.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<slf4j.version>1.7.12</slf4j.version>
-		<swagger-api.version>2.0.9</swagger-api.version>
-		<swagger-ui.version>3.23.8</swagger-ui.version>
+		<slf4j.version>1.7.36</slf4j.version>
+		<swagger-api.version>2.0.10</swagger-api.version>
+		<swagger-ui.version>3.52.5</swagger-ui.version>
 		<package-info-maven-plugin.version>1.1.0</package-info-maven-plugin.version>
-		<jsoup.version>1.13.1</jsoup.version>
-		<java-diff-utils.version>4.10</java-diff-utils.version>
-		<grpc.version>1.45.1</grpc.version>
-		<protobuf.version>3.19.4</protobuf.version>
+		<jsoup.version>1.16.1</jsoup.version>
+		<java-diff-utils.version>4.12</java-diff-utils.version>
+		<grpc.version>1.58.0</grpc.version>
+		<protobuf.version>3.24.4</protobuf.version>
 		<simplemagic.version>1.17</simplemagic.version>
+		<versions-maven-plugin.version>2.16.1</versions-maven-plugin.version>
+		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+		<git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
+		<replacer.version>1.5.3</replacer.version>
+		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+		<build-helper-maven-plugin.version>3.4.0</build-helper-maven-plugin.version>
+		<maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+		<maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
+		<reproducible-build-maven-plugin.version>0.16</reproducible-build-maven-plugin.version>
+		<maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+		<lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
+		<build-helper-maven-plugin.version>3.4.0</build-helper-maven-plugin.version>
+		<json-simple.version>1.1.1</json-simple.version>
+		<json.version>20231013</json.version>
+		<extendedset.version>0.12.3</extendedset.version>
+		<javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+		<mail.version>1.5.0-b01</mail.version>
+		<junit-jupiter-engine.version>5.3.1</junit-jupiter-engine.version>
+		<hamcrest-library.version>1.3</hamcrest-library.version>
 	</properties>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
@@ -51,14 +71,14 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.5</version>
+				<version>${versions-maven-plugin.version}</version>
 				<configuration>
 					<generateBackupPoms>false</generateBackupPoms>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
 					<release>11</release>
 				</configuration>
@@ -89,7 +109,7 @@
 			<plugin>
 				<groupId>pl.project13.maven</groupId>
 				<artifactId>git-commit-id-plugin</artifactId>
-				<version>4.0.0</version>
+				<version>${git-commit-id-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>get-the-git-infos</id>
@@ -121,7 +141,7 @@
 			<plugin>
 				<groupId>com.google.code.maven-replacer-plugin</groupId>
 				<artifactId>replacer</artifactId>
-				<version>1.5.3</version>
+				<version>${replacer.version}</version>
 				<executions>
 					<execution>
 						<id>replace-swagger-ui</id>
@@ -164,11 +184,13 @@
 						<configuration>
 							<file>${project.build.outputDirectory}/git.properties</file>
 							<regex>true</regex>
-							<regexFlags><regexFlag>MULTILINE</regexFlag></regexFlags>
+							<regexFlags>
+								<regexFlag>MULTILINE</regexFlag>
+							</regexFlags>
 							<replacements>
 								<replacement>
 									<token>^(#.*$[\n\r]*)</token>
-									<value></value>
+									<value/>
 								</replacement>
 							</replacements>
 						</configuration>
@@ -178,7 +200,10 @@
 			<!-- add swagger-ui as resource to output package -->
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>${maven-resources-plugin.version}</version>
+				<configuration>
+					<propertiesEncoding>ISO-8859-1</propertiesEncoding>
+				</configuration>
 				<executions>
 					<execution>
 						<id>copy-resources</id>
@@ -232,7 +257,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>${build-helper-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
@@ -250,7 +275,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>${maven-jar-plugin.version}</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -268,13 +293,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.3</version>
+				<version>${maven-shade-plugin.version}</version>
 				<configuration>
 					<createDependencyReducedPom>false</createDependencyReducedPom>
 					<artifactSet>
 						<excludes>
-							<!-- Don't include original swagger-UI as we're including our own 
-								modified version -->
+							<!-- Don't include original swagger-UI as we're including our own modified version -->
 							<exclude>org.webjars:swagger-ui</exclude>
 							<!-- Don't include JUnit as it's for testing only! -->
 							<exclude>junit:junit</exclude>
@@ -318,7 +342,7 @@
 			<plugin>
 				<groupId>io.github.zlika</groupId>
 				<artifactId>reproducible-build-maven-plugin</artifactId>
-				<version>0.11</version>
+				<version>${reproducible-build-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -335,7 +359,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
+				<version>${maven-surefire-plugin.version}</version>
 				<configuration>
 					<skipTests>${skipTests}</skipTests>
 				</configuration>
@@ -347,7 +371,7 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${lifecycle-mapping.version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
@@ -360,14 +384,14 @@
 											maven-dependency-plugin
 										</artifactId>
 										<versionRange>
-											[2.8,)
+											[3.6.0,)
 										</versionRange>
 										<goals>
 											<goal>unpack</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -386,7 +410,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<execute/>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -413,15 +437,17 @@
 		<dependency>
 			<groupId>org.codehaus.mojo</groupId>
 			<artifactId>build-helper-maven-plugin</artifactId>
-			<version>3.0.0</version>
-			<scope>provided</scope><!-- needed for build, not for runtime -->
+			<version>${build-helper-maven-plugin.version}</version>
+			<scope>provided</scope>
+			<!-- needed for build, not for runtime -->
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.bohnman/package-info-maven-plugin -->
 		<dependency>
 			<groupId>com.github.bohnman</groupId>
 			<artifactId>package-info-maven-plugin</artifactId>
 			<version>${package-info-maven-plugin.version}</version>
-			<scope>provided</scope><!-- needed for build, not for runtime -->
+			<scope>provided</scope>
+			<!-- needed for build, not for runtime -->
 		</dependency>
 		<!-- HSQLDB for repository -->
 		<dependency>
@@ -457,12 +483,12 @@
 		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
-			<version>1.1.1</version>
+			<version>${json-simple.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20210307</version>
+			<version>${json.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -493,7 +519,7 @@
 		<dependency>
 			<groupId>io.druid</groupId>
 			<artifactId>extendedset</artifactId>
-			<version>0.12.3</version>
+			<version>${extendedset.version}</version>
 			<exclusions>
 				<!-- exclude old versions of jackson-annotations / jackson-core -->
 				<exclusion>
@@ -564,12 +590,12 @@
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
-			<version>4.0.1</version>
+			<version>${javax.servlet-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
-			<version>1.5.0-b01</version>
+			<version>${mail.version}</version>
 		</dependency>
 		<!-- Unicode homoglyph utilities -->
 		<dependency>
@@ -638,7 +664,8 @@
 			<artifactId>jersey-hk2</artifactId>
 			<version>${jersey.version}</version>
 			<exclusions>
-				<exclusion><!-- exclude javax.inject-1.jar because other jersey modules include javax.inject v2+ -->
+				<exclusion>
+					<!-- exclude javax.inject-1.jar because other jersey modules include javax.inject v2+ -->
 					<groupId>javax.inject</groupId>
 					<artifactId>javax.inject</artifactId>
 				</exclusion>
@@ -665,7 +692,8 @@
 			<artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
 			<version>${swagger-api.version}</version>
 			<exclusions>
-				<exclusion><!-- excluded because included in swagger-jaxrs2-servlet-initializer -->
+				<exclusion>
+					<!-- excluded because included in swagger-jaxrs2-servlet-initializer -->
 					<groupId>io.swagger.core.v3</groupId>
 					<artifactId>swagger-integration</artifactId>
 				</exclusion>
@@ -681,12 +709,12 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.3.1</version>
+			<version>${junit-jupiter-engine.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-library</artifactId>
-			<version>1.3</version>
+			<version>${hamcrest-library.version}</version>
 		</dependency>
 		-->
 		<!-- BouncyCastle for crypto, including TLS secure networking -->
@@ -734,6 +762,12 @@
 			<groupId>com.j256.simplemagic</groupId>
 			<artifactId>simplemagic</artifactId>
 			<version>${simplemagic.version}</version>
+		</dependency>
+		<!-- JAXB runtime for WADL support -->
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>${jaxb-runtime.version}</version>
 		</dependency>
 	</dependencies>
 </project>

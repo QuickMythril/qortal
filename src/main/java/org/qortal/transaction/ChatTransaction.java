@@ -149,6 +149,12 @@ public class ChatTransaction extends Transaction {
 	}
 
 	@Override
+	public boolean isConfirmable() {
+		// CHAT transactions can't go into blocks
+		return false;
+	}
+
+	@Override
 	public ValidationResult isValid() throws DataException {
 		// Nonce checking is done via isSignatureValid() as that method is only called once per import
 

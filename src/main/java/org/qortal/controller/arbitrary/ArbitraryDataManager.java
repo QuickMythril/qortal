@@ -276,7 +276,10 @@ public class ArbitraryDataManager extends Thread {
 		int offset = 0;
 
 		while (!isStopping) {
-			Thread.sleep(1000L);
+			final int minSeconds = 3;
+			final int maxSeconds = 10;
+			final int randomSleepTime = new Random().nextInt((maxSeconds - minSeconds + 1)) + minSeconds;
+			Thread.sleep(randomSleepTime * 1000L);
 
 			// Any arbitrary transactions we want to fetch data for?
 			try (final Repository repository = RepositoryManager.getRepository()) {

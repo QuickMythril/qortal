@@ -129,6 +129,11 @@ public class ArbitraryDataRenderer {
             String filename = this.getFilename(unzippedPath, inPath);
             Path filePath = Paths.get(unzippedPath, filename);
             boolean usingCustomRouting = false;
+            if (Files.isDirectory(filePath) && (!inPath.endsWith("/"))) {
+                inPath = inPath + "/";
+                filename = this.getFilename(unzippedPath, inPath);
+                filePath = Paths.get(unzippedPath, filename);
+            }
             
             // If the file doesn't exist, we may need to route the request elsewhere, or cleanup
             if (!Files.exists(filePath)) {

@@ -4,7 +4,9 @@
 	"transactionExpiryPeriod": 86400000,
 	"maxBlockSize": 2097152,
 	"maxBytesPerUnitFee": 1024,
-	"unitFee": "0.001",
+	"unitFees": [
+		{ "timestamp": 0, "fee": "0.001" }
+	],
 	"nameRegistrationUnitFees": [
 		{ "timestamp": 0, "fee": "1.25" }
 	],
@@ -24,6 +26,7 @@
 	"onlineAccountSignaturesMaxLifetime": 86400000,
 	"onlineAccountsModulusV2Timestamp": 0,
 	"selfSponsorshipAlgoV1SnapshotTimestamp": 9999999999999,
+	"mempowTransactionUpdatesTimestamp": 1692554400000,
 	"rewardsByHeight": [
 		{ "height": 1, "reward": 5.00 },
 		{ "height": 259201, "reward": 4.75 },

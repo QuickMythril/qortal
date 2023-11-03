@@ -333,7 +333,7 @@ public class TradeBot implements Listener {
 			SysTray.getInstance().showMessage("Trade-Bot", String.format("%s: %s", tradeBotData.getAtAddress(), newState), MessageType.INFO);
 
 		if (logMessageSupplier != null)
-			LOGGER.info(logMessageSupplier);
+			LOGGER.info(logMessageSupplier.get());
 
 		LOGGER.debug(() -> String.format("new state for trade-bot entry based on AT %s: %s", tradeBotData.getAtAddress(), newState));
 
@@ -712,30 +712,16 @@ public class TradeBot implements Listener {
 			}
 
 			try {
-				List<byte[]> signatures = repository.getTransactionRepository().getSignaturesMatchingCriteria(null, null, null, Arrays.asList(Transaction.TransactionType.MESSAGE), null, null, crossChainTradeData.qortalCreatorTradeAddress, TransactionsResource.ConfirmationStatus.CONFIRMED, null, null, null);
-				if (signatures.size() < getMaxTradeOfferAttempts) {
-					// Less than 3 (or user-specified number of) MESSAGE transactions relate to this trade, so assume it is ok
-					validTrades.put(crossChainTradeData.qortalAtAddress, now);
-					continue;
-				}
+				List<TransactionData> transactions = repository.getTransactionRepository().getUnconfirmedTransactions(Arrays.asList(Transaction.TransactionType.MESSAGE), null, null, null, null);
 
-				List<TransactionData> transactions = new ArrayList<>(signatures.size());
-				for (byte[] signature : signatures) {
-					transactions.add(repository.getTransactionRepository().fromSignature(signature));
-				}
-				transactions.sort(Transaction.getDataComparator());
-
-				// Get timestamp of the first MESSAGE transaction
-				long firstMessageTimestamp = transactions.get(0).getTimestamp();
-
-				// Treat as failed if first buy attempt was more than 60 mins ago (as it's still in the OFFERING state)
-				boolean isFailed = (now - firstMessageTimestamp > 60*60*1000L);
-				if (isFailed) {
-					failedTrades.put(crossChainTradeData.qortalAtAddress, now);
-					updatedCrossChainTrades.remove(crossChainTradeData);
-				}
-				else {
-					validTrades.put(crossChainTradeData.qortalAtAddress, now);
+				for (TransactionData transactionData : transactions) {
+					// Treat as failed if buy attempt was more than 60 mins ago (as it's still in the OFFERING state)
+					if (transactionData.getRecipient().equals(crossChainTradeData.qortalCreatorTradeAddress) && now - transactionData.getTimestamp() > 60*60*1000L) {
+						failedTrades.put(crossChainTradeData.qortalAtAddress, now);
+						updatedCrossChainTrades.remove(crossChainTradeData);
+					} else {
+						validTrades.put(crossChainTradeData.qortalAtAddress, now);
+					}
 				}
 
 			} catch (DataException e) {

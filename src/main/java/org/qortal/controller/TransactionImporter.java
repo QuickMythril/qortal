@@ -47,6 +47,9 @@ public class TransactionImporter extends Thread {
     /** Map of recent invalid unconfirmed transactions. Key is base58 transaction signature, value is do-not-request expiry timestamp. */
     private final Map<String, Long> invalidUnconfirmedTransactions = Collections.synchronizedMap(new HashMap<>());
 
+    /** Cached list of unconfirmed transactions, used when counting per creator. This is replaced regularly */
+    public static List<TransactionData> unconfirmedTransactionsCache = null;
+
 
     public static synchronized TransactionImporter getInstance() {
         if (instance == null) {
@@ -215,12 +218,6 @@ public class TransactionImporter extends Thread {
                 LOGGER.debug("Finished validating signatures in incoming transactions queue (valid this round: {}, total pending import: {})...", validatedCount, sigValidTransactions.size());
             }
 
-            if (!newlyValidSignatures.isEmpty()) {
-                LOGGER.debug("Broadcasting {} newly valid signatures ahead of import", newlyValidSignatures.size());
-                Message newTransactionSignatureMessage = new TransactionSignaturesMessage(newlyValidSignatures);
-                Network.getInstance().broadcast(broadcastPeer -> newTransactionSignatureMessage);
-            }
-
         } catch (DataException e) {
             LOGGER.error("Repository issue while processing incoming transactions", e);
         }
@@ -254,6 +251,15 @@ public class TransactionImporter extends Thread {
         int processedCount = 0;
         try (final Repository repository = RepositoryManager.getRepository()) {
 
+            // Use a single copy of the unconfirmed transactions list for each cycle, to speed up constant lookups
+            // when counting unconfirmed transactions by creator.
+            List<TransactionData> unconfirmedTransactions = repository.getTransactionRepository().getUnconfirmedTransactions();
+            unconfirmedTransactions.removeIf(t -> t.getType() == Transaction.TransactionType.CHAT);
+            unconfirmedTransactionsCache = unconfirmedTransactions;
+
+            // A list of signatures were imported in this round
+            List<byte[]> newlyImportedSignatures = new ArrayList<>();
+
             // Import transactions with valid signatures
             try {
                 for (int i = 0; i < sigValidTransactions.size(); ++i) {
@@ -286,6 +292,15 @@ public class TransactionImporter extends Thread {
 
                         case OK: {
                             LOGGER.debug(() -> String.format("Imported %s transaction %s", transactionData.getType().name(), Base58.encode(transactionData.getSignature())));
+
+                            // Add to the unconfirmed transactions cache
+                            if (transactionData.getType() != Transaction.TransactionType.CHAT && unconfirmedTransactionsCache != null) {
+                                unconfirmedTransactionsCache.add(transactionData);
+                            }
+
+                            // Signature imported in this round
+                            newlyImportedSignatures.add(transactionData.getSignature());
+
                             break;
                         }
 
@@ -314,9 +329,18 @@ public class TransactionImporter extends Thread {
                     // Transaction has been processed, even if only to reject it
                     removeIncomingTransaction(transactionData.getSignature());
                 }
+
+                if (!newlyImportedSignatures.isEmpty()) {
+                    LOGGER.debug("Broadcasting {} newly imported signatures", newlyImportedSignatures.size());
+                    Message newTransactionSignatureMessage = new TransactionSignaturesMessage(newlyImportedSignatures);
+                    Network.getInstance().broadcast(broadcastPeer -> newTransactionSignatureMessage);
+                }
             } finally {
                 LOGGER.debug("Finished importing {} incoming transaction{}", processedCount, (processedCount == 1 ? "" : "s"));
                 blockchainLock.unlock();
+
+                // Clear the unconfirmed transaction cache so new data can be populated in the next cycle
+                unconfirmedTransactionsCache = null;
             }
         } catch (DataException e) {
             LOGGER.error("Repository issue while importing incoming transactions", e);

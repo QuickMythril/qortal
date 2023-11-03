@@ -50,7 +50,7 @@ tx_json=$( cat <<TX_END
 {
   "timestamp": ${timestamp},
   "reference": "${lastref}",
-  "fee": 0.001,
+  "fee": 0.01,
   "txGroupId": 0,
   "adminPublicKey": "${pubkey}",
   "pendingSignature": "${sig}",

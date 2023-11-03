@@ -19,6 +19,7 @@ import org.qortal.data.transaction.MessageTransactionData;
 import org.qortal.group.Group;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
+import org.qortal.repository.RepositoryManager;
 import org.qortal.transaction.DeployAtTransaction;
 import org.qortal.transaction.MessageTransaction;
 import org.qortal.transaction.Transaction.ValidationResult;
@@ -317,20 +318,36 @@ public class DogecoinACCTv3TradeBot implements AcctTradeBot {
 
 		boolean isMessageAlreadySent = repository.getMessageRepository().exists(tradeBotData.getTradeNativePublicKey(), messageRecipient, messageData);
 		if (!isMessageAlreadySent) {
-			PrivateKeyAccount sender = new PrivateKeyAccount(repository, tradeBotData.getTradePrivateKey());
-			MessageTransaction messageTransaction = MessageTransaction.build(repository, sender, Group.NO_GROUP, messageRecipient, messageData, false, false);
+			// Do this in a new thread so caller doesn't have to wait for computeNonce()
+			// In the unlikely event that the transaction doesn't validate then the buy won't happen and eventually Alice's AT will be refunded
+			new Thread(() -> {
+				try (final Repository threadsRepository = RepositoryManager.getRepository()) {
+					PrivateKeyAccount sender = new PrivateKeyAccount(threadsRepository, tradeBotData.getTradePrivateKey());
+					MessageTransaction messageTransaction = MessageTransaction.build(threadsRepository, sender, Group.NO_GROUP, messageRecipient, messageData, false, false);
 
-			messageTransaction.computeNonce();
-			messageTransaction.sign(sender);
+					LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", messageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
+					messageTransaction.computeNonce();
+					MessageTransactionData newMessageTransactionData = (MessageTransactionData) messageTransaction.getTransactionData();
+					LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), messageTransaction.getPoWDifficulty());
+					messageTransaction.sign(sender);
 
-			// reset repository state to prevent deadlock
-			repository.discardChanges();
-			ValidationResult result = messageTransaction.importAsUnconfirmed();
+					// reset repository state to prevent deadlock
+					threadsRepository.discardChanges();
 
-			if (result != ValidationResult.OK) {
-				LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, result.name()));
-				return ResponseResult.NETWORK_ISSUE;
-			}
+					if (messageTransaction.isSignatureValid()) {
+						ValidationResult result = messageTransaction.importAsUnconfirmed();
+
+						if (result != ValidationResult.OK) {
+							LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, result.name()));
+						}
+					}
+					else {
+						LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: signature invalid", messageRecipient));
+					}
+				} catch (DataException e) {
+					LOGGER.warn(() -> String.format("Unable to send MESSAGE to Bob's trade-bot %s: %s", messageRecipient, e.getMessage()));
+				}
+			}, "TradeBot response").start();
 		}
 
 		TradeBot.updateTradeBotState(repository, tradeBotData, () -> String.format("Funding P2SH-A %s. Messaged Bob. Waiting for AT-lock", p2shAddress));
@@ -548,15 +565,25 @@ public class DogecoinACCTv3TradeBot implements AcctTradeBot {
 				PrivateKeyAccount sender = new PrivateKeyAccount(repository, tradeBotData.getTradePrivateKey());
 				MessageTransaction outgoingMessageTransaction = MessageTransaction.build(repository, sender, Group.NO_GROUP, messageRecipient, outgoingMessageData, false, false);
 
+				LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", outgoingMessageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
 				outgoingMessageTransaction.computeNonce();
+				MessageTransactionData newMessageTransactionData = (MessageTransactionData) outgoingMessageTransaction.getTransactionData();
+				LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), outgoingMessageTransaction.getPoWDifficulty());
 				outgoingMessageTransaction.sign(sender);
 
 				// reset repository state to prevent deadlock
 				repository.discardChanges();
-				ValidationResult result = outgoingMessageTransaction.importAsUnconfirmed();
 
-				if (result != ValidationResult.OK) {
-					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+				if (outgoingMessageTransaction.isSignatureValid()) {
+					ValidationResult result = outgoingMessageTransaction.importAsUnconfirmed();
+
+					if (result != ValidationResult.OK) {
+						LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+						return;
+					}
+				}
+				else {
+					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: signature invalid", messageRecipient));
 					return;
 				}
 			}
@@ -668,15 +695,25 @@ public class DogecoinACCTv3TradeBot implements AcctTradeBot {
 			PrivateKeyAccount sender = new PrivateKeyAccount(repository, tradeBotData.getTradePrivateKey());
 			MessageTransaction messageTransaction = MessageTransaction.build(repository, sender, Group.NO_GROUP, messageRecipient, messageData, false, false);
 
+			LOGGER.info("Computing nonce at difficulty {} for AT {} and recipient {}", messageTransaction.getPoWDifficulty(), tradeBotData.getAtAddress(), messageRecipient);
 			messageTransaction.computeNonce();
+			MessageTransactionData newMessageTransactionData = (MessageTransactionData) messageTransaction.getTransactionData();
+			LOGGER.info("Computed nonce {} at difficulty {}", newMessageTransactionData.getNonce(), messageTransaction.getPoWDifficulty());
 			messageTransaction.sign(sender);
 
 			// Reset repository state to prevent deadlock
 			repository.discardChanges();
-			ValidationResult result = messageTransaction.importAsUnconfirmed();
 
-			if (result != ValidationResult.OK) {
-				LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+			if (messageTransaction.isSignatureValid()) {
+				ValidationResult result = messageTransaction.importAsUnconfirmed();
+
+				if (result != ValidationResult.OK) {
+					LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: %s", messageRecipient, result.name()));
+					return;
+				}
+			}
+			else {
+				LOGGER.warn(() -> String.format("Unable to send MESSAGE to AT %s: signature invalid", messageRecipient));
 				return;
 			}
 		}
