@@ -45,11 +45,8 @@ public class Dogecoin extends Bitcoiny {
 				return Arrays.asList(
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=doge
+					new Server("dogecoin.stackwallet.com", Server.ConnectionType.SSL, 50022),
 					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 54002),
-					new Server("electrum1-doge.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum2-doge.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum3-doge.qortal.online", Server.ConnectionType.SSL, 30002),
-					new Server("electrum4-doge.qortal.online", Server.ConnectionType.SSL, 30002),
 					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20060),
 					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20060),
 					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20060)

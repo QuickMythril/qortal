@@ -45,17 +45,14 @@ public class Litecoin extends Bitcoiny {
 				return Arrays.asList(
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=ltc
-					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 50002),
-					new Server("electrum1-ltc.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum2-ltc.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum3-ltc.qortal.online", Server.ConnectionType.SSL, 20002),
-					new Server("electrum4-ltc.qortal.online", Server.ConnectionType.SSL, 20002),
 					new Server("backup.electrum-ltc.org", Server.ConnectionType.SSL, 443),
 					new Server("electrum.ltc.xurious.com", Server.ConnectionType.SSL, 50002),
+					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 50002),
 					new Server("electrum-ltc.petrkr.net", Server.ConnectionType.SSL, 60002),
 					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20063),
 					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20063),
 					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20063),
+					new Server("electrum4-ltc.qortal.online", Server.ConnectionType.SSL, 20002),
 					new Server("ltc.rentonrisk.com", Server.ConnectionType.SSL, 50002)
 				);
 			}
@@ -80,9 +77,7 @@ public class Litecoin extends Bitcoiny {
 			@Override
 			public Collection<ElectrumX.Server> getServers() {
 				return Arrays.asList(
-					new Server("electrum-ltc.bysh.me", Server.ConnectionType.TCP, 51001),
 					new Server("electrum-ltc.bysh.me", Server.ConnectionType.SSL, 51002),
-					new Server("electrum.ltc.xurious.com", Server.ConnectionType.TCP, 51001),
 					new Server("electrum.ltc.xurious.com", Server.ConnectionType.SSL, 51002)
 				);
 			}

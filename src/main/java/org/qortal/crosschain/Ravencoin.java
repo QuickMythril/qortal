@@ -46,13 +46,10 @@ public class Ravencoin extends Bitcoiny {
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=rvn
 					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 56002),
-					new Server("electrum1-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum2-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum3-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
-					new Server("electrum4-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
 					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20051),
 					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20051),
 					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20051),
+					new Server("electrum3-rvn.qortal.online", Server.ConnectionType.SSL, 50002),
 					new Server("rvn-dashboard.com", Server.ConnectionType.SSL, 50002),
 					new Server("rvn4lyfe.com", Server.ConnectionType.SSL, 50002)
 				);

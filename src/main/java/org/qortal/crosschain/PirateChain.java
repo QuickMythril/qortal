@@ -51,7 +51,6 @@ public class PirateChain extends Bitcoiny {
 			public Collection<Server> getServers() {
 				return Arrays.asList(
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
-					new Server("wallet-arrr1.qortal.online", Server.ConnectionType.SSL, 443),
 					new Server("wallet-arrr2.qortal.online", Server.ConnectionType.SSL, 443),
 					new Server("wallet-arrr3.qortal.online", Server.ConnectionType.SSL, 443),
 					new Server("wallet-arrr4.qortal.online", Server.ConnectionType.SSL, 443),
