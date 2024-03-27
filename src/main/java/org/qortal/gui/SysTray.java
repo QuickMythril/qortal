@@ -196,7 +196,7 @@ public class SysTray {
 			}
 
 			// Now execute extracted script
-			List<String> scriptCmd = Arrays.asList(NTP_SCRIPT);
+			List<String> scriptCmd = List.of(NTP_SCRIPT);
 			LOGGER.info(String.format("Running NTP configuration script: %s", String.join(" ", scriptCmd)));
 			try {
 				new ProcessBuilder(scriptCmd).start();

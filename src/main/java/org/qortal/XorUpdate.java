@@ -21,7 +21,7 @@ public class XorUpdate {
 
 		Path inPath = Paths.get(args[0]);
 		if (!Files.isReadable(inPath)) {
-			System.err.println(String.format("Cannot open '%s'", args[0]));
+			System.err.printf("Cannot open '%s'%n", args[0]);
 			System.exit(2);
 		}
 

@@ -27,7 +27,7 @@ public abstract class BouncyCastleEd25519
         public static final int Ed25519ph = 2;
     }
 
-    protected static class F extends X25519Field {};
+    protected static class F extends X25519Field {}
 
     protected static final long M08L = 0x000000FFL;
     protected static final long M28L = 0x0FFFFFFFL;
@@ -1012,23 +1012,23 @@ public abstract class BouncyCastleEd25519
     protected static byte[] reduceScalar(byte[] n)
     {
         long x00 =  decode32(n,  0)       & M32L;   // x00:32/--
-        long x01 = (decode24(n,  4) << 4) & M32L;   // x01:28/--
+        long x01 = ((long) decode24(n, 4) << 4) & M32L;   // x01:28/--
         long x02 =  decode32(n,  7)       & M32L;   // x02:32/--
-        long x03 = (decode24(n, 11) << 4) & M32L;   // x03:28/--
+        long x03 = ((long) decode24(n, 11) << 4) & M32L;   // x03:28/--
         long x04 =  decode32(n, 14)       & M32L;   // x04:32/--
-        long x05 = (decode24(n, 18) << 4) & M32L;   // x05:28/--
+        long x05 = ((long) decode24(n, 18) << 4) & M32L;   // x05:28/--
         long x06 =  decode32(n, 21)       & M32L;   // x06:32/--
-        long x07 = (decode24(n, 25) << 4) & M32L;   // x07:28/--
+        long x07 = ((long) decode24(n, 25) << 4) & M32L;   // x07:28/--
         long x08 =  decode32(n, 28)       & M32L;   // x08:32/--
-        long x09 = (decode24(n, 32) << 4) & M32L;   // x09:28/--
+        long x09 = ((long) decode24(n, 32) << 4) & M32L;   // x09:28/--
         long x10 =  decode32(n, 35)       & M32L;   // x10:32/--
-        long x11 = (decode24(n, 39) << 4) & M32L;   // x11:28/--
+        long x11 = ((long) decode24(n, 39) << 4) & M32L;   // x11:28/--
         long x12 =  decode32(n, 42)       & M32L;   // x12:32/--
-        long x13 = (decode24(n, 46) << 4) & M32L;   // x13:28/--
+        long x13 = ((long) decode24(n, 46) << 4) & M32L;   // x13:28/--
         long x14 =  decode32(n, 49)       & M32L;   // x14:32/--
-        long x15 = (decode24(n, 53) << 4) & M32L;   // x15:28/--
+        long x15 = ((long) decode24(n, 53) << 4) & M32L;   // x15:28/--
         long x16 =  decode32(n, 56)       & M32L;   // x16:32/--
-        long x17 = (decode24(n, 60) << 4) & M32L;   // x17:28/--
+        long x17 = ((long) decode24(n, 60) << 4) & M32L;   // x17:28/--
         long x18 =  n[63]                 & M08L;   // x18:08/--
         long t;
 

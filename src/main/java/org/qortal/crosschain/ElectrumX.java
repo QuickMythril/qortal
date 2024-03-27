@@ -51,7 +51,7 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 		ConnectionType connectionType;
 
 		int port;
-		private List<Long> responseTimes = new ArrayList<>();
+		private final List<Long> responseTimes = new ArrayList<>();
 
 		public Server(String hostname, ConnectionType connectionType, int port) {
 			this.hostname = hostname;
@@ -120,9 +120,9 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 			return String.format("%s:%s:%d", this.connectionType.name(), this.hostname, this.port);
 		}
 	}
-	private Set<ChainableServer> servers = new HashSet<>();
-	private List<ChainableServer> remainingServers = new ArrayList<>();
-	private Set<ChainableServer> uselessServers = Collections.synchronizedSet(new HashSet<>());
+	private final Set<ChainableServer> servers = new HashSet<>();
+	private final List<ChainableServer> remainingServers = new ArrayList<>();
+	private final Set<ChainableServer> uselessServers = Collections.synchronizedSet(new HashSet<>());
 
 	private final String netId;
 	private final String expectedGenesisHash;
@@ -707,7 +707,7 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 				if (featuresJson == null || Double.valueOf((String) featuresJson.get("protocol_min")) < MIN_PROTOCOL_VERSION)
 					continue;
 
-				if (this.expectedGenesisHash != null && !((String) featuresJson.get("genesis_hash")).equals(this.expectedGenesisHash))
+				if (this.expectedGenesisHash != null && !featuresJson.get("genesis_hash").equals(this.expectedGenesisHash))
 					continue;
 
 				// Ask for more servers
@@ -803,7 +803,7 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 		Object errorObj = responseJson.get("error");
 		if (errorObj != null) {
 			if (errorObj instanceof String) {
-				LOGGER.debug(String.format("Unexpected error message from ElectrumX server %s for RPC method %s: %s", this.currentServer, method, (String) errorObj));
+				LOGGER.debug(String.format("Unexpected error message from ElectrumX server %s for RPC method %s: %s", this.currentServer, method, errorObj));
 				// Try another server
 				return null;
 			}

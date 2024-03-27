@@ -326,11 +326,11 @@ public class NamesDatabaseIntegrityCheck {
         signatures.addAll(sellNameTransactions);
 
         List<byte[]> buyNameTransactions = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
-                TransactionType.BUY_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
+                TransactionType.BUY_NAME, Arrays.asList("name = ?"), Collections.singletonList(name));
         signatures.addAll(buyNameTransactions);
 
         List<byte[]> cancelSellNameTransactions = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
-                TransactionType.CANCEL_SELL_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
+                TransactionType.CANCEL_SELL_NAME, List.of("name = ?"), Collections.singletonList(name));
         signatures.addAll(cancelSellNameTransactions);
 
         List<TransactionData> transactions = new ArrayList<>();

@@ -244,11 +244,8 @@ public class ArbitraryDataStorageManager extends Thread {
             // Private data isn't enabled so we can't store data without a valid secret
             return false;
         }
-        if (!Settings.getInstance().isPublicDataEnabled() && hasSecret) {
-            // Public data isn't enabled so we can't store data with a secret
-            return false;
-        }
-        return true;
+        // Public data isn't enabled so we can't store data with a secret
+        return Settings.getInstance().isPublicDataEnabled() || !hasSecret;
     }
 
 
@@ -402,12 +399,9 @@ public class ArbitraryDataStorageManager extends Thread {
             return true;
         }
         // If we haven't checked for a while, we need to check it now
-        if (now - lastDirectorySizeCheck > DIRECTORY_SIZE_CHECK_INTERVAL) {
-            return true;
-        }
+        return now - lastDirectorySizeCheck > DIRECTORY_SIZE_CHECK_INTERVAL;
 
         // We shouldn't check this time, as we want to reduce IO load on the SSD/HDD
-        return false;
     }
 
     public void calculateDirectorySize(Long now) {
@@ -478,10 +472,7 @@ public class ArbitraryDataStorageManager extends Thread {
         }
 
         long maxStorageCapacity = (long)((double)this.storageCapacity * threshold);
-        if (this.totalDirectorySize >= maxStorageCapacity) {
-            return false;
-        }
-        return true;
+        return this.totalDirectorySize < maxStorageCapacity;
     }
 
     public boolean isStorageSpaceAvailableForName(Repository repository, String name, double threshold) {
@@ -522,11 +513,7 @@ public class ArbitraryDataStorageManager extends Thread {
         }
 
         // Have we reached the limit for this name?
-        if (totalSizeForName > maxStoragePerName) {
-            return false;
-        }
-
-        return true;
+        return totalSizeForName <= maxStoragePerName;
     }
 
     public long storageCapacityPerName(double threshold) {

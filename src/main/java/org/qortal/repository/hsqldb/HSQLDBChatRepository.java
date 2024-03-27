@@ -69,10 +69,10 @@ public class HSQLDBChatRepository implements ChatRepository {
 			bindParams.add(chatReferenceBytes);
 		}
 
-		if (hasChatReference != null && hasChatReference == true) {
+		if (hasChatReference != null && hasChatReference) {
 			whereClauses.add("chat_reference IS NOT NULL");
 		}
-		else if (hasChatReference != null && hasChatReference == false) {
+		else if (hasChatReference != null && !hasChatReference) {
 			whereClauses.add("chat_reference IS NULL");
 		}
 

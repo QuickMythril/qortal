@@ -16,7 +16,7 @@ public class PaymentTransaction extends Transaction {
 
 	// Properties
 
-	private PaymentTransactionData paymentTransactionData;
+	private final PaymentTransactionData paymentTransactionData;
 	private PaymentData paymentData = null;
 
 	// Constructors

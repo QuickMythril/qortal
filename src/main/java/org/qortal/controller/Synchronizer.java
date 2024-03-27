@@ -83,15 +83,15 @@ public class Synchronizer extends Thread {
 	private boolean syncRequestPending = false;
 
 	// Keep track of invalid blocks so that we don't keep trying to sync them
-	private Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
+	private final Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
 	public Long timeValidBlockLastReceived = null;
 	public Long timeInvalidBlockLastReceived = null;
 
 	private static Synchronizer instance;
 
 	public enum SynchronizationResult {
-		OK, NOTHING_TO_DO, GENESIS_ONLY, NO_COMMON_BLOCK, TOO_DIVERGENT, NO_REPLY, INFERIOR_CHAIN, INVALID_DATA, NO_BLOCKCHAIN_LOCK, REPOSITORY_ISSUE, SHUTTING_DOWN, CHAIN_TIP_TOO_OLD;
-	}
+		OK, NOTHING_TO_DO, GENESIS_ONLY, NO_COMMON_BLOCK, TOO_DIVERGENT, NO_REPLY, INFERIOR_CHAIN, INVALID_DATA, NO_BLOCKCHAIN_LOCK, REPOSITORY_ISSUE, SHUTTING_DOWN, CHAIN_TIP_TOO_OLD
+    }
 
 	public static class NewChainTipEvent implements Event {
 		private final BlockData priorChainTip;
@@ -268,7 +268,7 @@ public class Synchronizer extends Thread {
 			StringBuilder finalPeersString = new StringBuilder();
 			for (Peer peer : peers)
 				finalPeersString = finalPeersString.length() > 0 ? finalPeersString.append(", ").append(peer) : finalPeersString.append(peer);
-			LOGGER.debug(String.format("Choosing random peer from: [%s]", finalPeersString.toString()));
+			LOGGER.debug(String.format("Choosing random peer from: [%s]", finalPeersString));
 		}
 
 		// Pick random peer to sync with
@@ -276,13 +276,9 @@ public class Synchronizer extends Thread {
 		Peer peer = peers.get(index);
 
 		SynchronizationResult syncResult = actuallySynchronize(peer, false);
-		if (syncResult == SynchronizationResult.NO_BLOCKCHAIN_LOCK) {
-			// No blockchain lock - force a retry by returning false
-			return false;
-		}
-
-		return true;
-	}
+        // No blockchain lock - force a retry by returning false
+        return syncResult != SynchronizationResult.NO_BLOCKCHAIN_LOCK;
+    }
 
 	public SynchronizationResult actuallySynchronize(Peer peer, boolean force) throws InterruptedException {
 		boolean hasStatusChanged = false;
@@ -406,7 +402,7 @@ public class Synchronizer extends Thread {
 				// If enough time has passed, enter recovery mode, which lifts some restrictions on who we can sync with and when we can mint
 				long recoveryModeTimeout = Settings.getInstance().getRecoveryModeTimeout();
 				if (NTP.getTime() - timePeersLastAvailable > recoveryModeTimeout) {
-					if (recoveryMode == false) {
+					if (!recoveryMode) {
 						LOGGER.info(String.format("Peers have been unavailable for %d minutes. Entering recovery mode...", recoveryModeTimeout/60/1000));
 						recoveryMode = true;
 					}
@@ -457,7 +453,7 @@ public class Synchronizer extends Thread {
 
 				final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 				if (ourLatestBlockData.getTimestamp() < minLatestBlockTimestamp) {
-					LOGGER.debug(String.format("Our latest block is very old, so we won't collect common block info from peers"));
+					LOGGER.debug("Our latest block is very old, so we won't collect common block info from peers");
 					return SynchronizationResult.NOTHING_TO_DO;
 				}
 
@@ -582,7 +578,7 @@ public class Synchronizer extends Thread {
 
 				final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 				if (ourLatestBlockData.getTimestamp() < minLatestBlockTimestamp) {
-					LOGGER.debug(String.format("Our latest block is very old, so we won't filter the peers list"));
+					LOGGER.debug("Our latest block is very old, so we won't filter the peers list");
 					return peers;
 				}
 
@@ -663,7 +659,7 @@ public class Synchronizer extends Thread {
 							}
 						}
 
-						if (useCachedSummaries == false) {
+						if (!useCachedSummaries) {
 							if (summariesRequired > 0) {
 								LOGGER.trace(String.format("Requesting %d block summar%s from peer %s after common block %.8s. Peer height: %d", summariesRequired, (summariesRequired != 1 ? "ies" : "y"), peer, Base58.encode(commonBlockSummary.getSignature()), peerHeight));
 
@@ -711,7 +707,7 @@ public class Synchronizer extends Thread {
 					LOGGER.trace(String.format("About to fetch our block summaries from %d to %d. Our height: %d", commonBlockSummary.getHeight() + 1, commonBlockSummary.getHeight() + ourSummariesRequired, ourHeight));
 					List<BlockSummaryData> ourBlockSummaries = repository.getBlockRepository().getBlockSummaries(commonBlockSummary.getHeight() + 1, commonBlockSummary.getHeight() + ourSummariesRequired);
 					if (ourBlockSummaries.isEmpty()) {
-						LOGGER.debug(String.format("We don't have any block summaries so can't compare our chain against peers with this common block. We can still compare them against each other."));
+						LOGGER.debug("We don't have any block summaries so can't compare our chain against peers with this common block. We can still compare them against each other.");
 					}
 					else {
 						populateBlockSummariesMinterLevels(repository, ourBlockSummaries);

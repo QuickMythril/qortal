@@ -66,7 +66,7 @@ public class ArbitraryDataQortalMetadata extends ArbitraryDataMetadata {
         Path path = Paths.get(this.qortalDirectoryPath.toString(), this.fileName());
         File patchFile = new File(path.toString());
         if (!patchFile.exists()) {
-            throw new IOException(String.format("Patch file doesn't exist: %s", path.toString()));
+            throw new IOException(String.format("Patch file doesn't exist: %s", path));
         }
 
         this.jsonString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);

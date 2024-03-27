@@ -3,9 +3,9 @@ package org.qortal.data.block;
 public class BlockTransactionData {
 
 	// Properties
-	private byte[] blockSignature;
-	private int sequence;
-	private byte[] transactionSignature;
+	private final byte[] blockSignature;
+	private final int sequence;
+	private final byte[] transactionSignature;
 
 	// Constructors
 

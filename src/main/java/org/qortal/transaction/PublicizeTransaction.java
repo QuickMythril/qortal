@@ -22,7 +22,7 @@ import java.util.List;
 public class PublicizeTransaction extends Transaction {
 
 	// Properties
-	private PublicizeTransactionData publicizeTransactionData;
+	private final PublicizeTransactionData publicizeTransactionData;
 
 	// Other useful constants
 

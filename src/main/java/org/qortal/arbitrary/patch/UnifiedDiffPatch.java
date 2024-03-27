@@ -50,10 +50,10 @@ public class UnifiedDiffPatch {
      */
     public void create() throws IOException {
         if (!Files.exists(before)) {
-            throw new IOException(String.format("File not found (before): %s", before.toString()));
+            throw new IOException(String.format("File not found (before): %s", before));
         }
         if (!Files.exists(after)) {
-            throw new IOException(String.format("File not found (after): %s", after.toString()));
+            throw new IOException(String.format("File not found (after): %s", after));
         }
 
         // Ensure parent folders exist in the destination

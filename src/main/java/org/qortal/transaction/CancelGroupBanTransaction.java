@@ -17,7 +17,7 @@ public class CancelGroupBanTransaction extends Transaction {
 
 	// Properties
 
-	private CancelGroupBanTransactionData groupUnbanTransactionData;
+	private final CancelGroupBanTransactionData groupUnbanTransactionData;
 	private Account memberAccount = null;
 
 	// Constructors

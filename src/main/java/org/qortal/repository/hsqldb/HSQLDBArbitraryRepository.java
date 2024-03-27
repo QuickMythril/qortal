@@ -66,12 +66,8 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 		ArbitraryDataFile arbitraryDataFile = ArbitraryDataFile.fromTransactionData(transactionData);
 
 		// Check if we already have the complete data file or all chunks
-		if (arbitraryDataFile.allFilesExist()) {
-			return true;
-		}
-
-		return false;
-	}
+        return arbitraryDataFile.allFilesExist();
+    }
 
 	@Override
 	public byte[] fetchData(byte[] signature) {

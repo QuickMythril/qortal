@@ -48,7 +48,7 @@ public class PirateChainWalletController extends Thread {
     private boolean shouldLoadWallet = false;
     private String loadStatus = null;
 
-    private static String qdnWalletSignature = "EsfUw54perxkEtfoUoL7Z97XPrNsZRZXePVZPz3cwRm9qyEPSofD5KmgVpDqVitQp7LhnZRmL6z2V9hEe1YS45T";
+    private static final String qdnWalletSignature = "EsfUw54perxkEtfoUoL7Z97XPrNsZRZXePVZPz3cwRm9qyEPSofD5KmgVpDqVitQp7LhnZRmL6z2V9hEe1YS45T";
 
 
     private PirateChainWalletController() {
@@ -172,7 +172,7 @@ public class PirateChainWalletController extends Thread {
             List<Peer> handshakedPeers = Network.getInstance().getImmutableHandshakedPeers();
             if (handshakedPeers.size() < Settings.getInstance().getMinBlockchainPeers()) {
                 // Wait for more peers
-                this.loadStatus = String.format("Searching for peers...");
+                this.loadStatus = "Searching for peers...";
                 return;
             }
 

@@ -800,16 +800,14 @@ public class HSQLDBDatabaseUpdates {
 
 					stmt.execute("ALTER TABLE TradeBotStates ADD COLUMN trade_state VARCHAR(40) BEFORE trade_state_value");
 					// Any existing values will be BitcoinACCTv1
-					StringBuilder updateTradeBotStatesSql = new StringBuilder(1024);
-					updateTradeBotStatesSql.append("UPDATE TradeBotStates SET (trade_state) = (")
-							.append("SELECT state_name FROM (VALUES ")
-							.append(
-									Arrays.stream(BitcoinACCTv1TradeBot.State.values())
-									.map(state -> String.format("(%d, '%s')", state.value, state.name()))
-									.collect(Collectors.joining(", ")))
-							.append(") AS BitcoinACCTv1States (state_value, state_name) ")
-							.append("WHERE state_value = trade_state_value)");
-					stmt.execute(updateTradeBotStatesSql.toString());
+                    String updateTradeBotStatesSql = "UPDATE TradeBotStates SET (trade_state) = (" +
+                            "SELECT state_name FROM (VALUES " +
+                            Arrays.stream(BitcoinACCTv1TradeBot.State.values())
+                                    .map(state -> String.format("(%d, '%s')", state.value, state.name()))
+                                    .collect(Collectors.joining(", ")) +
+                            ") AS BitcoinACCTv1States (state_value, state_name) " +
+                            "WHERE state_value = trade_state_value)";
+					stmt.execute(updateTradeBotStatesSql);
 					stmt.execute("ALTER TABLE TradeBotStates ALTER COLUMN trade_state SET NOT NULL");
 
 					stmt.execute("ALTER TABLE TradeBotStates ADD COLUMN foreign_blockchain VARCHAR(40) BEFORE trade_foreign_public_key");

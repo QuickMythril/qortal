@@ -172,7 +172,7 @@ public class BlockMinter extends Thread {
 
 					// Disregard peers that don't have a recent block, but only if we're not in recovery mode.
 					// In that mode, we want to allow minting on top of older blocks, to recover stalled networks.
-					if (Synchronizer.getInstance().getRecoveryMode() == false)
+					if (!Synchronizer.getInstance().getRecoveryMode())
 						peers.removeIf(Controller.hasNoRecentBlock);
 
 					// Don't mint if we don't have enough up-to-date peers as where would the transactions/consensus come from?
@@ -197,7 +197,7 @@ public class BlockMinter extends Thread {
 
 					// If our latest block isn't recent then we need to synchronize instead of minting, unless we're in recovery mode.
 					if (!peers.isEmpty() && lastBlockData.getTimestamp() < minLatestBlockTimestamp)
-						if (Synchronizer.getInstance().getRecoveryMode() == false && recoverInvalidBlock == false)
+						if (!Synchronizer.getInstance().getRecoveryMode() && !recoverInvalidBlock)
 							continue;
 
 					// There are enough peers with a recent block and our latest block is recent
@@ -227,7 +227,7 @@ public class BlockMinter extends Thread {
 					byte[] previousBlockMinter = previousBlockData.getMinterPublicKey();
 					boolean mintedLastBlock = mintingAccountsData.stream().anyMatch(mintingAccount -> Arrays.equals(mintingAccount.getPublicKey(), previousBlockMinter));
 					if (mintedLastBlock && !isSingleNodeTestnet) {
-						LOGGER.trace(String.format("One of our keys signed the last block, so we won't sign the next one"));
+						LOGGER.trace("One of our keys signed the last block, so we won't sign the next one");
 						continue;
 					}
 

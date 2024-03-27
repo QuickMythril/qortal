@@ -21,7 +21,7 @@ public class NTP implements Runnable {
 	private static final Logger LOGGER = LogManager.getLogger(NTP.class);
 
 	private static boolean isStarted = false;
-	private static volatile boolean isStopping = false;
+	private static final boolean isStopping = false;
 	private static ExecutorService instanceExecutor;
 	private static NTP instance;
 	private static volatile boolean isOffsetSet = false;
@@ -41,7 +41,7 @@ public class NTP implements Runnable {
 		public Double offset;
 		public Double jitter;
 
-		private Deque<Double> offsets = new LinkedList<>();
+		private final Deque<Double> offsets = new LinkedList<>();
 		private double totalSquareOffsets = 0.0;
 		private long nextPoll;
 		private Long lastGood;
@@ -86,7 +86,7 @@ public class NTP implements Runnable {
 					this.reach <<= 1;
 				}
 
-				this.nextPoll = now + this.poll * 1000;
+				this.nextPoll = now + this.poll * 1000L;
 				return isUpdated;
 			} finally {
 				Thread.currentThread().setName("NTP (dormant)");
@@ -163,8 +163,7 @@ public class NTP implements Runnable {
 			}
 		} catch (InterruptedException e) {
 			// Interrupted - time to exit
-			return;
-		}
+        }
 	}
 
 	private boolean pollServers() throws InterruptedException {

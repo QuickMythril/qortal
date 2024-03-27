@@ -23,7 +23,7 @@ public class RewardShareTransaction extends Transaction {
 
 	// Properties
 
-	private RewardShareTransactionData rewardShareTransactionData;
+	private final RewardShareTransactionData rewardShareTransactionData;
 	private boolean haveCheckedForExistingRewardShare = false;
 	private RewardShareData existingRewardShareData = null;
 
@@ -43,7 +43,7 @@ public class RewardShareTransaction extends Transaction {
 	}
 
 	private RewardShareData getExistingRewardShare() throws DataException {
-		if (this.haveCheckedForExistingRewardShare == false) {
+		if (!this.haveCheckedForExistingRewardShare) {
 			this.haveCheckedForExistingRewardShare = true;
 
 			// Look up any existing reward-share (using transaction's reward-share public key)
@@ -200,13 +200,9 @@ public class RewardShareTransaction extends Transaction {
 			return false;
 		}
 
-		if (height >= startV3 && height <= endV3) {
-			// Not confirmable on algo V3 run
-			return false;
-		}
-
-		return true;
-	}
+        // Not confirmable on algo V3 run
+        return height < startV3 || height > endV3;
+    }
 
 	@Override
 	public void process() throws DataException {

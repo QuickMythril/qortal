@@ -18,7 +18,7 @@ import java.util.List;
 public class GroupKickTransaction extends Transaction {
 
 	// Properties
-	private GroupKickTransactionData groupKickTransactionData;
+	private final GroupKickTransactionData groupKickTransactionData;
 
 	// Constructors
 

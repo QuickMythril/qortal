@@ -4,17 +4,17 @@ import java.sql.SQLException;
 
 public interface RepositoryFactory {
 
-	public boolean wasPristineAtOpen();
+	boolean wasPristineAtOpen();
 
-	public RepositoryFactory reopen() throws DataException;
+	RepositoryFactory reopen() throws DataException;
 
-	public Repository getRepository() throws DataException;
+	Repository getRepository() throws DataException;
 
-	public Repository tryRepository() throws DataException;
+	Repository tryRepository() throws DataException;
 
-	public void close() throws DataException;
+	void close() throws DataException;
 
 	// Not ideal place for this but implementating class will know the answer without having to open a new DB session
-	public boolean isDeadlockException(SQLException e);
+    boolean isDeadlockException(SQLException e);
 
 }

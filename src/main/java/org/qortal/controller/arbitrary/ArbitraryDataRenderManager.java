@@ -17,9 +17,9 @@ public class ArbitraryDataRenderManager extends Thread {
      * Map to keep track of authorized resources for rendering.
      * Keyed by resource ID, with the authorization time as the value.
      */
-    private Map<String, Long> authorizedResources = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Long> authorizedResources = Collections.synchronizedMap(new HashMap<>());
 
-    private static long AUTHORIZATION_TIMEOUT = 60 * 60 * 1000L; // 1 hour
+    private static final long AUTHORIZATION_TIMEOUT = 60 * 60 * 1000L; // 1 hour
 
 
     public ArbitraryDataRenderManager() {

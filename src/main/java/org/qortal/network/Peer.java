@@ -113,7 +113,7 @@ public class Peer {
 
 
     /* Pending signature requests */
-    private List<byte[]> pendingSignatureRequests = Collections.synchronizedList(new ArrayList<>());
+    private final List<byte[]> pendingSignatureRequests = Collections.synchronizedList(new ArrayList<>());
 
 
     // Versioning
@@ -934,10 +934,7 @@ public class Peer {
         if (commonBlockChainTipData == null || commonBlockChainTipData.getSignature() == null)
             return false;
 
-        if (!Arrays.equals(peerChainTipData.getSignature(), commonBlockChainTipData.getSignature()))
-            return false;
-
-        return true;
+        return Arrays.equals(peerChainTipData.getSignature(), commonBlockChainTipData.getSignature());
     }
 
 

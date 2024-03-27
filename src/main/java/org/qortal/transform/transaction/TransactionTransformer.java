@@ -90,7 +90,7 @@ public abstract class TransactionTransformer extends Transformer {
 
 	/** Container for raw transaction layout */
 	public static class TransactionLayout {
-		private List<Transformation> layout = new ArrayList<>();
+		private final List<Transformation> layout = new ArrayList<>();
 
 		public void add(String name, TransformationType format) {
 			layout.add(new Transformation(name, format));
@@ -183,7 +183,7 @@ public abstract class TransactionTransformer extends Transformer {
 		if (bytes == null)
 			return null;
 
-		LOGGER.trace(() -> "tx hex: " + HashCode.fromBytes(bytes).toString());
+		LOGGER.trace(() -> "tx hex: " + HashCode.fromBytes(bytes));
 
 		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
 

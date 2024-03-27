@@ -78,7 +78,7 @@ public class PirateChain extends Bitcoiny {
 
 			@Override
 			public Collection<Server> getServers() {
-				return Arrays.asList();
+				return List.of();
 			}
 
 			@Override

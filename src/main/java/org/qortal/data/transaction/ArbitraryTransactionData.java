@@ -25,8 +25,8 @@ public class ArbitraryTransactionData extends TransactionData {
 	// "data" field types
 	public enum DataType {
 		RAW_DATA,
-		DATA_HASH;
-	}
+		DATA_HASH
+    }
 
 	// Methods
 	public enum Method {

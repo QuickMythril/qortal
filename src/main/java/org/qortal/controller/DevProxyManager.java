@@ -48,7 +48,7 @@ public class DevProxyManager {
                 return;
             }
 
-            LOGGER.info(String.format("Shutting down developer proxy service"));
+            LOGGER.info("Shutting down developer proxy service");
             DevProxyService devProxyService = DevProxyService.getInstance();
             devProxyService.stop();
             this.running = false;
