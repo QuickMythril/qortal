@@ -14,7 +14,7 @@
 		<ciyam-at.version>1.4.1</ciyam-at.version>
 		<commons-net.version>3.8.0</commons-net.version>
 		<commons-text.version>1.11.0</commons-text.version>
-		<commons-io.version>2.15.1</commons-io.version>
+		<commons-io.version>2.16.0</commons-io.version>
 		<commons-compress.version>1.26.1</commons-compress.version>
 		<commons-lang3.version>3.14.0</commons-lang3.version>
 		<dagger.version>1.2.2</dagger.version>
@@ -54,7 +54,7 @@
 		<simplemagic.version>1.17</simplemagic.version>
 		<slf4j.version>1.7.36</slf4j.version>
 		<swagger-api.version>2.0.10</swagger-api.version>
-		<swagger-ui.version>5.12.2</swagger-ui.version>
+		<swagger-ui.version>5.13.0</swagger-ui.version>
 		<upnp.version>1.2</upnp.version>
 		<xz.version>1.9</xz.version>
 	</properties>
