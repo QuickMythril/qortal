@@ -204,7 +204,7 @@ public class Synchronizer extends Thread {
 	}
 
 	public boolean getRecoveryMode() {
-		return this.recoveryMode;
+		return !this.recoveryMode;
 	}
 
 
@@ -258,7 +258,7 @@ public class Synchronizer extends Thread {
 		peers.removeIf(Controller.hasNoRecentBlock);
 
 		final int peersRemoved = peersBeforeComparison - peers.size();
-		if (peersRemoved > 0 && peers.size() > 0)
+		if (peersRemoved > 0 && !peers.isEmpty())
 			LOGGER.debug(String.format("Ignoring %d peers on inferior chains. Peers remaining: %d", peersRemoved, peers.size()));
 
 		if (peers.isEmpty())
@@ -388,7 +388,7 @@ public class Synchronizer extends Thread {
 	private boolean checkRecoveryModeForPeers(List<Peer> qualifiedPeers) {
 		List<Peer> handshakedPeers = Network.getInstance().getImmutableHandshakedPeers();
 
-		if (handshakedPeers.size() > 0) {
+		if (!handshakedPeers.isEmpty()) {
 			// There is at least one handshaked peer
 			if (qualifiedPeers.isEmpty()) {
 				// There are no 'qualified' peers - i.e. peers that have a recent block we can sync to
@@ -441,7 +441,7 @@ public class Synchronizer extends Thread {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			try {
 
-				if (peers.size() == 0)
+				if (peers.isEmpty())
 					return SynchronizationResult.NOTHING_TO_DO;
 
 				// If our latest block is very old, it's best that we don't try and determine the best peers to sync to.
@@ -697,7 +697,7 @@ public class Synchronizer extends Thread {
 
 						// Reduce minChainLength if needed. If we don't have any blocks, this peer will be excluded from chain weight comparisons later in the process, so we shouldn't update minChainLength
 						List <BlockSummaryData> peerBlockSummaries = peer.getCommonBlockData().getBlockSummariesAfterCommonBlock();
-						if (peerBlockSummaries != null && peerBlockSummaries.size() > 0)
+						if (peerBlockSummaries != null && !peerBlockSummaries.isEmpty())
 							if (peerBlockSummaries.size() < minChainLength)
 								minChainLength = peerBlockSummaries.size();
 					}
@@ -724,7 +724,7 @@ public class Synchronizer extends Thread {
 
 					// Calculate our chain weight
 					BigInteger ourChainWeight = BigInteger.valueOf(0);
-					if (ourBlockSummaries.size() > 0)
+					if (!ourBlockSummaries.isEmpty())
 						ourChainWeight = Block.calcChainWeight(commonBlockSummary.getHeight(), commonBlockSummary.getSignature(), ourBlockSummaries, maxHeightForChainWeightComparisons);
 
 					LOGGER.debug(String.format("Our chain weight based on %d blocks is %s", (usingSameLengthChainWeight ? minChainLength : ourBlockSummaries.size()), accurateFormatter.format(ourChainWeight)));
@@ -776,7 +776,7 @@ public class Synchronizer extends Thread {
 					}
 
 					// Now that we have selected the best peers, compare them against each other and remove any with lower weights
-					if (superiorPeersForComparison.size() > 0) {
+					if (!superiorPeersForComparison.isEmpty()) {
 						BigInteger bestChainWeight = null;
 						for (Peer peer : superiorPeersForComparison) {
 							// Increase bestChainWeight if needed
@@ -1286,7 +1286,7 @@ public class Synchronizer extends Thread {
 						cachedCommonBlockData.setBlockSummariesAfterCommonBlock(null);
 
                     // If we have already received newer blocks from this peer that what we have already, go ahead and apply them
-                    if (peerBlocks.size() > 0) {
+                    if (!peerBlocks.isEmpty()) {
 						final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 						final Block peerLatestBlock = peerBlocks.get(peerBlocks.size() - 1);
 						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
@@ -1348,7 +1348,7 @@ public class Synchronizer extends Thread {
 
 				if (retryCount >= maxRetries) {
 					// If we have already received newer blocks from this peer that what we have already, go ahead and apply them
-					if (peerBlocks.size() > 0) {
+					if (!peerBlocks.isEmpty()) {
 						final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 						final Block peerLatestBlock = peerBlocks.get(peerBlocks.size() - 1);
 						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();

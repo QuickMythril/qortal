@@ -60,7 +60,7 @@ public class AddGroupAdminTransaction extends Transaction {
 			return ValidationResult.INVALID_ADDRESS;
 
 		// Check group exists
-		if (!this.repository.getGroupRepository().groupExists(groupId))
+		if (this.repository.getGroupRepository().groupExists(groupId))
 			return ValidationResult.GROUP_DOES_NOT_EXIST;
 
 		Account owner = getOwner();

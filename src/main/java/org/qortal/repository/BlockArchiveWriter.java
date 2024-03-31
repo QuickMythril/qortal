@@ -256,7 +256,7 @@ public class BlockArchiveWriter {
 
         // We have enough blocks to create a new file
         int endHeight = startHeight + i - 1;
-        String filePath = String.format("%s/%d-%d.dat", archivePath.toString(), startHeight, endHeight);
+        String filePath = String.format("%s/%d-%d.dat", archivePath, startHeight, endHeight);
         FileOutputStream fileOutputStream = new FileOutputStream(filePath);
         // Write version number
         fileOutputStream.write(Ints.toByteArray(serializationVersion));

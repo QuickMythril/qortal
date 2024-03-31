@@ -859,7 +859,7 @@ public class Peer {
             }
         }
 
-        if (logStats && this.receivedMessageStats.size() > 0) {
+        if (logStats && !this.receivedMessageStats.isEmpty()) {
             StringBuilder statsBuilder = new StringBuilder(1024);
             statsBuilder.append("peer ").append(this).append(" message stats:\n=received=");
             appendMessageStats(statsBuilder, this.receivedMessageStats);

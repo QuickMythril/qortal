@@ -82,7 +82,7 @@ public class HSQLDBAssetRepository implements AssetRepository {
 	@Override
 	public boolean assetExists(long assetId) throws DataException {
 		try {
-			return this.repository.exists("Assets", "asset_id = ?", assetId);
+			return !this.repository.exists("Assets", "asset_id = ?", assetId);
 		} catch (SQLException e) {
 			throw new DataException("Unable to check for asset in repository", e);
 		}

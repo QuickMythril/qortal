@@ -810,7 +810,7 @@ public class Network {
                 .filter(peer -> peer.hasReachedMaxConnectionAge())
                 .collect(Collectors.toList());
 
-        if (peersToDisconnect != null && peersToDisconnect.size() > 0) {
+        if (peersToDisconnect != null && !peersToDisconnect.isEmpty()) {
             for (Peer peer : peersToDisconnect) {
                 LOGGER.debug("Forcing disconnection of peer {} because connection age ({} ms) " +
                         "has reached the maximum ({} ms)", peer, peer.getConnectionAge(), peer.getMaxConnectionAge());
@@ -1232,11 +1232,7 @@ public class Network {
                 return true;
             }
 
-            if (lastConnected < connectionThreshold) {
-                return true;
-            }
-
-            return false;
+            return lastConnected < connectionThreshold;
         };
         knownPeers.removeIf(notRecentlyConnected);
 
@@ -1515,12 +1511,8 @@ public class Network {
                         return true;
                     }
 
-                    if (peerData.getLastConnected() == null
-                            || peerData.getLastConnected() > now - OLD_PEER_CONNECTION_PERIOD) {
-                        return true;
-                    }
-
-                    return false;
+                    return peerData.getLastConnected() == null
+                            || peerData.getLastConnected() > now - OLD_PEER_CONNECTION_PERIOD;
                 };
 
                 // Disregard peers that are NOT 'old'

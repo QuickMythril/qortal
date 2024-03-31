@@ -10,7 +10,6 @@ import javax.xml.bind.*;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -138,7 +137,7 @@ public class ApiRequest {
         }
 
         String resultString = result.toString();
-		return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
+		return !resultString.isEmpty() ? resultString.substring(0, resultString.length() - 1) : resultString;
 	}
 
 	/**

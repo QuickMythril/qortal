@@ -137,7 +137,7 @@ public class FilesystemUtils {
         // Delete existing
         if (FilesystemUtils.pathInsideDataOrTempPath(source)) {
             File directory = new File(source.toString());
-            System.out.println(String.format("Deleting directory %s", directory.toString()));
+            System.out.println(String.format("Deleting directory %s", directory));
             FileUtils.deleteDirectory(directory);
         }
 
@@ -196,10 +196,7 @@ public class FilesystemUtils {
         Path dataPath = Paths.get(Settings.getInstance().getDataPath()).toAbsolutePath();
         Path tempDataPath = Paths.get(Settings.getInstance().getTempDataPath()).toAbsolutePath();
         Path absolutePath = path.toAbsolutePath();
-        if (absolutePath.startsWith(dataPath) || absolutePath.startsWith(tempDataPath)) {
-            return true;
-        }
-        return false;
+        return absolutePath.startsWith(dataPath) || absolutePath.startsWith(tempDataPath);
     }
 
     public static boolean isChild(Path child, Path parent) {
@@ -282,9 +279,7 @@ public class FilesystemUtils {
             }
             if (files.length == 1) {
                 Path filePath = Paths.get(path.toString(), files[0]);
-                if (filePath.toFile().isFile()) {
-                    return true;
-                }
+                return filePath.toFile().isFile();
             }
         }
 

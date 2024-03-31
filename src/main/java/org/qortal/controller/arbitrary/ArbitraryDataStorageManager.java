@@ -77,7 +77,7 @@ public class ArbitraryDataStorageManager extends Thread {
                 Thread.sleep(1000);
 
                 // Don't run if QDN is disabled
-                if (!Settings.getInstance().isQdnEnabled()) {
+                if (Settings.getInstance().isQdnEnabled()) {
                     Thread.sleep(60 * 60 * 1000L);
                     continue;
                 }
@@ -121,7 +121,7 @@ public class ArbitraryDataStorageManager extends Thread {
         }
 
         // Don't store data unless it's an allowed type (public/private)
-        if (!this.isDataTypeAllowed(arbitraryTransactionData)) {
+        if (this.isDataTypeAllowed(arbitraryTransactionData)) {
             return false;
         }
 
@@ -176,7 +176,7 @@ public class ArbitraryDataStorageManager extends Thread {
         }
 
         // Don't store data unless it's an allowed type (public/private)
-        if (!this.isDataTypeAllowed(arbitraryTransactionData)) {
+        if (this.isDataTypeAllowed(arbitraryTransactionData)) {
             return false;
         }
 
@@ -242,10 +242,10 @@ public class ArbitraryDataStorageManager extends Thread {
 
         if (!Settings.getInstance().isPrivateDataEnabled() && !hasSecret) {
             // Private data isn't enabled so we can't store data without a valid secret
-            return false;
+            return true;
         }
         // Public data isn't enabled so we can't store data with a secret
-        return Settings.getInstance().isPublicDataEnabled() || !hasSecret;
+        return !Settings.getInstance().isPublicDataEnabled() && hasSecret;
     }
 
 
@@ -526,9 +526,8 @@ public class ArbitraryDataStorageManager extends Thread {
         double maxStorageCapacity = (double)this.storageCapacity * threshold;
 
         // Some names won't need/use much space, so give all names a 4x multiplier to compensate
-        long maxStoragePerName = (long)(maxStorageCapacity / (double)followedNamesCount) * PER_NAME_STORAGE_MULTIPLIER;
 
-        return maxStoragePerName;
+        return (long)(maxStorageCapacity / (double)followedNamesCount) * PER_NAME_STORAGE_MULTIPLIER;
     }
 
     public boolean isStorageCapacityCalculated() {

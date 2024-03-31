@@ -101,15 +101,13 @@ public final class Darkside {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              branchID_ = s;
+                branchID_ = input.readStringRequireUtf8();
               break;
             }
             case 26: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              chainName_ = s;
+                chainName_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -404,8 +402,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideMetaState}
@@ -870,9 +867,8 @@ public final class Darkside {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              block_ = s;
+                block_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -1097,8 +1093,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -1448,9 +1443,8 @@ public final class Darkside {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              url_ = s;
+                url_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -1675,8 +1669,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -2039,9 +2032,8 @@ public final class Darkside {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              url_ = s;
+                url_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -2288,8 +2280,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -2866,8 +2857,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideHeight}
@@ -3421,8 +3411,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideEmptyBlocks}

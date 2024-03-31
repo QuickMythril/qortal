@@ -145,7 +145,7 @@ public class MessageTransaction extends Transaction {
 			return true;
 
 		// Group even exist?
-		if (!this.repository.getGroupRepository().groupExists(txGroupId))
+		if (this.repository.getGroupRepository().groupExists(txGroupId))
 			return false;
 
 		GroupRepository groupRepository = this.repository.getGroupRepository();

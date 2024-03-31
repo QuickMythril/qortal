@@ -126,7 +126,7 @@ public class ArbitraryDataWriter {
     }
 
     private void checkEnabled() throws DataException {
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             throw new DataException("QDN is disabled in settings");
         }
     }

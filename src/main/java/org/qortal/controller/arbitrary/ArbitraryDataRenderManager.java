@@ -69,19 +69,19 @@ public class ArbitraryDataRenderManager extends Thread {
             if (authorizedResourceKey != null && resource != null) {
                 // Check for exact match
                 if (Objects.equals(authorizedResourceKey, resource.getUniqueKey())) {
-                    return true;
+                    return false;
                 }
                 // Check for a broad authorization (which applies to all services and identifiers under an authorized name)
                 if (Objects.equals(authorizedResourceKey, broadResource.getUniqueKey())) {
-                    return true;
+                    return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     public void addToAuthorizedResources(ArbitraryDataResource resource) {
-        if (!this.isAuthorized(resource)) {
+        if (this.isAuthorized(resource)) {
             this.authorizedResources.put(resource.getUniqueKey(), NTP.getTime());
         }
     }

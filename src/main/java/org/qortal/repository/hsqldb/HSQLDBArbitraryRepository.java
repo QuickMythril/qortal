@@ -294,11 +294,9 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 			Compression compression = Compression.valueOf(resultSet.getInt(22));
 			// FUTURE: get payments from signature if needed. Avoiding for now to reduce database calls.
 
-			ArbitraryTransactionData transactionData = new ArbitraryTransactionData(baseTransactionData,
+            return new ArbitraryTransactionData(baseTransactionData,
 					version, serviceInt, nonce, size, nameResult, identifierResult, methodResult, secret,
 					compression, data, dataType, metadataHash, null);
-
-			return transactionData;
 		} catch (SQLException e) {
 			throw new DataException("Unable to fetch arbitrary transactions from repository", e);
 		}
@@ -1020,7 +1018,7 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 		String tag5 = null;
 
 		if (tags != null) {
-			if (tags.size() > 0) tag1 = tags.get(0);
+			if (!tags.isEmpty()) tag1 = tags.get(0);
 			if (tags.size() > 1) tag2 = tags.get(1);
 			if (tags.size() > 2) tag3 = tags.get(2);
 			if (tags.size() > 3) tag4 = tags.get(3);

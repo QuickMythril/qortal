@@ -59,7 +59,7 @@ public class BlockArchiveUtils {
         if (firstBlock == null || firstBlock.getBlockData().getHeight() != startHeight) {
             throw new IllegalStateException("Non matching first block when importing from archive");
         }
-        if (blockInfoList.size() > 0) {
+        if (!blockInfoList.isEmpty()) {
             BlockTransformation lastBlock = blockInfoList.get(blockInfoList.size() - 1);
             if (lastBlock == null || lastBlock.getBlockData().getHeight() != endHeight) {
                 throw new IllegalStateException("Non matching last block when importing from archive");

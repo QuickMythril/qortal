@@ -85,7 +85,7 @@ public class ResourceList {
             String jsonString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             this.list = ResourceList.listFromJSONString(jsonString);
         } catch (IOException e) {
-            throw new IOException(String.format("Couldn't read contents from file %s", path.toString()));
+            throw new IOException(String.format("Couldn't read contents from file %s", path));
         }
 
         return true;

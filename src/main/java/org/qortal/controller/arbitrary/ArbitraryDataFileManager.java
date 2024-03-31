@@ -554,7 +554,7 @@ public class ArbitraryDataFileManager extends Thread {
 
     public void onNetworkGetArbitraryDataFileMessage(Peer peer, Message message) {
         // Don't respond if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return;
         }
 

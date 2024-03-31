@@ -130,8 +130,8 @@ public abstract class BouncyCastleEd25519
 
     protected static boolean checkContextVar(byte[] ctx , byte phflag)
     {
-        return ctx == null && phflag == 0x00
-                || ctx != null && ctx.length < 256;
+        return (ctx != null || phflag != 0x00)
+                && (ctx == null || ctx.length >= 256);
     }
 
     protected static int checkPoint(int[] x, int[] y)
@@ -179,14 +179,14 @@ public abstract class BouncyCastleEd25519
         int[] t = new int[8];
         decode32(p, 0, t, 0, 8);
         t[7] &= 0x7FFFFFFF;
-        return !Nat256.gte(t, P);
+        return Nat256.gte(t, P);
     }
 
     protected static boolean checkScalarVar(byte[] s)
     {
         int[] n = new int[SCALAR_INTS];
         decodeScalar(s, 0, n);
-        return !Nat256.gte(n, L);
+        return Nat256.gte(n, L);
     }
 
     protected static Digest createDigest()
@@ -227,9 +227,9 @@ public abstract class BouncyCastleEd25519
     protected static boolean decodePointVar(byte[] p, int pOff, boolean negate, PointAffine r)
     {
         byte[] py = Arrays.copyOfRange(p, pOff, pOff + POINT_BYTES);
-        if (!checkPointVar(py))
+        if (checkPointVar(py))
         {
-            return false;
+            return true;
         }
 
         int x_0 = (py[POINT_BYTES - 1] & 0x80) >>> 7;
@@ -247,13 +247,13 @@ public abstract class BouncyCastleEd25519
 
         if (!F.sqrtRatioVar(u, v, r.x))
         {
-            return false;
+            return true;
         }
 
         F.normalize(r.x);
         if (x_0 == 1 && F.isZeroVar(r.x))
         {
-            return false;
+            return true;
         }
 
         if (negate ^ (x_0 != (r.x[0] & 1)))
@@ -261,7 +261,7 @@ public abstract class BouncyCastleEd25519
             F.negate(r.x, r.x);
         }
 
-        return true;
+        return false;
     }
 
     protected static void decodeScalar(byte[] k, int kOff, int[] n)
@@ -430,7 +430,7 @@ public abstract class BouncyCastleEd25519
     protected static void implSign(byte[] sk, int skOff, byte[] ctx, byte phflag, byte[] m, int mOff, int mLen,
                                  byte[] sig, int sigOff)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -453,7 +453,7 @@ public abstract class BouncyCastleEd25519
     protected static void implSign(byte[] sk, int skOff, byte[] pk, int pkOff, byte[] ctx, byte phflag,
                                  byte[] m, int mOff, int mLen, byte[] sig, int sigOff)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -473,7 +473,7 @@ public abstract class BouncyCastleEd25519
     protected static boolean implVerify(byte[] sig, int sigOff, byte[] pk, int pkOff, byte[] ctx, byte phflag, byte[] m,
                                       int mOff, int mLen)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -481,17 +481,17 @@ public abstract class BouncyCastleEd25519
         byte[] R = Arrays.copyOfRange(sig, sigOff, sigOff + POINT_BYTES);
         byte[] S = Arrays.copyOfRange(sig, sigOff + POINT_BYTES, sigOff + SIGNATURE_SIZE);
 
-        if (!checkPointVar(R))
+        if (checkPointVar(R))
         {
             return false;
         }
-        if (!checkScalarVar(S))
+        if (checkScalarVar(S))
         {
             return false;
         }
 
         PointAffine pA = new PointAffine();
-        if (!decodePointVar(pk, pkOff, true, pA))
+        if (decodePointVar(pk, pkOff, true, pA))
         {
             return false;
         }

@@ -110,7 +110,7 @@ public class ChatTransaction extends Transaction {
 			return true;
 
 		// Group even exist?
-		if (!this.repository.getGroupRepository().groupExists(txGroupId))
+		if (this.repository.getGroupRepository().groupExists(txGroupId))
 			return false;
 
 		GroupRepository groupRepository = this.repository.getGroupRepository();
@@ -122,11 +122,8 @@ public class ChatTransaction extends Transaction {
 
 		// If recipient address present, check they belong to group too.
 		String recipient = this.chatTransactionData.getRecipient();
-		if (recipient != null && !groupRepository.memberExists(txGroupId, recipient))
-			return false;
-
-		return true;
-	}
+        return recipient == null || groupRepository.memberExists(txGroupId, recipient);
+    }
 
 	@Override
 	public ValidationResult isFeeValid() throws DataException {
@@ -168,7 +165,7 @@ public class ChatTransaction extends Transaction {
 
 		// Check for blocked author by registered name
 		List<NameData> names = this.repository.getNameRepository().getNamesByOwner(this.chatTransactionData.getSender());
-		if (names != null && names.size() > 0) {
+		if (names != null && !names.isEmpty()) {
 			for (NameData nameData : names) {
 				if (nameData != null && nameData.getName() != null) {
 					if (ListUtils.isNameBlocked(nameData.getName())) {

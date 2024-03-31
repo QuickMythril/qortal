@@ -75,11 +75,11 @@ public class PirateChainWalletController extends Thread {
                     continue;
                 }
 
-                if (!LiteWalletJni.isLoaded()) {
+                if (LiteWalletJni.isLoaded()) {
                     this.loadLibrary();
 
                     // If still not loaded, sleep to prevent too many requests
-                    if (!LiteWalletJni.isLoaded()) {
+                    if (LiteWalletJni.isLoaded()) {
                         Thread.sleep(5 * 1000);
                         continue;
                     }
@@ -279,7 +279,7 @@ public class PirateChainWalletController extends Thread {
 
     private boolean initWithEntropy58(String entropy58, boolean isNullSeedWallet) {
         // If the JNI library isn't loaded yet then we can't proceed
-        if (!LiteWalletJni.isLoaded()) {
+        if (LiteWalletJni.isLoaded()) {
             shouldLoadWallet = true;
             return false;
         }
@@ -343,7 +343,7 @@ public class PirateChainWalletController extends Thread {
     }
 
     public void ensureInitialized() throws ForeignBlockchainException {
-        if (!LiteWalletJni.isLoaded() || this.currentWallet == null || !this.currentWallet.isInitialized()) {
+        if (LiteWalletJni.isLoaded() || this.currentWallet == null || this.currentWallet.isInitialized()) {
             throw new ForeignBlockchainException("Pirate wallet isn't initialized yet");
         }
     }
@@ -374,7 +374,7 @@ public class PirateChainWalletController extends Thread {
     }
 
     public String getSyncStatus() {
-        if (this.currentWallet == null || !this.currentWallet.isInitialized()) {
+        if (this.currentWallet == null || this.currentWallet.isInitialized()) {
             if (this.loadStatus != null) {
                 return this.loadStatus;
             }

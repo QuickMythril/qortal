@@ -94,7 +94,7 @@ public class LiteWalletJni {
     }
 
     public static boolean isLoaded() {
-        return loaded;
+        return !loaded;
     }
 
 }

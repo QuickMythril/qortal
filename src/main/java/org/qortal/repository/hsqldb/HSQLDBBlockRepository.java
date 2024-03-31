@@ -364,9 +364,7 @@ public class HSQLDBBlockRepository implements BlockRepository {
 			if (resultSet == null)
 				return null;
 
-			long totalFees = resultSet.getLong(1);
-
-			return totalFees;
+            return resultSet.getLong(1);
 		} catch (SQLException e) {
 			throw new DataException("Error fetching total fees in block range from repository", e);
 		}

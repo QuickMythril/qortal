@@ -1025,9 +1025,7 @@ public class HSQLDBRepository implements Repository {
 					// Failed to even find HSQLDB session info!
 					throw new DataException("No results when checking repository session status");
 
-				int transactionCount = resultSet.getInt(1);
-
-				return transactionCount;
+                return resultSet.getInt(1);
 			}
 		} catch (SQLException e) {
 			throw new DataException("Unable to check repository session status", e);

@@ -103,7 +103,7 @@ public class ArbitraryDataManager extends Thread {
 				Thread.sleep(2000);
 
 				// Don't run if QDN is disabled
-				if (!Settings.getInstance().isQdnEnabled()) {
+				if (Settings.getInstance().isQdnEnabled()) {
 					Thread.sleep(60 * 60 * 1000L);
 					continue;
 				}

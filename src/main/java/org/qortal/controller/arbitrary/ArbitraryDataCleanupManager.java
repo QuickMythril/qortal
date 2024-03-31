@@ -81,7 +81,7 @@ public class ArbitraryDataCleanupManager extends Thread {
 				Thread.sleep(30000);
 
 				// Don't run if QDN is disabled
-				if (!Settings.getInstance().isQdnEnabled()) {
+				if (Settings.getInstance().isQdnEnabled()) {
 					Thread.sleep(60 * 60 * 1000L);
 					continue;
 				}
@@ -454,7 +454,7 @@ public class ArbitraryDataCleanupManager extends Thread {
 
 				// We're expecting the contents of each subfolder to be a directory
 				if (directory.isDirectory()) {
-					if (!ArbitraryTransactionUtils.isFileRecent(directory.toPath(), now, minAge)) {
+					if (ArbitraryTransactionUtils.isFileRecent(directory.toPath(), now, minAge)) {
 						// File isn't recent, so can be deleted
 						this.safeDeleteDirectory(directory, "not recent");
 					}
