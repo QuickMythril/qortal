@@ -230,8 +230,7 @@ public class ArbitraryDataManager extends Thread {
 					// Remove transactions that we already have local data for
 					if (hasLocalData(arbitraryTransaction)) {
 						iterator.remove();
-						continue;
-					}
+                    }
 				}
 
 				if (signatures.isEmpty()) {
@@ -313,8 +312,7 @@ public class ArbitraryDataManager extends Thread {
 					// Remove transactions that we already have local data for
 					if (hasLocalMetadata(arbitraryTransaction)) {
 						iterator.remove();
-						continue;
-					}
+                    }
 				}
 
 				if (signatures.isEmpty()) {
@@ -507,15 +505,11 @@ public class ArbitraryDataManager extends Thread {
 			String key = resource.getUniqueKey();
 			LOGGER.trace("Clearing cache for {}...", resource);
 
-			if (this.arbitraryDataCachedResources.containsKey(key)) {
-				this.arbitraryDataCachedResources.remove(key);
-			}
+            this.arbitraryDataCachedResources.remove(key);
 
 			// Also remove from the failed builds queue in case it previously failed due to missing chunks
 			ArbitraryDataBuildManager buildManager = ArbitraryDataBuildManager.getInstance();
-			if (buildManager.arbitraryDataFailedBuilds.containsKey(key)) {
-				buildManager.arbitraryDataFailedBuilds.remove(key);
-			}
+            buildManager.arbitraryDataFailedBuilds.remove(key);
 
 			// Remove from the signature requests list now that we have all files for this signature
 			ArbitraryDataFileListManager.getInstance().removeFromSignatureRequests(signature58);

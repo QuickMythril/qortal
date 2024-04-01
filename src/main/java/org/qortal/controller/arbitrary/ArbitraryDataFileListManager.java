@@ -520,7 +520,7 @@ public class ArbitraryDataFileListManager {
 
                     // Remove optional parameters if the requesting peer doesn't support it yet
                     // A message with less statistical data is better than no message at all
-                    if (!requestingPeer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
+                    if (requestingPeer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
                         forwardArbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes);
                     } else {
                         forwardArbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes, requestTime, requestHops,
@@ -650,7 +650,7 @@ public class ArbitraryDataFileListManager {
 
             // Remove optional parameters if the requesting peer doesn't support it yet
             // A message with less statistical data is better than no message at all
-            if (!peer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
+            if (peer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
                 arbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes);
             } else {
                 arbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature,
@@ -694,7 +694,7 @@ public class ArbitraryDataFileListManager {
                     LOGGER.debug("Rebroadcasting hash list request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(
                             broadcastPeer ->
-                                    !broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
+                                    broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
                                     broadcastPeer == peer || Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost()) ? null : relayGetArbitraryDataFileListMessage
                     );
 

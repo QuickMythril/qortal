@@ -288,7 +288,6 @@ public class ArbitraryDataStorageManager extends Thread {
                 arbitraryTransactionDataList.add(arbitraryTransactionData);
 
             } catch (DataException e) {
-                continue;
             }
         }
 
@@ -342,7 +341,6 @@ public class ArbitraryDataStorageManager extends Thread {
                }
 
             } catch (Exception e) {
-                continue;
             }
         }
 

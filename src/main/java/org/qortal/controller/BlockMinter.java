@@ -159,8 +159,7 @@ public class BlockMinter extends Thread {
 						int level = mintingAccount.getEffectiveMintingLevel();
 						if (level < BlockChain.getInstance().getMinAccountLevelForBlockSubmissions()) {
 							madi.remove();
-							continue;
-						}
+                        }
 					}
 
 					// Needs a mutable copy of the unmodifiableList

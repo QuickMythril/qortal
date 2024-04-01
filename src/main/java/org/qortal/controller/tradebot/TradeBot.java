@@ -512,8 +512,7 @@ public class TradeBot implements Listener {
 		Message responseMessage = new TradePresencesMessage(safeTradePresences);
 		if (!peer.sendMessage(responseMessage)) {
 			peer.disconnect("failed to send TRADE_PRESENCES response");
-			return;
-		}
+        }
 	}
 
 	public void onTradePresencesMessage(Peer peer, Message message) {
@@ -723,8 +722,7 @@ public class TradeBot implements Listener {
 
 			} catch (DataException e) {
 				LOGGER.info("Unable to determine failed state of AT {}", crossChainTradeData.qortalAtAddress);
-				continue;
-			}
+            }
 		}
 
 		return updatedCrossChainTrades;

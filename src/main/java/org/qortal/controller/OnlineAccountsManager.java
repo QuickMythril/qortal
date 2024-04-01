@@ -535,7 +535,6 @@ public class OnlineAccountsManager {
 
                     if (++i > 1 + 1) {
                         iterator.remove();
-                        continue;
                     }
                 }
             } catch (DataException e) {

@@ -1265,8 +1265,7 @@ public class Block {
 			return ciyamAtResult;
 
 		// Check transactions
-		ValidationResult transactionsResult = this.areTransactionsValid();
-        return transactionsResult;
+        return this.areTransactionsValid();
 
 		// Block is valid
     }

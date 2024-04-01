@@ -69,7 +69,7 @@ public class ArbitraryDataQortalMetadata extends ArbitraryDataMetadata {
             throw new IOException(String.format("Patch file doesn't exist: %s", path));
         }
 
-        this.jsonString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        this.jsonString = Files.readString(path);
     }
 
 
