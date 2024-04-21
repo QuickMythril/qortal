@@ -7,12 +7,12 @@ import java.util.List;
 
 public interface NetworkRepository {
 
-	public List<PeerData> getAllPeers() throws DataException;
+	List<PeerData> getAllPeers() throws DataException;
 
-	public void save(PeerData peerData) throws DataException;
+	void save(PeerData peerData) throws DataException;
 
-	public int delete(PeerAddress peerAddress) throws DataException;
+	int delete(PeerAddress peerAddress) throws DataException;
 
-	public int deleteAllPeers() throws DataException;
+	int deleteAllPeers() throws DataException;
 
 }

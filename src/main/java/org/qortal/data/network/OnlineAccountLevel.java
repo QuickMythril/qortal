@@ -47,9 +47,6 @@ public class OnlineAccountLevel {
 
 		OnlineAccountLevel otherOnlineAccountData = (OnlineAccountLevel) other;
 
-		if (otherOnlineAccountData.level != this.level)
-			return false;
-
-		return true;
-	}
+        return otherOnlineAccountData.level == this.level;
+    }
 }

@@ -37,7 +37,7 @@ public class PresenceTransaction extends Transaction {
 	private static final Logger LOGGER = LogManager.getLogger(PresenceTransaction.class);
 
 	// Properties
-	private PresenceTransactionData presenceTransactionData;
+	private final PresenceTransactionData presenceTransactionData;
 
 	// Other useful constants
 	public static final int POW_BUFFER_SIZE = 8 * 1024 * 1024; // bytes

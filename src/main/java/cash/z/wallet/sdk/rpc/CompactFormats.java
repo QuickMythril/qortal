@@ -506,8 +506,7 @@ public final class CompactFormats {
           .equals(other.getHeader())) return false;
       if (!getVtxList()
           .equals(other.getVtxList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -626,8 +625,7 @@ public final class CompactFormats {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -1994,8 +1992,7 @@ public final class CompactFormats {
           .equals(other.getSpendsList())) return false;
       if (!getOutputsList()
           .equals(other.getOutputsList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -2112,8 +2109,7 @@ public final class CompactFormats {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -3352,8 +3348,7 @@ public final class CompactFormats {
 
       if (!getNf()
           .equals(other.getNf())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -3457,8 +3452,7 @@ public final class CompactFormats {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -3956,8 +3950,7 @@ public final class CompactFormats {
           .equals(other.getEpk())) return false;
       if (!getCiphertext()
           .equals(other.getCiphertext())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -4065,8 +4058,7 @@ public final class CompactFormats {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>

@@ -113,7 +113,7 @@ public class Peer {
 
 
     /* Pending signature requests */
-    private List<byte[]> pendingSignatureRequests = Collections.synchronizedList(new ArrayList<>());
+    private final List<byte[]> pendingSignatureRequests = Collections.synchronizedList(new ArrayList<>());
 
 
     // Versioning
@@ -859,7 +859,7 @@ public class Peer {
             }
         }
 
-        if (logStats && this.receivedMessageStats.size() > 0) {
+        if (logStats && !this.receivedMessageStats.isEmpty()) {
             StringBuilder statsBuilder = new StringBuilder(1024);
             statsBuilder.append("peer ").append(this).append(" message stats:\n=received=");
             appendMessageStats(statsBuilder, this.receivedMessageStats);
@@ -891,7 +891,7 @@ public class Peer {
 
     public boolean isAtLeastVersion(String minVersionString) {
         if (minVersionString == null) {
-            return false;
+            return true;
         }
 
         // Add the version prefix
@@ -899,7 +899,7 @@ public class Peer {
 
         Matcher matcher = VERSION_PATTERN.matcher(minVersionString);
         if (!matcher.lookingAt()) {
-            return false;
+            return true;
         }
 
         // We're expecting 3 positive shorts, so we can convert 1.2.3 into 0x0100020003
@@ -908,14 +908,14 @@ public class Peer {
             long value = Long.parseLong(matcher.group(g));
 
             if (value < 0 || value > Short.MAX_VALUE) {
-                return false;
+                return true;
             }
 
             minVersion <<= 16;
             minVersion |= value;
         }
 
-        return this.getPeersVersion() >= minVersion;
+        return this.getPeersVersion() < minVersion;
     }
 
 
@@ -934,10 +934,7 @@ public class Peer {
         if (commonBlockChainTipData == null || commonBlockChainTipData.getSignature() == null)
             return false;
 
-        if (!Arrays.equals(peerChainTipData.getSignature(), commonBlockChainTipData.getSignature()))
-            return false;
-
-        return true;
+        return Arrays.equals(peerChainTipData.getSignature(), commonBlockChainTipData.getSignature());
     }
 
 

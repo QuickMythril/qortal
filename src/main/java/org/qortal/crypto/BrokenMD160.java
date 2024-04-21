@@ -170,23 +170,22 @@ public class BrokenMD160 {
 	}
 
 	private void MDfinish(int[] array, int lswlen, int mswlen) {
-		int[] X = array; /* message words */
 
-		/* append the bit m_n == 1 */
-		X[(lswlen >> 2) & 15] ^= 1 << (((lswlen & 3) << 3) + 7);
+        /* append the bit m_n == 1 */
+		array[(lswlen >> 2) & 15] ^= 1 << (((lswlen & 3) << 3) + 7);
 
 		if ((lswlen & 63) > 55) {
 			/* length goes to next block */
-			compress(X);
+			compress(array);
 			for (int i = 0; i < 14; i++) {
-				X[i] = 0;
+				array[i] = 0;
 			}
 		}
 
 		/* append length in bits */
-		X[14] = lswlen << 3;
-		X[15] = (lswlen >> 29) | (mswlen << 3);
-		compress(X);
+		array[14] = lswlen << 3;
+		array[15] = (lswlen >> 29) | (mswlen << 3);
+		compress(array);
 	}
 
 	private int[] working;
@@ -294,9 +293,7 @@ public class BrokenMD160 {
 
 	public int[] intdigest() {
 		int[] res = new int[5];
-		for (int i = 0; i < 5; i++) {
-			res[i] = MDbuf[i];
-		}
+        System.arraycopy(MDbuf, 0, res, 0, 5);
 		return res;
 	}
 

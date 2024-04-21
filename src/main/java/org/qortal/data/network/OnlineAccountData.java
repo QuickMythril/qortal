@@ -76,13 +76,10 @@ public class OnlineAccountData {
 		if (!Objects.equals(otherOnlineAccountData.nonce, this.nonce))
 			return false;
 
-		if (!Arrays.equals(otherOnlineAccountData.publicKey, this.publicKey))
-			return false;
+        return Arrays.equals(otherOnlineAccountData.publicKey, this.publicKey);
 
 		// We don't compare signature because it's not our remit to verify and newer aggregate signatures use random nonces
-
-		return true;
-	}
+    }
 
 	@Override
 	public int hashCode() {

@@ -280,7 +280,7 @@ public class Bootstrap {
             LOGGER.info("Generating checksum file...");
             String checksum = Crypto.digestHexString(compressedOutputPath.toFile(), 1024*1024);
             LOGGER.info("checksum: {}", checksum);
-            Path checksumPath = Paths.get(String.format("%s.sha256", compressedOutputPath.toString()));
+            Path checksumPath = Paths.get(String.format("%s.sha256", compressedOutputPath));
             LOGGER.info("Writing checksum to path: {}", checksumPath);
             Files.writeString(checksumPath, checksum, StandardOpenOption.CREATE);
 
@@ -435,8 +435,7 @@ public class Bootstrap {
         // Select a random host from bootstrapHosts
         String[] hosts = Settings.getInstance().getBootstrapHosts();
         int index = new SecureRandom().nextInt(hosts.length);
-        String bootstrapHost = hosts[index];
-        return bootstrapHost;
+        return hosts[index];
     }
 
     public void importFromPath(Path path) throws InterruptedException, DataException, IOException {
@@ -503,8 +502,7 @@ public class Bootstrap {
     public Path getBootstrapOutputPath() {
         Path initialPath = Paths.get(Settings.getInstance().getRepositoryPath()).toAbsolutePath().getParent();
         String compressedFilename = String.format("%s%s", Settings.getInstance().getBootstrapFilenamePrefix(), this.getFilename());
-        Path compressedOutputPath = Paths.get(initialPath.toString(), compressedFilename);
-        return compressedOutputPath;
+        return Paths.get(initialPath.toString(), compressedFilename);
     }
 
     private void updateStatus(String text) {

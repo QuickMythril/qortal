@@ -145,9 +145,8 @@ public class AdminResource {
 		}
 	)
 	public NodeStatus status() {
-		NodeStatus nodeStatus = new NodeStatus();
 
-		return nodeStatus;
+        return new NodeStatus();
 	}
 
 	@GET
@@ -161,9 +160,8 @@ public class AdminResource {
 		}
 	)
 	public Settings settings() {
-		Settings nodeSettings = Settings.getInstance();
 
-		return nodeSettings;
+        return Settings.getInstance();
 	}
 
 	@GET

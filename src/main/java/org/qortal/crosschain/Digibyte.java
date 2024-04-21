@@ -10,10 +10,7 @@ import org.qortal.crosschain.ElectrumX.Server;
 import org.qortal.crosschain.ChainableServer.ConnectionType;
 import org.qortal.settings.Settings;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 public class Digibyte extends Bitcoiny {
 
@@ -70,7 +67,7 @@ public class Digibyte extends Bitcoiny {
 
 			@Override
 			public Collection<Server> getServers() {
-				return Arrays.asList(); // TODO: find testnet servers
+				return List.of(); // TODO: find testnet servers
 			}
 
 			@Override

@@ -73,14 +73,10 @@ public abstract class RepositoryManager {
 	public static boolean needsTransactionSequenceRebuild(Repository repository) throws DataException {
 		// Check if we have any transactions without a block_sequence
 		List<byte[]> testSignatures = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
-				null, Arrays.asList("block_height IS NOT NULL AND block_sequence IS NULL"), new ArrayList<>(), 100);
-		if (testSignatures.isEmpty()) {
-			// block_sequence intact, so assume complete
-			return false;
-		}
-
-		return true;
-	}
+				null, List.of("block_height IS NOT NULL AND block_sequence IS NULL"), new ArrayList<>(), 100);
+        // block_sequence intact, so assume complete
+        return !testSignatures.isEmpty();
+    }
 
 	public static boolean rebuildTransactionSequences(Repository repository) throws DataException {
 		if (Settings.getInstance().isLite()) {
@@ -251,7 +247,7 @@ public abstract class RepositoryManager {
 	public static boolean isDeadlockRelated(Throwable e) {
 		Throwable cause = e.getCause();
 
-		return SQLException.class.isInstance(cause) && repositoryFactory.isDeadlockException((SQLException) cause);
+		return cause instanceof SQLException && repositoryFactory.isDeadlockException((SQLException) cause);
 	}
 
 	public static boolean canArchiveOrPrune() {

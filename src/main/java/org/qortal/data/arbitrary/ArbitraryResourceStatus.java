@@ -24,8 +24,8 @@ public class ArbitraryResourceStatus {
         BLOCKED(10, "Blocked", "Name is blocked so content cannot be served");
 
         public int value;
-        private String title;
-        private String description;
+        private final String title;
+        private final String description;
 
         private static final Map<Integer, Status> map = stream(Status.values())
                 .collect(toMap(status -> status.value, status -> status));

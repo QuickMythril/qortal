@@ -128,7 +128,7 @@ public class ArbitraryDataMerge {
 
     private static void copyPathToBaseDir(Path source, Path base, Path relativePath) throws IOException {
         if (!Files.exists(source)) {
-            throw new IOException(String.format("File not found: %s", source.toString()));
+            throw new IOException(String.format("File not found: %s", source));
         }
 
         File sourceFile = source.toFile();
@@ -142,13 +142,13 @@ public class ArbitraryDataMerge {
             FilesystemUtils.copyAndReplaceDirectory(source.toString(), dest.toString());
         }
         else {
-            throw new IOException(String.format("Invalid file: %s", source.toString()));
+            throw new IOException(String.format("Invalid file: %s", source));
         }
     }
 
     private static void copyDirPathToBaseDir(Path source, Path base, Path relativePath) throws IOException {
         if (!Files.exists(source)) {
-            throw new IOException(String.format("File not found: %s", source.toString()));
+            throw new IOException(String.format("File not found: %s", source));
         }
 
         Path dest = Paths.get(base.toString(), relativePath.toString());

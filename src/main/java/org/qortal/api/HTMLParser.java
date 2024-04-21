@@ -13,16 +13,16 @@ public class HTMLParser {
 
     private static final Logger LOGGER = LogManager.getLogger(HTMLParser.class);
 
-    private String qdnBase;
-    private String qdnBaseWithPath;
+    private final String qdnBase;
+    private final String qdnBaseWithPath;
     private byte[] data;
-    private String qdnContext;
-    private String resourceId;
-    private Service service;
-    private String identifier;
-    private String path;
-    private String theme;
-    private boolean usingCustomRouting;
+    private final String qdnContext;
+    private final String resourceId;
+    private final Service service;
+    private final String identifier;
+    private final String path;
+    private final String theme;
+    private final boolean usingCustomRouting;
 
     public HTMLParser(String resourceId, String inPath, String prefix, boolean includeResourceIdInPrefix, byte[] data,
                       String qdnContext, Service service, String identifier, String theme, boolean usingCustomRouting) {
@@ -82,10 +82,7 @@ public class HTMLParser {
     }
 
     public static boolean isHtmlFile(String path) {
-        if (path.endsWith(".html") || path.endsWith(".htm") || path.equals("")) {
-            return true;
-        }
-        return false;
+        return path.endsWith(".html") || path.endsWith(".htm") || path.equals("");
     }
 
     public byte[] getData() {

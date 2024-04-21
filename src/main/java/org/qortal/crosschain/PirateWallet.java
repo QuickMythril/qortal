@@ -192,7 +192,7 @@ public class PirateWallet {
     }
 
     public boolean save() throws IOException {
-        if (!isInitialized()) {
+        if (isInitialized()) {
             LOGGER.info("Error: can't save wallet, because no wallet it initialized");
             return false;
         }
@@ -240,8 +240,7 @@ public class PirateWallet {
         if (wallet == null) {
             return null;
         }
-        String wallet64 = Base64.toBase64String(wallet);
-        return wallet64;
+        return Base64.toBase64String(wallet);
     }
 
     private String getEntropyHash58() {
@@ -284,7 +283,7 @@ public class PirateWallet {
     }
 
     public boolean isInitialized() {
-        return this.entropyBytes != null && this.ready;
+        return this.entropyBytes == null || !this.ready;
     }
 
     public boolean isSynchronized() {
@@ -389,10 +388,9 @@ public class PirateWallet {
             JSONObject addressJson = addressesJson.getJSONObject(0);
             if (addressJson.has("private_key")) {
                 //String address = addressJson.getString("address");
-                String privateKey = addressJson.getString("private_key");
                 //String viewingKey = addressJson.getString("viewing_key");
 
-                return privateKey;
+                return addressJson.getString("private_key");
             }
         }
         return null;

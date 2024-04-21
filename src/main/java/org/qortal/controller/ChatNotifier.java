@@ -17,7 +17,7 @@ public class ChatNotifier {
 		void notify(ChatTransactionData chatTransactionData);
 	}
 
-	private Map<Session, Listener> listenersBySession = new HashMap<>();
+	private final Map<Session, Listener> listenersBySession = new HashMap<>();
 
 	private ChatNotifier() {
 	}

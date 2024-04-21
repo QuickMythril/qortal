@@ -21,11 +21,11 @@ public class SplashFrame {
 
 	@SuppressWarnings("serial")
 	public static class SplashPanel extends JPanel {
-		private BufferedImage image;
+		private final BufferedImage image;
 
-		private String defaultSplash = "Qlogo_512.png";
+		private final String defaultSplash = "Qlogo_512.png";
 
-		private JLabel statusLabel;
+		private final JLabel statusLabel;
 
 		public SplashPanel() {
 			image = Gui.loadImage(defaultSplash);

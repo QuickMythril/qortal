@@ -203,8 +203,7 @@ public final class Service {
           != other.getHeight()) return false;
       if (!getHash()
           .equals(other.getHash())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -311,8 +310,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -847,8 +845,7 @@ public final class Service {
         if (!getEnd()
             .equals(other.getEnd())) return false;
       }
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -958,8 +955,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -1721,8 +1717,7 @@ public final class Service {
           != other.getIndex()) return false;
       if (!getHash()
           .equals(other.getHash())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -1833,8 +1828,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -2510,8 +2504,7 @@ public final class Service {
           .equals(other.getData())) return false;
       if (getHeight()
           != other.getHeight()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -2618,8 +2611,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -3000,9 +2992,8 @@ public final class Service {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              errorMessage_ = s;
+                errorMessage_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -3143,8 +3134,7 @@ public final class Service {
           != other.getErrorCode()) return false;
       if (!getErrorMessage()
           .equals(other.getErrorMessage())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -3250,8 +3240,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -3621,18 +3610,14 @@ public final class Service {
         boolean done = false;
         while (!done) {
           int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
+            if (tag == 0) {
                 done = true;
-              }
-              break;
+            } else {
+                if (!parseUnknownField(
+                        input, unknownFields, extensionRegistry, tag)) {
+                    done = true;
+                }
             }
-          }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw e.setUnfinishedMessage(this);
@@ -3697,8 +3682,7 @@ public final class Service {
       }
       cash.z.wallet.sdk.rpc.Service.ChainSpec other = (cash.z.wallet.sdk.rpc.Service.ChainSpec) obj;
 
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -3800,8 +3784,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -4049,18 +4032,14 @@ public final class Service {
         boolean done = false;
         while (!done) {
           int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
+            if (tag == 0) {
                 done = true;
-              }
-              break;
+            } else {
+                if (!parseUnknownField(
+                        input, unknownFields, extensionRegistry, tag)) {
+                    done = true;
+                }
             }
-          }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw e.setUnfinishedMessage(this);
@@ -4125,8 +4104,7 @@ public final class Service {
       }
       cash.z.wallet.sdk.rpc.Service.Empty other = (cash.z.wallet.sdk.rpc.Service.Empty) obj;
 
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -4228,8 +4206,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -4685,15 +4662,13 @@ public final class Service {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              version_ = s;
+                version_ = input.readStringRequireUtf8();
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              vendor_ = s;
+                vendor_ = input.readStringRequireUtf8();
               break;
             }
             case 24: {
@@ -4702,9 +4677,8 @@ public final class Service {
               break;
             }
             case 34: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              chainName_ = s;
+                chainName_ = input.readStringRequireUtf8();
               break;
             }
             case 40: {
@@ -4713,9 +4687,8 @@ public final class Service {
               break;
             }
             case 50: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              consensusBranchId_ = s;
+                consensusBranchId_ = input.readStringRequireUtf8();
               break;
             }
             case 56: {
@@ -4724,27 +4697,23 @@ public final class Service {
               break;
             }
             case 66: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              gitCommit_ = s;
+                gitCommit_ = input.readStringRequireUtf8();
               break;
             }
             case 74: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              branch_ = s;
+                branch_ = input.readStringRequireUtf8();
               break;
             }
             case 82: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              buildDate_ = s;
+                buildDate_ = input.readStringRequireUtf8();
               break;
             }
             case 90: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              buildUser_ = s;
+                buildUser_ = input.readStringRequireUtf8();
               break;
             }
             case 96: {
@@ -4753,15 +4722,13 @@ public final class Service {
               break;
             }
             case 106: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              piratedBuild_ = s;
+                piratedBuild_ = input.readStringRequireUtf8();
               break;
             }
             case 114: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              piratedSubversion_ = s;
+                piratedSubversion_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -5290,7 +5257,7 @@ public final class Service {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vendor_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, vendor_);
       }
-      if (taddrSupport_ != false) {
+      if (taddrSupport_) {
         output.writeBool(3, taddrSupport_);
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(chainName_)) {
@@ -5341,7 +5308,7 @@ public final class Service {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vendor_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, vendor_);
       }
-      if (taddrSupport_ != false) {
+      if (taddrSupport_) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(3, taddrSupport_);
       }
@@ -5424,8 +5391,7 @@ public final class Service {
           .equals(other.getPiratedBuild())) return false;
       if (!getPiratedSubversion()
           .equals(other.getPiratedSubversion())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -5559,8 +5525,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -5729,7 +5694,7 @@ public final class Service {
           vendor_ = other.vendor_;
           onChanged();
         }
-        if (other.getTaddrSupport() != false) {
+        if (other.getTaddrSupport()) {
           setTaddrSupport(other.getTaddrSupport());
         }
         if (!other.getChainName().isEmpty()) {
@@ -6969,9 +6934,8 @@ public final class Service {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              address_ = s;
+                address_ = input.readStringRequireUtf8();
               break;
             }
             case 18: {
@@ -7163,8 +7127,7 @@ public final class Service {
         if (!getRange()
             .equals(other.getRange())) return false;
       }
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -7272,8 +7235,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -7903,8 +7865,7 @@ public final class Service {
 
       if (getIntervalUs()
           != other.getIntervalUs()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -8009,8 +7970,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -8437,8 +8397,7 @@ public final class Service {
           != other.getEntry()) return false;
       if (getExit()
           != other.getExit()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -8546,8 +8505,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -8885,9 +8843,8 @@ public final class Service {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              address_ = s;
+                address_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -9008,8 +8965,7 @@ public final class Service {
 
       if (!getAddress()
           .equals(other.getAddress())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -9113,8 +9069,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.Address}
@@ -9600,8 +9555,7 @@ public final class Service {
 
       if (!getAddressesList()
           .equals(other.getAddressesList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -9707,8 +9661,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.AddressList}
@@ -10184,8 +10137,7 @@ public final class Service {
 
       if (getValueZat()
           != other.getValueZat()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -10290,8 +10242,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.Balance}
@@ -10715,8 +10666,7 @@ public final class Service {
 
       if (!getTxidList()
           .equals(other.getTxidList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -10822,8 +10772,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.Exclude}
@@ -11255,9 +11204,8 @@ public final class Service {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              network_ = s;
+                network_ = input.readStringRequireUtf8();
               break;
             }
             case 16: {
@@ -11266,9 +11214,8 @@ public final class Service {
               break;
             }
             case 26: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              hash_ = s;
+                hash_ = input.readStringRequireUtf8();
               break;
             }
             case 32: {
@@ -11277,9 +11224,8 @@ public final class Service {
               break;
             }
             case 42: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              tree_ = s;
+                tree_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -11560,8 +11506,7 @@ public final class Service {
           != other.getTime()) return false;
       if (!getTree()
           .equals(other.getTree())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -11674,8 +11619,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -12552,8 +12496,7 @@ public final class Service {
           != other.getStartHeight()) return false;
       if (getMaxEntries()
           != other.getMaxEntries()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -12664,8 +12607,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -13200,9 +13142,8 @@ public final class Service {
               break;
             }
             case 50: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              address_ = s;
+                address_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -13423,8 +13364,7 @@ public final class Service {
           != other.getValueZat()) return false;
       if (getHeight()
           != other.getHeight()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -13540,8 +13480,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.GetAddressUtxosReply}
@@ -14218,8 +14157,7 @@ public final class Service {
 
       if (!getAddressUtxosList()
           .equals(other.getAddressUtxosList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -14325,8 +14263,7 @@ public final class Service {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.GetAddressUtxosReplyList}

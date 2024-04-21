@@ -83,15 +83,15 @@ public class Synchronizer extends Thread {
 	private boolean syncRequestPending = false;
 
 	// Keep track of invalid blocks so that we don't keep trying to sync them
-	private Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
+	private final Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
 	public Long timeValidBlockLastReceived = null;
 	public Long timeInvalidBlockLastReceived = null;
 
 	private static Synchronizer instance;
 
 	public enum SynchronizationResult {
-		OK, NOTHING_TO_DO, GENESIS_ONLY, NO_COMMON_BLOCK, TOO_DIVERGENT, NO_REPLY, INFERIOR_CHAIN, INVALID_DATA, NO_BLOCKCHAIN_LOCK, REPOSITORY_ISSUE, SHUTTING_DOWN, CHAIN_TIP_TOO_OLD;
-	}
+		OK, NOTHING_TO_DO, GENESIS_ONLY, NO_COMMON_BLOCK, TOO_DIVERGENT, NO_REPLY, INFERIOR_CHAIN, INVALID_DATA, NO_BLOCKCHAIN_LOCK, REPOSITORY_ISSUE, SHUTTING_DOWN, CHAIN_TIP_TOO_OLD
+    }
 
 	public static class NewChainTipEvent implements Event {
 		private final BlockData priorChainTip;
@@ -204,7 +204,7 @@ public class Synchronizer extends Thread {
 	}
 
 	public boolean getRecoveryMode() {
-		return this.recoveryMode;
+		return !this.recoveryMode;
 	}
 
 
@@ -258,7 +258,7 @@ public class Synchronizer extends Thread {
 		peers.removeIf(Controller.hasNoRecentBlock);
 
 		final int peersRemoved = peersBeforeComparison - peers.size();
-		if (peersRemoved > 0 && peers.size() > 0)
+		if (peersRemoved > 0 && !peers.isEmpty())
 			LOGGER.debug(String.format("Ignoring %d peers on inferior chains. Peers remaining: %d", peersRemoved, peers.size()));
 
 		if (peers.isEmpty())
@@ -268,7 +268,7 @@ public class Synchronizer extends Thread {
 			StringBuilder finalPeersString = new StringBuilder();
 			for (Peer peer : peers)
 				finalPeersString = finalPeersString.length() > 0 ? finalPeersString.append(", ").append(peer) : finalPeersString.append(peer);
-			LOGGER.debug(String.format("Choosing random peer from: [%s]", finalPeersString.toString()));
+			LOGGER.debug(String.format("Choosing random peer from: [%s]", finalPeersString));
 		}
 
 		// Pick random peer to sync with
@@ -276,13 +276,9 @@ public class Synchronizer extends Thread {
 		Peer peer = peers.get(index);
 
 		SynchronizationResult syncResult = actuallySynchronize(peer, false);
-		if (syncResult == SynchronizationResult.NO_BLOCKCHAIN_LOCK) {
-			// No blockchain lock - force a retry by returning false
-			return false;
-		}
-
-		return true;
-	}
+        // No blockchain lock - force a retry by returning false
+        return syncResult != SynchronizationResult.NO_BLOCKCHAIN_LOCK;
+    }
 
 	public SynchronizationResult actuallySynchronize(Peer peer, boolean force) throws InterruptedException {
 		boolean hasStatusChanged = false;
@@ -392,7 +388,7 @@ public class Synchronizer extends Thread {
 	private boolean checkRecoveryModeForPeers(List<Peer> qualifiedPeers) {
 		List<Peer> handshakedPeers = Network.getInstance().getImmutableHandshakedPeers();
 
-		if (handshakedPeers.size() > 0) {
+		if (!handshakedPeers.isEmpty()) {
 			// There is at least one handshaked peer
 			if (qualifiedPeers.isEmpty()) {
 				// There are no 'qualified' peers - i.e. peers that have a recent block we can sync to
@@ -406,7 +402,7 @@ public class Synchronizer extends Thread {
 				// If enough time has passed, enter recovery mode, which lifts some restrictions on who we can sync with and when we can mint
 				long recoveryModeTimeout = Settings.getInstance().getRecoveryModeTimeout();
 				if (NTP.getTime() - timePeersLastAvailable > recoveryModeTimeout) {
-					if (recoveryMode == false) {
+					if (!recoveryMode) {
 						LOGGER.info(String.format("Peers have been unavailable for %d minutes. Entering recovery mode...", recoveryModeTimeout/60/1000));
 						recoveryMode = true;
 					}
@@ -445,7 +441,7 @@ public class Synchronizer extends Thread {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			try {
 
-				if (peers.size() == 0)
+				if (peers.isEmpty())
 					return SynchronizationResult.NOTHING_TO_DO;
 
 				// If our latest block is very old, it's best that we don't try and determine the best peers to sync to.
@@ -457,7 +453,7 @@ public class Synchronizer extends Thread {
 
 				final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 				if (ourLatestBlockData.getTimestamp() < minLatestBlockTimestamp) {
-					LOGGER.debug(String.format("Our latest block is very old, so we won't collect common block info from peers"));
+					LOGGER.debug("Our latest block is very old, so we won't collect common block info from peers");
 					return SynchronizationResult.NOTHING_TO_DO;
 				}
 
@@ -582,7 +578,7 @@ public class Synchronizer extends Thread {
 
 				final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 				if (ourLatestBlockData.getTimestamp() < minLatestBlockTimestamp) {
-					LOGGER.debug(String.format("Our latest block is very old, so we won't filter the peers list"));
+					LOGGER.debug("Our latest block is very old, so we won't filter the peers list");
 					return peers;
 				}
 
@@ -663,7 +659,7 @@ public class Synchronizer extends Thread {
 							}
 						}
 
-						if (useCachedSummaries == false) {
+						if (!useCachedSummaries) {
 							if (summariesRequired > 0) {
 								LOGGER.trace(String.format("Requesting %d block summar%s from peer %s after common block %.8s. Peer height: %d", summariesRequired, (summariesRequired != 1 ? "ies" : "y"), peer, Base58.encode(commonBlockSummary.getSignature()), peerHeight));
 
@@ -701,7 +697,7 @@ public class Synchronizer extends Thread {
 
 						// Reduce minChainLength if needed. If we don't have any blocks, this peer will be excluded from chain weight comparisons later in the process, so we shouldn't update minChainLength
 						List <BlockSummaryData> peerBlockSummaries = peer.getCommonBlockData().getBlockSummariesAfterCommonBlock();
-						if (peerBlockSummaries != null && peerBlockSummaries.size() > 0)
+						if (peerBlockSummaries != null && !peerBlockSummaries.isEmpty())
 							if (peerBlockSummaries.size() < minChainLength)
 								minChainLength = peerBlockSummaries.size();
 					}
@@ -711,7 +707,7 @@ public class Synchronizer extends Thread {
 					LOGGER.trace(String.format("About to fetch our block summaries from %d to %d. Our height: %d", commonBlockSummary.getHeight() + 1, commonBlockSummary.getHeight() + ourSummariesRequired, ourHeight));
 					List<BlockSummaryData> ourBlockSummaries = repository.getBlockRepository().getBlockSummaries(commonBlockSummary.getHeight() + 1, commonBlockSummary.getHeight() + ourSummariesRequired);
 					if (ourBlockSummaries.isEmpty()) {
-						LOGGER.debug(String.format("We don't have any block summaries so can't compare our chain against peers with this common block. We can still compare them against each other."));
+						LOGGER.debug("We don't have any block summaries so can't compare our chain against peers with this common block. We can still compare them against each other.");
 					}
 					else {
 						populateBlockSummariesMinterLevels(repository, ourBlockSummaries);
@@ -728,7 +724,7 @@ public class Synchronizer extends Thread {
 
 					// Calculate our chain weight
 					BigInteger ourChainWeight = BigInteger.valueOf(0);
-					if (ourBlockSummaries.size() > 0)
+					if (!ourBlockSummaries.isEmpty())
 						ourChainWeight = Block.calcChainWeight(commonBlockSummary.getHeight(), commonBlockSummary.getSignature(), ourBlockSummaries, maxHeightForChainWeightComparisons);
 
 					LOGGER.debug(String.format("Our chain weight based on %d blocks is %s", (usingSameLengthChainWeight ? minChainLength : ourBlockSummaries.size()), accurateFormatter.format(ourChainWeight)));
@@ -780,7 +776,7 @@ public class Synchronizer extends Thread {
 					}
 
 					// Now that we have selected the best peers, compare them against each other and remove any with lower weights
-					if (superiorPeersForComparison.size() > 0) {
+					if (!superiorPeersForComparison.isEmpty()) {
 						BigInteger bestChainWeight = null;
 						for (Peer peer : superiorPeersForComparison) {
 							// Increase bestChainWeight if needed
@@ -1290,7 +1286,7 @@ public class Synchronizer extends Thread {
 						cachedCommonBlockData.setBlockSummariesAfterCommonBlock(null);
 
                     // If we have already received newer blocks from this peer that what we have already, go ahead and apply them
-                    if (peerBlocks.size() > 0) {
+                    if (!peerBlocks.isEmpty()) {
 						final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 						final Block peerLatestBlock = peerBlocks.get(peerBlocks.size() - 1);
 						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
@@ -1352,7 +1348,7 @@ public class Synchronizer extends Thread {
 
 				if (retryCount >= maxRetries) {
 					// If we have already received newer blocks from this peer that what we have already, go ahead and apply them
-					if (peerBlocks.size() > 0) {
+					if (!peerBlocks.isEmpty()) {
 						final BlockData ourLatestBlockData = repository.getBlockRepository().getLastBlock();
 						final Block peerLatestBlock = peerBlocks.get(peerBlocks.size() - 1);
 						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();

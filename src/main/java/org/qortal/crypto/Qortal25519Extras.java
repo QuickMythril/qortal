@@ -29,7 +29,7 @@ public abstract class Qortal25519Extras extends BouncyCastleEd25519 {
 		X25519Field.one(one);
 
 		PointAffine pA = new PointAffine();
-		if (!decodePointVar(ed25519PublicKey, 0, true, pA))
+		if (decodePointVar(ed25519PublicKey, 0, true, pA))
 			return null;
 
 		int[] y = pA.y;
@@ -81,7 +81,7 @@ public abstract class Qortal25519Extras extends BouncyCastleEd25519 {
 
 		for (byte[] publicKey : publicKeys) {
 			PointAffine pA = new PointAffine();
-			if (!decodePointVar(publicKey, 0, false, pA))
+			if (decodePointVar(publicKey, 0, false, pA))
 				// Failed to decode
 				return null;
 
@@ -114,7 +114,7 @@ public abstract class Qortal25519Extras extends BouncyCastleEd25519 {
 			System.arraycopy(signature,0, rEncoded, 0, rEncoded.length);
 
 			PointAffine pA = new PointAffine();
-			if (!decodePointVar(rEncoded, 0, false, pA))
+			if (decodePointVar(rEncoded, 0, false, pA))
 				// Failed to decode
 				return null;
 
@@ -190,11 +190,11 @@ public abstract class Qortal25519Extras extends BouncyCastleEd25519 {
 
 		byte[] s = Arrays.copyOfRange(signature, POINT_BYTES, POINT_BYTES + SCALAR_BYTES);
 
-		if (!checkPointVar(R))
+		if (checkPointVar(R))
 			// R out of bounds
 			return false;
 
-		if (!checkScalarVar(s))
+		if (checkScalarVar(s))
 			// s out of bounds
 			return false;
 
@@ -202,7 +202,7 @@ public abstract class Qortal25519Extras extends BouncyCastleEd25519 {
 		scalarMultBaseEncoded(s, S, 0);
 
 		PointAffine pA = new PointAffine();
-		if (!decodePointVar(publicKey, 0, true, pA))
+		if (decodePointVar(publicKey, 0, true, pA))
 			// Failed to decode
 			return false;
 

@@ -76,7 +76,7 @@ public class ArbitraryDataMetadata {
             throw new IOException(String.format("Metadata file doesn't exist: %s", this.filePath.toString()));
         }
 
-        this.jsonString = new String(Files.readAllBytes(this.filePath), StandardCharsets.UTF_8);
+        this.jsonString = Files.readString(this.filePath);
     }
 
 

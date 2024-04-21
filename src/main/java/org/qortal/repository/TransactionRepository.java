@@ -16,24 +16,24 @@ public interface TransactionRepository {
 
 	// Fetching transactions / transaction height
 
-	public TransactionData fromSignature(byte[] signature) throws DataException;
+	TransactionData fromSignature(byte[] signature) throws DataException;
 
-	public TransactionData fromReference(byte[] reference) throws DataException;
+	TransactionData fromReference(byte[] reference) throws DataException;
 
-	public TransactionData fromHeightAndSequence(int height, int sequence) throws DataException;
+	TransactionData fromHeightAndSequence(int height, int sequence) throws DataException;
 
 	/** Returns block height containing transaction or 0 if not in a block or transaction doesn't exist */
-	public int getHeightFromSignature(byte[] signature) throws DataException;
+    int getHeightFromSignature(byte[] signature) throws DataException;
 
-	public boolean exists(byte[] signature) throws DataException;
+	boolean exists(byte[] signature) throws DataException;
 
 	// Transaction participants
 
-	public List<byte[]> getSignaturesInvolvingAddress(String address) throws DataException;
+	List<byte[]> getSignaturesInvolvingAddress(String address) throws DataException;
 
-	public void saveParticipants(TransactionData transactionData, List<String> participants) throws DataException;
+	void saveParticipants(TransactionData transactionData, List<String> participants) throws DataException;
 
-	public void deleteParticipants(TransactionData transactionData) throws DataException;
+	void deleteParticipants(TransactionData transactionData) throws DataException;
 
 	// Searching transactions
 
@@ -47,7 +47,7 @@ public interface TransactionRepository {
 	 * @return transaction counts, indexed by transaction type value
 	 * @throws DataException
 	 */
-	public Map<TransactionType, Integer> getTransactionSummary(int startHeight, int endHeight) throws DataException;
+    Map<TransactionType, Integer> getTransactionSummary(int startHeight, int endHeight) throws DataException;
 
 	/**
 	 * Returns signatures for transactions that match search criteria.
@@ -70,9 +70,9 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<byte[]> getSignaturesMatchingCriteria(Integer startBlock, Integer blockLimit, Integer txGroupId,
-													  List<TransactionType> txTypes, Service service, String name, String address,
-													  ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<byte[]> getSignaturesMatchingCriteria(Integer startBlock, Integer blockLimit, Integer txGroupId,
+                                               List<TransactionType> txTypes, Service service, String name, String address,
+                                               ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	/**
 	 * Returns signatures for transactions that match search criteria.
@@ -89,8 +89,8 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<byte[]> getSignaturesMatchingCriteria(TransactionType txType, byte[] publicKey,
-			ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<byte[]> getSignaturesMatchingCriteria(TransactionType txType, byte[] publicKey,
+                                               ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	/**
 	 * Returns signatures for transactions that match search criteria.
@@ -105,8 +105,8 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<byte[]> getSignaturesMatchingCriteria(TransactionType txType, byte[] publicKey,
-			Integer minBlockHeight, Integer maxBlockHeight) throws DataException;
+    List<byte[]> getSignaturesMatchingCriteria(TransactionType txType, byte[] publicKey,
+                                               Integer minBlockHeight, Integer maxBlockHeight) throws DataException;
 
 	/**
 	 * Returns signatures for transactions that match search criteria.
@@ -122,8 +122,8 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<byte[]> getSignaturesMatchingCustomCriteria(TransactionType txType, List<String> whereClauses,
-															List<Object> bindParams) throws DataException;
+    List<byte[]> getSignaturesMatchingCustomCriteria(TransactionType txType, List<String> whereClauses,
+                                                     List<Object> bindParams) throws DataException;
 
 	/**
 	 * Returns signatures for transactions that match search criteria, with optional limit.
@@ -139,8 +139,8 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<byte[]> getSignaturesMatchingCustomCriteria(TransactionType txType, List<String> whereClauses,
-															List<Object> bindParams, Integer limit) throws DataException;
+    List<byte[]> getSignaturesMatchingCustomCriteria(TransactionType txType, List<String> whereClauses,
+                                                     List<Object> bindParams, Integer limit) throws DataException;
 
 	/**
 	 * Returns signature for latest auto-update transaction.
@@ -157,7 +157,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public byte[] getLatestAutoUpdateTransaction(TransactionType txType, int txGroupId, Integer service) throws DataException;
+    byte[] getLatestAutoUpdateTransaction(TransactionType txType, int txGroupId, Integer service) throws DataException;
 
 	/**
 	 * Returns signatures for all name-registration related transactions relating to supplied name.
@@ -168,7 +168,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<TransactionData> getTransactionsInvolvingName(String name, ConfirmationStatus confirmationStatus) throws DataException;
+    List<TransactionData> getTransactionsInvolvingName(String name, ConfirmationStatus confirmationStatus) throws DataException;
 
 	/**
 	 * Returns list of transactions relating to specific asset ID.
@@ -180,7 +180,7 @@ public interface TransactionRepository {
 	 * @param reverse
 	 * @return list of transactions, or empty if none
 	 */
-	public List<TransactionData> getAssetTransactions(long assetId, ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse)
+    List<TransactionData> getAssetTransactions(long assetId, ConfirmationStatus confirmationStatus, Integer limit, Integer offset, Boolean reverse)
 			throws DataException;
 
 	/**
@@ -193,7 +193,7 @@ public interface TransactionRepository {
 	 * @param reverse
 	 * @return list of transactions, or empty if none
 	 */
-	public List<TransferAssetTransactionData> getAssetTransfers(long assetId, String address, Integer limit, Integer offset, Boolean reverse)
+    List<TransferAssetTransactionData> getAssetTransfers(long assetId, String address, Integer limit, Integer offset, Boolean reverse)
 			throws DataException;
 
 	/**
@@ -203,7 +203,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<String> getConfirmedRewardShareCreatorsExcludingSelfShares() throws DataException;
+    List<String> getConfirmedRewardShareCreatorsExcludingSelfShares() throws DataException;
 
 	/**
 	 * Returns list of transfer asset transaction creators.
@@ -212,7 +212,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<String> getConfirmedTransferAssetCreators() throws DataException;
+    List<String> getConfirmedTransferAssetCreators() throws DataException;
 
 	/**
 	 * Returns list of transactions pending approval, with optional txGgroupId filtering.
@@ -226,7 +226,7 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public List<TransactionData> getApprovalPendingTransactions(Integer txGroupId, Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<TransactionData> getApprovalPendingTransactions(Integer txGroupId, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	/**
 	 * Returns list of transactions pending approval that can be resolved as of passed blockHeight.
@@ -237,7 +237,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<TransactionData> getApprovalPendingTransactions(int blockHeight) throws DataException;
+    List<TransactionData> getApprovalPendingTransactions(int blockHeight) throws DataException;
 
 	/**
 	 * Returns list of transactions that have now expired as of passed blockHeight.
@@ -248,13 +248,13 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public List<TransactionData> getApprovalExpiringTransactions(int blockHeight) throws DataException;
+    List<TransactionData> getApprovalExpiringTransactions(int blockHeight) throws DataException;
 
 	/** Returns list of transactions that had group-approval decided at passed block height. */
-	public List<TransactionData> getApprovalTransactionDecidedAtHeight(int approvalHeight) throws DataException;
+    List<TransactionData> getApprovalTransactionDecidedAtHeight(int approvalHeight) throws DataException;
 
 	/** Returns latest approval decision by given admin for given pending transaction signature. */
-	public GroupApprovalTransactionData getLatestApproval(byte[] pendingSignature, byte[] adminPublicKey) throws DataException;
+    GroupApprovalTransactionData getLatestApproval(byte[] pendingSignature, byte[] adminPublicKey) throws DataException;
 
 	/**
 	 * Returns list of latest approval decisions for given pending transaction signature.
@@ -263,7 +263,7 @@ public interface TransactionRepository {
 	 * @return
 	 * @throws DataException
 	 */
-	public GroupApprovalData getApprovalData(byte[] pendingSignature) throws DataException;
+    GroupApprovalData getApprovalData(byte[] pendingSignature) throws DataException;
 
 	/**
 	 * Returns whether transaction is confirmed or not.
@@ -271,7 +271,7 @@ public interface TransactionRepository {
 	 * @param signature
 	 * @return true if confirmed, false if not.
 	 */
-	public boolean isConfirmed(byte[] signature) throws DataException;
+    boolean isConfirmed(byte[] signature) throws DataException;
 
 	/**
 	 * Returns list of unconfirmed transaction signatures in timestamp-else-signature order.
@@ -279,7 +279,7 @@ public interface TransactionRepository {
 	 * @return list of transaction signatures, or empty if none.
 	 * @throws DataException
 	 */
-	public List<byte[]> getUnconfirmedTransactionSignatures() throws DataException;
+    List<byte[]> getUnconfirmedTransactionSignatures() throws DataException;
 
 	/**
 	 * Returns list of unconfirmed transactions in timestamp-else-signature order.
@@ -292,8 +292,8 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public List<TransactionData> getUnconfirmedTransactions(List<TransactionType> txTypes, byte[] creatorPublicKey,
-															Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<TransactionData> getUnconfirmedTransactions(List<TransactionType> txTypes, byte[] creatorPublicKey,
+                                                     Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 	/**
 	 * Returns list of unconfirmed transactions in timestamp-else-signature order.
@@ -301,7 +301,7 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public default List<TransactionData> getUnconfirmedTransactions() throws DataException {
+	default List<TransactionData> getUnconfirmedTransactions() throws DataException {
 		return getUnconfirmedTransactions(null, null, null, null, null);
 	}
 
@@ -315,7 +315,7 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public List<TransactionData> getUnconfirmedTransactions(TransactionType txType, byte[] creatorPublicKey) throws DataException;
+    List<TransactionData> getUnconfirmedTransactions(TransactionType txType, byte[] creatorPublicKey) throws DataException;
 
 	/**
 	 * Returns list of unconfirmed transactions excluding specified type(s).
@@ -323,7 +323,7 @@ public interface TransactionRepository {
 	 * @return list of transactions, or empty if none.
 	 * @throws DataException
 	 */
-	public List<TransactionData> getUnconfirmedTransactions(EnumSet<TransactionType> excludedTxTypes, Integer limit) throws DataException;
+    List<TransactionData> getUnconfirmedTransactions(EnumSet<TransactionType> excludedTxTypes, Integer limit) throws DataException;
 
 	/**
 	 * Remove transaction from unconfirmed transactions pile.
@@ -331,13 +331,13 @@ public interface TransactionRepository {
 	 * @param signature
 	 * @throws DataException
 	 */
-	public void confirmTransaction(byte[] signature) throws DataException;
+    void confirmTransaction(byte[] signature) throws DataException;
 
-	public void updateBlockHeight(byte[] signature, Integer height) throws DataException;
+	void updateBlockHeight(byte[] signature, Integer height) throws DataException;
 
-	public void updateBlockSequence(byte[] signature, Integer sequence) throws DataException;
+	void updateBlockSequence(byte[] signature, Integer sequence) throws DataException;
 
-	public void updateApprovalHeight(byte[] signature, Integer approvalHeight) throws DataException;
+	void updateApprovalHeight(byte[] signature, Integer approvalHeight) throws DataException;
 
 	/**
 	 * Add transaction to unconfirmed transactions pile.
@@ -345,10 +345,10 @@ public interface TransactionRepository {
 	 * @param transactionData
 	 * @throws DataException
 	 */
-	public void unconfirmTransaction(TransactionData transactionData) throws DataException;
+    void unconfirmTransaction(TransactionData transactionData) throws DataException;
 
-	public void save(TransactionData transactionData) throws DataException;
+	void save(TransactionData transactionData) throws DataException;
 
-	public void delete(TransactionData transactionData) throws DataException;
+	void delete(TransactionData transactionData) throws DataException;
 
 }

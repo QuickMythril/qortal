@@ -23,7 +23,7 @@ public class URLViewer {
 		try {
 			openWebpage(url.toURI());
 		} catch (URISyntaxException e) {
-			LOGGER.error(String.format("Invalid URL: %s", url.toString()));
+			LOGGER.error(String.format("Invalid URL: %s", url));
 		}
 	}
 

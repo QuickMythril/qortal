@@ -164,8 +164,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	 * @throws ForeignBlockchainException if error occurs
 	 */
 	public int getBlockchainHeight() throws ForeignBlockchainException {
-		int height = this.blockchainProvider.getCurrentHeight();
-		return height;
+        return this.blockchainProvider.getCurrentHeight();
 	}
 
 	/** Returns fee per transaction KB. To be overridden for testnet/regtest. */
@@ -359,12 +358,9 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		List<ECKey> spendingKeys = wallet.getImportedKeys();
 		spendingKeys.addAll(wallet.getActiveKeyChain().getLeafKeys());
 
-		List<String> spendingCandidateAddresses
-				= spendingKeys.stream()
-					.map(spendingKey -> Address.fromKey(this.params, spendingKey, ScriptType.P2PKH ).toString())
-					.collect(Collectors.toList());
-
-		return spendingCandidateAddresses;
+        return spendingKeys.stream()
+            .map(spendingKey -> Address.fromKey(this.params, spendingKey, ScriptType.P2PKH ).toString())
+            .collect(Collectors.toList());
 	}
 
 	/**
@@ -757,7 +753,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 			Address address = Address.fromKey(this.params, keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS), ScriptType.P2PKH);
 
 			// if zero transactions, return address
-			if( 0 == getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).size() )
+			if(getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).isEmpty())
 				return address.toString();
 
 			// else try the next receive funds address

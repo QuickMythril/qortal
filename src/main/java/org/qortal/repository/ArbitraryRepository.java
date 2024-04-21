@@ -14,43 +14,43 @@ public interface ArbitraryRepository {
 
 	// Utils
 
-	public boolean isDataLocal(byte[] signature) throws DataException;
+	boolean isDataLocal(byte[] signature) throws DataException;
 
-	public byte[] fetchData(byte[] signature) throws DataException;
+	byte[] fetchData(byte[] signature) throws DataException;
 
 
 	// Transaction related
 
-	public void save(ArbitraryTransactionData arbitraryTransactionData) throws DataException;
+	void save(ArbitraryTransactionData arbitraryTransactionData) throws DataException;
 
-	public void delete(ArbitraryTransactionData arbitraryTransactionData) throws DataException;
+	void delete(ArbitraryTransactionData arbitraryTransactionData) throws DataException;
 
-	public List<ArbitraryTransactionData> getArbitraryTransactions(String name, Service service, String identifier, long since) throws DataException;
+	List<ArbitraryTransactionData> getArbitraryTransactions(String name, Service service, String identifier, long since) throws DataException;
 
-	public ArbitraryTransactionData getInitialTransaction(String name, Service service, Method method, String identifier) throws DataException;
+	ArbitraryTransactionData getInitialTransaction(String name, Service service, Method method, String identifier) throws DataException;
 
-	public ArbitraryTransactionData getLatestTransaction(String name, Service service, Method method, String identifier) throws DataException;
+	ArbitraryTransactionData getLatestTransaction(String name, Service service, Method method, String identifier) throws DataException;
 
-	public List<ArbitraryTransactionData> getArbitraryTransactions(boolean requireName, Integer limit, Integer offset, Boolean reverse) throws DataException;
+	List<ArbitraryTransactionData> getArbitraryTransactions(boolean requireName, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 
 	// Resource related
 
-	public ArbitraryResourceData getArbitraryResource(Service service, String name, String identifier) throws DataException;
+	ArbitraryResourceData getArbitraryResource(Service service, String name, String identifier) throws DataException;
 
-	public List<ArbitraryResourceData> getArbitraryResources(Integer limit, Integer offset, Boolean reverse) throws DataException;
+	List<ArbitraryResourceData> getArbitraryResources(Integer limit, Integer offset, Boolean reverse) throws DataException;
 
-	public List<ArbitraryResourceData> getArbitraryResources(Service service, String identifier, List<String> names, boolean defaultResource, Boolean followedOnly, Boolean excludeBlocked, Boolean includeMetadata, Boolean includeStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
+	List<ArbitraryResourceData> getArbitraryResources(Service service, String identifier, List<String> names, boolean defaultResource, Boolean followedOnly, Boolean excludeBlocked, Boolean includeMetadata, Boolean includeStatus, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
-	public List<ArbitraryResourceData> searchArbitraryResources(Service service, String query, String identifier, List<String> names, String title, String description, boolean prefixOnly, List<String> namesFilter, boolean defaultResource, SearchMode mode, Integer minLevel, Boolean followedOnly, Boolean excludeBlocked, Boolean includeMetadata, Boolean includeStatus, Long before, Long after, Integer limit, Integer offset, Boolean reverse) throws DataException;
+	List<ArbitraryResourceData> searchArbitraryResources(Service service, String query, String identifier, List<String> names, String title, String description, boolean prefixOnly, List<String> namesFilter, boolean defaultResource, SearchMode mode, Integer minLevel, Boolean followedOnly, Boolean excludeBlocked, Boolean includeMetadata, Boolean includeStatus, Long before, Long after, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 
 	// Arbitrary resources cache save/load
 
-	public void save(ArbitraryResourceData arbitraryResourceData) throws DataException;
-	public void setStatus(ArbitraryResourceData arbitraryResourceData, ArbitraryResourceStatus.Status status) throws DataException;
-	public void delete(ArbitraryResourceData arbitraryResourceData) throws DataException;
+	void save(ArbitraryResourceData arbitraryResourceData) throws DataException;
+	void setStatus(ArbitraryResourceData arbitraryResourceData, ArbitraryResourceStatus.Status status) throws DataException;
+	void delete(ArbitraryResourceData arbitraryResourceData) throws DataException;
 
-	public void save(ArbitraryResourceMetadata metadata) throws DataException;
-	public void delete(ArbitraryResourceMetadata metadata) throws DataException;
+	void save(ArbitraryResourceMetadata metadata) throws DataException;
+	void delete(ArbitraryResourceMetadata metadata) throws DataException;
 }

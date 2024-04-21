@@ -5,61 +5,61 @@ import java.util.concurrent.TimeoutException;
 
 public interface Repository extends AutoCloseable {
 
-	public ATRepository getATRepository();
+	ATRepository getATRepository();
 
-	public AccountRepository getAccountRepository();
+	AccountRepository getAccountRepository();
 
-	public ArbitraryRepository getArbitraryRepository();
+	ArbitraryRepository getArbitraryRepository();
 
-	public AssetRepository getAssetRepository();
+	AssetRepository getAssetRepository();
 
-	public BlockRepository getBlockRepository();
+	BlockRepository getBlockRepository();
 
-	public BlockArchiveRepository getBlockArchiveRepository();
+	BlockArchiveRepository getBlockArchiveRepository();
 
-	public ChatRepository getChatRepository();
+	ChatRepository getChatRepository();
 
-	public CrossChainRepository getCrossChainRepository();
+	CrossChainRepository getCrossChainRepository();
 
-	public GroupRepository getGroupRepository();
+	GroupRepository getGroupRepository();
 
-	public MessageRepository getMessageRepository();
+	MessageRepository getMessageRepository();
 
-	public NameRepository getNameRepository();
+	NameRepository getNameRepository();
 
-	public NetworkRepository getNetworkRepository();
+	NetworkRepository getNetworkRepository();
 
-	public TransactionRepository getTransactionRepository();
+	TransactionRepository getTransactionRepository();
 
-	public VotingRepository getVotingRepository();
+	VotingRepository getVotingRepository();
 
-	public void saveChanges() throws DataException;
+	void saveChanges() throws DataException;
 
-	public void discardChanges() throws DataException;
+	void discardChanges() throws DataException;
 
-	public void setSavepoint() throws DataException;
+	void setSavepoint() throws DataException;
 
-	public void rollbackToSavepoint() throws DataException;
+	void rollbackToSavepoint() throws DataException;
 
 	@Override
-	public void close() throws DataException;
+    void close() throws DataException;
 
-	public void rebuild() throws DataException;
+	void rebuild() throws DataException;
 
-	public boolean getDebug();
+	boolean getDebug();
 
-	public void setDebug(boolean debugState);
+	void setDebug(boolean debugState);
 
-	public void backup(boolean quick, String name, Long timeout) throws DataException, TimeoutException;
+	void backup(boolean quick, String name, Long timeout) throws DataException, TimeoutException;
 
-	public void performPeriodicMaintenance(Long timeout) throws DataException, TimeoutException;
+	void performPeriodicMaintenance(Long timeout) throws DataException, TimeoutException;
 
-	public void exportNodeLocalData() throws DataException;
+	void exportNodeLocalData() throws DataException;
 
-	public void importDataFromFile(String filename) throws DataException, IOException;
+	void importDataFromFile(String filename) throws DataException, IOException;
 
-	public void checkConsistency() throws DataException;
+	void checkConsistency() throws DataException;
 
-	public static void attemptRecovery(String connectionUrl, String name) throws DataException {}
+	static void attemptRecovery(String connectionUrl, String name) throws DataException {}
 
 }

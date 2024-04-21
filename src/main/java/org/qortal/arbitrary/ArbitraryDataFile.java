@@ -53,7 +53,7 @@ public class ArbitraryDataFile {
     private static final Logger LOGGER = LogManager.getLogger(ArbitraryDataFile.class);
 
     public static final long MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MiB
-    protected static final int MAX_CHUNK_SIZE = 1 * 1024 * 1024; // 1MiB
+    protected static final int MAX_CHUNK_SIZE = 1024 * 1024; // 1MiB
     public static final int CHUNK_SIZE = 512 * 1024; // 0.5MiB
     public static int SHORT_DIGEST_LENGTH = 8;
 
@@ -354,7 +354,7 @@ public class ArbitraryDataFile {
 
     public boolean join() {
         // Ensure we have chunks
-        if (this.chunks != null && this.chunks.size() > 0) {
+        if (this.chunks != null && !this.chunks.isEmpty()) {
 
             // Create temporary path for joined file
             // Use the user-specified temp dir, as it is deterministic, and is more likely to be located on reusable storage hardware
@@ -439,7 +439,7 @@ public class ArbitraryDataFile {
         boolean success = false;
 
         // Delete the individual chunks
-        if (this.chunks != null && this.chunks.size() > 0) {
+        if (this.chunks != null && !this.chunks.isEmpty()) {
             Iterator iterator = this.chunks.iterator();
             while (iterator.hasNext()) {
                 ArbitraryDataFileChunk chunk = (ArbitraryDataFileChunk) iterator.next();
@@ -616,11 +616,7 @@ public class ArbitraryDataFile {
         }
 
         // Complete file doesn't exist, so check the chunks
-        if (this.allChunksExist()) {
-            return true;
-        }
-
-        return false;
+        return this.allChunksExist();
     }
 
     /**
@@ -709,7 +705,7 @@ public class ArbitraryDataFile {
     }
 
     public byte[] chunkHashes() throws DataException {
-        if (this.chunks != null && this.chunks.size() > 0) {
+        if (this.chunks != null && !this.chunks.isEmpty()) {
             // Return null if we only have one chunk, with the same hash as the parent
             if (Arrays.equals(this.digest(), this.chunks.get(0).digest())) {
                 return null;
@@ -736,7 +732,7 @@ public class ArbitraryDataFile {
     public List<byte[]> chunkHashList() {
         List<byte[]> chunks = new ArrayList<>();
 
-        if (this.chunks != null && this.chunks.size() > 0) {
+        if (this.chunks != null && !this.chunks.isEmpty()) {
             // Return null if we only have one chunk, with the same hash as the parent
             if (Arrays.equals(this.digest(), this.chunks.get(0).digest())) {
                 return null;
@@ -820,7 +816,7 @@ public class ArbitraryDataFile {
         String outputString = "";
         if (this.chunkCount() > 0) {
             for (ArbitraryDataFileChunk chunk : this.chunks) {
-                if (outputString.length() > 0) {
+                if (!outputString.isEmpty()) {
                     outputString = outputString.concat(",");
                 }
                 outputString = outputString.concat(chunk.digest58());

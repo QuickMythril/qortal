@@ -122,13 +122,10 @@ public class ArbitraryDataBuildManager extends Thread {
             return false;
         }
 
-        if (this.arbitraryDataBuildQueue.containsKey(key)) {
-            // Already in queue
-            return true;
-        }
+        // Already in queue
+        return this.arbitraryDataBuildQueue.containsKey(key);
 
         // Not in queue
-        return false;
     }
 
 
@@ -170,13 +167,10 @@ public class ArbitraryDataBuildManager extends Thread {
             return false;
         }
 
-        if (this.arbitraryDataFailedBuilds.containsKey(key)) {
-            // Already in list
-            return true;
-        }
+        // Already in list
+        return this.arbitraryDataFailedBuilds.containsKey(key);
 
         // Not in list
-        return false;
     }
 
 

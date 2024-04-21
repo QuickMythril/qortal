@@ -23,10 +23,10 @@ public class HSQLDBSaver {
 
 	private final Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
-	private String table;
+	private final String table;
 
-	private List<String> columns = new ArrayList<>();
-	private List<Object> objects = new ArrayList<>();
+	private final List<String> columns = new ArrayList<>();
+	private final List<Object> objects = new ArrayList<>();
 
 	/**
 	 * Construct a SaveHelper, using SQL Connection and table name.
