@@ -2,7 +2,7 @@ name: PR testing
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ action-run-test ]
 
 jobs:
   mavenTesting:
