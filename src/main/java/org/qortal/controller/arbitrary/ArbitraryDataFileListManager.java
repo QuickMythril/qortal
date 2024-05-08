@@ -99,7 +99,7 @@ public class ArbitraryDataFileListManager {
 
         if (request == null) {
             // Not attempted yet
-            return true;
+            return false;
         }
 
         // Extract the components
@@ -109,7 +109,7 @@ public class ArbitraryDataFileListManager {
 
         if (lastAttemptTimestamp == null) {
             // Not attempted yet
-            return true;
+            return false;
         }
 
         long timeSinceLastAttempt = NTP.getTime() - lastAttemptTimestamp;
@@ -120,7 +120,7 @@ public class ArbitraryDataFileListManager {
 
             if (networkBroadcastCount < 3) {
                 // We've made less than 3 total attempts
-                return true;
+                return false;
             }
         }
 
@@ -130,7 +130,7 @@ public class ArbitraryDataFileListManager {
 
             if (networkBroadcastCount < 8) {
                 // We've made less than 8 total attempts
-                return true;
+                return false;
             }
         }
 
@@ -140,17 +140,13 @@ public class ArbitraryDataFileListManager {
 
             if (networkBroadcastCount < 16) {
                 // We've made less than 16 total attempts
-                return true;
+                return false;
             }
         }
 
         // From then on, only try once every 6 hours, to reduce network spam
-        if (timeSinceLastAttempt > 6 * 60 * 60 * 1000L) {
-            // We haven't tried for at least 6 hours
-            return true;
-        }
-
-        return false;
+        // We haven't tried for at least 6 hours
+        return timeSinceLastAttempt <= 6 * 60 * 60 * 1000L;
     }
 
     private boolean shouldMakeDirectFileRequestsForSignature(String signature58) {
@@ -198,17 +194,13 @@ public class ArbitraryDataFileListManager {
             }
         }
 
-        if (timeSinceLastAttempt > 60 * 60 * 1000L) {
-            // We haven't tried for at least 1 hour
-            return true;
-        }
-
-        return false;
+        // We haven't tried for at least 1 hour
+        return timeSinceLastAttempt > 60 * 60 * 1000L;
     }
 
     public boolean isSignatureRateLimited(byte[] signature) {
         String signature58 = Base58.encode(signature);
-        return !this.shouldMakeFileListRequestForSignature(signature58)
+        return this.shouldMakeFileListRequestForSignature(signature58)
                 && !this.shouldMakeDirectFileRequestsForSignature(signature58);
     }
 
@@ -269,7 +261,7 @@ public class ArbitraryDataFileListManager {
         }
 
         // If we've already tried too many times in a short space of time, make sure to give up
-        if (!this.shouldMakeFileListRequestForSignature(signature58)) {
+        if (this.shouldMakeFileListRequestForSignature(signature58)) {
             // Check if we should make direct connections to peers
             if (this.shouldMakeDirectFileRequestsForSignature(signature58)) {
                 return ArbitraryDataFileManager.getInstance().fetchDataFilesFromPeersForSignature(signature);
@@ -415,7 +407,7 @@ public class ArbitraryDataFileListManager {
 
     public void onNetworkArbitraryDataFileListMessage(Peer peer, Message message) {
         // Don't process if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return;
         }
 
@@ -528,7 +520,7 @@ public class ArbitraryDataFileListManager {
 
                     // Remove optional parameters if the requesting peer doesn't support it yet
                     // A message with less statistical data is better than no message at all
-                    if (!requestingPeer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
+                    if (requestingPeer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
                         forwardArbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes);
                     } else {
                         forwardArbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes, requestTime, requestHops,
@@ -548,7 +540,7 @@ public class ArbitraryDataFileListManager {
 
     public void onNetworkGetArbitraryDataFileListMessage(Peer peer, Message message) {
         // Don't respond if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return;
         }
 
@@ -605,7 +597,7 @@ public class ArbitraryDataFileListManager {
                         }
 
                         // Add the chunk hashes
-                        if (arbitraryDataFile.getChunkHashes().size() > 0) {
+                        if (!arbitraryDataFile.getChunkHashes().isEmpty()) {
                             requestedHashes.addAll(arbitraryDataFile.getChunkHashes());
                         }
                         // Add complete file if there are no hashes
@@ -641,7 +633,7 @@ public class ArbitraryDataFileListManager {
         }
 
         // We should only respond if we have at least one hash
-        if (hashes.size() > 0) {
+        if (!hashes.isEmpty()) {
 
             // Firstly we should keep track of the requesting peer, to allow for potential direct connections later
             ArbitraryDataFileManager.getInstance().addRecentDataRequest(requestingPeer);
@@ -658,7 +650,7 @@ public class ArbitraryDataFileListManager {
 
             // Remove optional parameters if the requesting peer doesn't support it yet
             // A message with less statistical data is better than no message at all
-            if (!peer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
+            if (peer.isAtLeastVersion(MIN_PEER_VERSION_FOR_FILE_LIST_STATS)) {
                 arbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature, hashes);
             } else {
                 arbitraryDataFileListMessage = new ArbitraryDataFileListMessage(signature,
@@ -702,7 +694,7 @@ public class ArbitraryDataFileListManager {
                     LOGGER.debug("Rebroadcasting hash list request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(
                             broadcastPeer ->
-                                    !broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
+                                    broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
                                     broadcastPeer == peer || Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost()) ? null : relayGetArbitraryDataFileListMessage
                     );
 

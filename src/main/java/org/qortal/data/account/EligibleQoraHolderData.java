@@ -4,13 +4,13 @@ public class EligibleQoraHolderData {
 
 	// Properties
 
-	private String address;
+	private final String address;
 
-	private long qoraBalance;
-	private long qortFromQoraBalance;
+	private final long qoraBalance;
+	private final long qortFromQoraBalance;
 
-	private Long finalQortFromQora;
-	private Integer finalBlockHeight;
+	private final Long finalQortFromQora;
+	private final Integer finalBlockHeight;
 
 	// Constructors
 

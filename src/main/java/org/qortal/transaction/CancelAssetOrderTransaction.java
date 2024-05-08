@@ -17,7 +17,7 @@ import java.util.List;
 public class CancelAssetOrderTransaction extends Transaction {
 
 	// Properties
-	private CancelAssetOrderTransactionData cancelOrderTransactionData;
+	private final CancelAssetOrderTransactionData cancelOrderTransactionData;
 
 	// Constructors
 

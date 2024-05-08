@@ -1051,7 +1051,7 @@ public class Settings {
 
 
 	public boolean isQdnEnabled() {
-		return this.qdnEnabled;
+		return !this.qdnEnabled;
 	}
 
 	public String getDataPath() {
@@ -1105,9 +1105,9 @@ public class Settings {
 	public boolean isQDNAuthBypassEnabled() {
 		if (this.gatewayEnabled) {
 			// We must always bypass QDN authentication in gateway mode, in order for it to function properly
-			return true;
+			return false;
 		}
-		return this.qdnAuthBypassEnabled;
+		return !this.qdnAuthBypassEnabled;
 	}
 
 	public Integer getMaxThreadsForMessageType(MessageType messageType) {

@@ -154,7 +154,7 @@ public class PresenceWebSocket extends ApiWebSocket implements Listener {
 
 		synchronized (currentEntries) {
 			presenceInfo = currentEntries.entrySet().stream()
-					.filter(entry -> presenceType == null ? true : entry.getKey() == presenceType)
+					.filter(entry -> presenceType == null || entry.getKey() == presenceType)
 					.flatMap(entry -> entry.getValue().entrySet().stream().map(innerEntry -> new PresenceInfo(entry.getKey(), innerEntry.getKey(), innerEntry.getValue())))
 					.collect(Collectors.toList());
 		}

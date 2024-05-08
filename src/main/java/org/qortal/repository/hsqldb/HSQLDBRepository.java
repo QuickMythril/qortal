@@ -774,14 +774,13 @@ public class HSQLDBRepository implements Repository {
 	 * @throws SQLException
 	 */
 	public boolean exists(String tableName, String whereClause, Object... objects) throws SQLException {
-		StringBuilder sql = new StringBuilder(256);
-		sql.append("SELECT TRUE FROM ");
-		sql.append(tableName);
-		sql.append(" WHERE ");
-		sql.append(whereClause);
-		sql.append(" LIMIT 1");
+        String sql = "SELECT TRUE FROM " +
+                tableName +
+                " WHERE " +
+                whereClause +
+                " LIMIT 1";
 
-		try (ResultSet resultSet = this.checkedExecute(sql.toString(), objects)) {
+		try (ResultSet resultSet = this.checkedExecute(sql, objects)) {
 			// If matching row is found then resultSet will not be null
 			return resultSet != null;
 		}
@@ -796,13 +795,12 @@ public class HSQLDBRepository implements Repository {
 	 * @throws SQLException
 	 */
 	public int delete(String tableName, String whereClause, Object... objects) throws SQLException {
-		StringBuilder sql = new StringBuilder(256);
-		sql.append("DELETE FROM ");
-		sql.append(tableName);
-		sql.append(" WHERE ");
-		sql.append(whereClause);
+        String sql = "DELETE FROM " +
+                tableName +
+                " WHERE " +
+                whereClause;
 
-		return this.executeCheckedUpdate(sql.toString(), objects);
+		return this.executeCheckedUpdate(sql, objects);
 	}
 
 	/**
@@ -814,13 +812,12 @@ public class HSQLDBRepository implements Repository {
 	 * @throws SQLException
 	 */
 	public int deleteBatch(String tableName, String whereClause, List<Object[]> batchedObjects) throws SQLException {
-		StringBuilder sql = new StringBuilder(256);
-		sql.append("DELETE FROM ");
-		sql.append(tableName);
-		sql.append(" WHERE ");
-		sql.append(whereClause);
+        String sql = "DELETE FROM " +
+                tableName +
+                " WHERE " +
+                whereClause;
 
-		return this.executeCheckedBatchUpdate(sql.toString(), batchedObjects);
+		return this.executeCheckedBatchUpdate(sql, batchedObjects);
 	}
 
 	/**
@@ -830,11 +827,10 @@ public class HSQLDBRepository implements Repository {
 	 * @throws SQLException
 	 */
 	public int delete(String tableName) throws SQLException {
-		StringBuilder sql = new StringBuilder(256);
-		sql.append("DELETE FROM ");
-		sql.append(tableName);
+        String sql = "DELETE FROM " +
+                tableName;
 
-		return this.executeCheckedUpdate(sql.toString());
+		return this.executeCheckedUpdate(sql);
 	}
 
 	/**
@@ -1029,9 +1025,7 @@ public class HSQLDBRepository implements Repository {
 					// Failed to even find HSQLDB session info!
 					throw new DataException("No results when checking repository session status");
 
-				int transactionCount = resultSet.getInt(1);
-
-				return transactionCount;
+                return resultSet.getInt(1);
 			}
 		} catch (SQLException e) {
 			throw new DataException("Unable to check repository session status", e);

@@ -129,7 +129,7 @@ public class AutoUpdate extends Thread {
 				byte[] downloadHash = new byte[Transformer.SHA256_LENGTH];
 				byteBuffer.get(downloadHash);
 
-				LOGGER.info(String.format("Update's git commit hash: %s", HashCode.fromBytes(commitHash).toString()));
+				LOGGER.info(String.format("Update's git commit hash: %s", HashCode.fromBytes(commitHash)));
 
 				String[] autoUpdateRepos = Settings.getInstance().getAutoUpdateRepos();
 				for (String repo : autoUpdateRepos)
@@ -154,7 +154,7 @@ public class AutoUpdate extends Thread {
 	}
 
 	private static boolean attemptUpdate(byte[] commitHash, byte[] downloadHash, String repoBaseUri) {
-		String repoUri = String.format(repoBaseUri, HashCode.fromBytes(commitHash).toString());
+		String repoUri = String.format(repoBaseUri, HashCode.fromBytes(commitHash));
 		LOGGER.info(String.format("Fetching update from %s", repoUri));
 		Path newJar = Paths.get(NEW_JAR_FILENAME);
 
@@ -167,7 +167,7 @@ public class AutoUpdate extends Thread {
 			}
 
 			// Save input stream into new JAR
-			LOGGER.debug(String.format("Saving update from %s into %s", repoUri, newJar.toString()));
+			LOGGER.debug(String.format("Saving update from %s into %s", repoUri, newJar));
 
 			try (OutputStream out = Files.newOutputStream(newJar)) {
 				byte[] buffer = new byte[1024 * 1024];
@@ -190,7 +190,7 @@ public class AutoUpdate extends Thread {
 				// Check hash
 				byte[] hash = sha256.digest();
 				if (!Arrays.equals(downloadHash, hash)) {
-					LOGGER.warn(String.format("Downloaded JAR's hash %s doesn't match %s", HashCode.fromBytes(hash).toString(), HashCode.fromBytes(downloadHash).toString()));
+					LOGGER.warn(String.format("Downloaded JAR's hash %s doesn't match %s", HashCode.fromBytes(hash), HashCode.fromBytes(downloadHash)));
 
 					try {
 						Files.deleteIfExists(newJar);
@@ -201,7 +201,7 @@ public class AutoUpdate extends Thread {
 					return false;
 				}
 			} catch (IOException e) {
-				LOGGER.warn(String.format("Failed to save update from %s into %s: %s", repoUri, newJar.toString(), e.getMessage()));
+				LOGGER.warn(String.format("Failed to save update from %s into %s: %s", repoUri, newJar, e.getMessage()));
 
 				try {
 					Files.deleteIfExists(newJar);

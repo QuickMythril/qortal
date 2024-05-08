@@ -330,8 +330,8 @@ public class TransactionsResource {
 	public enum ConfirmationStatus {
 		CONFIRMED,
 		UNCONFIRMED,
-		BOTH;
-	}
+		BOTH
+    }
 
 	@GET
 	@Path("/search")

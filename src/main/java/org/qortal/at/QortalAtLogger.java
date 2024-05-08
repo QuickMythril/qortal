@@ -134,7 +134,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void error(final Marker marker, final Message msg) {
-        logger.logIfEnabled(FQCN, ERROR, marker, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, marker, msg, null);
     }
 
     /**
@@ -155,7 +155,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void error(final Marker marker, final Object message) {
-        logger.logIfEnabled(FQCN, ERROR, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, marker, message, null);
     }
 
     /**
@@ -166,7 +166,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void error(final Marker marker, final CharSequence message) {
-        logger.logIfEnabled(FQCN, ERROR, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, marker, message, null);
     }
 
     /**
@@ -419,7 +419,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void error(final Message msg) {
-        logger.logIfEnabled(FQCN, ERROR, null, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, msg, null);
     }
 
     /**
@@ -438,7 +438,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void error(final Object message) {
-        logger.logIfEnabled(FQCN, ERROR, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, message, null);
     }
 
     /**
@@ -459,7 +459,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void error(final CharSequence message) {
-        logger.logIfEnabled(FQCN, ERROR, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, message, null);
     }
 
     /**
@@ -688,12 +688,12 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void error(final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, ERROR, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, msgSupplier, null);
     }
 
     /** Java 8 version */
     public void error(final java.util.function.Supplier<String> msgSupplier) {
-        logger.logIfEnabled(FQCN, ERROR, null, () -> msgSupplier.get(), (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, () -> msgSupplier.get(), null);
     }
 
     /**
@@ -719,7 +719,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void error(final Marker marker, final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, ERROR, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, marker, msgSupplier, null);
     }
 
     /**
@@ -772,7 +772,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void error(final Marker marker, final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, ERROR, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, marker, msgSupplier, null);
     }
 
     /**
@@ -799,7 +799,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void error(final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, ERROR, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ERROR, null, msgSupplier, null);
     }
 
     /**
@@ -823,7 +823,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void debug(final Marker marker, final Message msg) {
-        logger.logIfEnabled(FQCN, DEBUG, marker, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, marker, msg, null);
     }
 
     /**
@@ -844,7 +844,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void debug(final Marker marker, final Object message) {
-        logger.logIfEnabled(FQCN, DEBUG, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, marker, message, null);
     }
 
     /**
@@ -855,7 +855,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void debug(final Marker marker, final CharSequence message) {
-        logger.logIfEnabled(FQCN, DEBUG, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, marker, message, null);
     }
 
     /**
@@ -1108,7 +1108,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void debug(final Message msg) {
-        logger.logIfEnabled(FQCN, DEBUG, null, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, msg, null);
     }
 
     /**
@@ -1127,7 +1127,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void debug(final Object message) {
-        logger.logIfEnabled(FQCN, DEBUG, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, message, null);
     }
 
     /**
@@ -1148,7 +1148,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void debug(final CharSequence message) {
-        logger.logIfEnabled(FQCN, DEBUG, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, message, null);
     }
 
     /**
@@ -1377,12 +1377,12 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void debug(final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, DEBUG, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, msgSupplier, null);
     }
 
     /** Java 8 version */
     public void debug(final java.util.function.Supplier<String> msgSupplier) {
-        logger.logIfEnabled(FQCN, DEBUG, null, () -> msgSupplier.get(), (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, () -> msgSupplier.get(), null);
     }
 
     /**
@@ -1408,7 +1408,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void debug(final Marker marker, final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, DEBUG, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, marker, msgSupplier, null);
     }
 
     /**
@@ -1461,7 +1461,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void debug(final Marker marker, final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, DEBUG, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, marker, msgSupplier, null);
     }
 
     /**
@@ -1488,7 +1488,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void debug(final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, DEBUG, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, DEBUG, null, msgSupplier, null);
     }
 
     /**
@@ -1512,7 +1512,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void echo(final Marker marker, final Message msg) {
-        logger.logIfEnabled(FQCN, ECHO, marker, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, marker, msg, null);
     }
 
     /**
@@ -1533,7 +1533,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void echo(final Marker marker, final Object message) {
-        logger.logIfEnabled(FQCN, ECHO, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, marker, message, null);
     }
 
     /**
@@ -1544,7 +1544,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void echo(final Marker marker, final CharSequence message) {
-        logger.logIfEnabled(FQCN, ECHO, marker, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, marker, message, null);
     }
 
     /**
@@ -1797,7 +1797,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param msg the message string to be logged
      */
     public void echo(final Message msg) {
-        logger.logIfEnabled(FQCN, ECHO, null, msg, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, msg, null);
     }
 
     /**
@@ -1816,7 +1816,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @param message the message object to log.
      */
     public void echo(final Object message) {
-        logger.logIfEnabled(FQCN, ECHO, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, message, null);
     }
 
     /**
@@ -1837,7 +1837,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.6
      */
     public void echo(final CharSequence message) {
-        logger.logIfEnabled(FQCN, ECHO, null, message, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, message, null);
     }
 
     /**
@@ -2066,12 +2066,12 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void echo(final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, ECHO, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, msgSupplier, null);
     }
 
     /** Java 8 version */
     public void echo(final java.util.function.Supplier<String> msgSupplier) {
-        logger.logIfEnabled(FQCN, ECHO, null, () -> msgSupplier.get(), (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, () -> msgSupplier.get(), null);
     }
 
     /**
@@ -2097,7 +2097,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void echo(final Marker marker, final Supplier<?> msgSupplier) {
-        logger.logIfEnabled(FQCN, ECHO, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, marker, msgSupplier, null);
     }
 
     /**
@@ -2150,7 +2150,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void echo(final Marker marker, final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, ECHO, marker, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, marker, msgSupplier, null);
     }
 
     /**
@@ -2177,7 +2177,7 @@ public final class QortalAtLogger extends ExtendedLoggerWrapper implements org.c
      * @since Log4j-2.4
      */
     public void echo(final MessageSupplier msgSupplier) {
-        logger.logIfEnabled(FQCN, ECHO, null, msgSupplier, (Throwable) null);
+        logger.logIfEnabled(FQCN, ECHO, null, msgSupplier, null);
     }
 
     /**

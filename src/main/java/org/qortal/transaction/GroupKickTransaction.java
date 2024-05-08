@@ -18,7 +18,7 @@ import java.util.List;
 public class GroupKickTransaction extends Transaction {
 
 	// Properties
-	private GroupKickTransactionData groupKickTransactionData;
+	private final GroupKickTransactionData groupKickTransactionData;
 
 	// Constructors
 
@@ -80,6 +80,10 @@ public class GroupKickTransaction extends Transaction {
 
 		// Can't kick another admin unless kicker is the group owner
 		if (!admin.getAddress().equals(groupData.getOwner()) && groupRepository.adminExists(groupId, member.getAddress()))
+			return ValidationResult.INVALID_GROUP_OWNER;
+
+		// Can't kick if not group's current owner
+		if (!admin.getAddress().equals(groupData.getOwner()))
 			return ValidationResult.INVALID_GROUP_OWNER;
 
 		// Check creator has enough funds

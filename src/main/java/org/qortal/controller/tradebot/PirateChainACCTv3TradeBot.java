@@ -156,7 +156,7 @@ public class PirateChainACCTv3TradeBot implements AcctTradeBot {
 
 		// ARRR wallet must be loaded before a trade can be created
 		// This is to stop trades from nodes on unsupported architectures (e.g. 32bit)
-		if (!LiteWalletJni.isLoaded()) {
+		if (LiteWalletJni.isLoaded()) {
 			throw new DataException("Pirate wallet not found. Check wallets screen for details.");
 		}
 
@@ -285,7 +285,7 @@ public class PirateChainACCTv3TradeBot implements AcctTradeBot {
 
 		// Attempt to backup the trade bot data
 		// Include tradeBotData as an additional parameter, since it's not in the repository yet
-		TradeBot.backupTradeBotData(repository, Arrays.asList(tradeBotData));
+		TradeBot.backupTradeBotData(repository, List.of(tradeBotData));
 
 		// Check we have enough funds via xprv58 to fund P2SH to cover expectedForeignAmount
 		long p2shFee;
@@ -945,7 +945,7 @@ public class PirateChainACCTv3TradeBot implements AcctTradeBot {
 	}
 
 	private long calcFeeTimestamp(int lockTimeA, int tradeTimeout) {
-		return (lockTimeA - tradeTimeout * 60) * 1000L;
+		return (lockTimeA - tradeTimeout * 60L) * 1000L;
 	}
 
 }

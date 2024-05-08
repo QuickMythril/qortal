@@ -23,8 +23,8 @@ public class HSQLDBRepositoryFactory implements RepositoryFactory {
 	/** Log getConnection() calls that take longer than this. (ms) */
 	private static final long SLOW_CONNECTION_THRESHOLD = 1000L;
 
-	private String connectionUrl;
-	private HSQLDBPool connectionPool;
+	private final String connectionUrl;
+	private final HSQLDBPool connectionPool;
 	private final boolean wasPristine;
 
 	/**

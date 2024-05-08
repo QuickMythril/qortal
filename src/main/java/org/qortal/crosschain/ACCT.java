@@ -8,18 +8,18 @@ import org.qortal.repository.Repository;
 
 public interface ACCT {
 
-	public byte[] getCodeBytesHash();
+	byte[] getCodeBytesHash();
 
-	public int getModeByteOffset();
+	int getModeByteOffset();
 
-	public ForeignBlockchain getBlockchain();
+	ForeignBlockchain getBlockchain();
 
-	public CrossChainTradeData populateTradeData(Repository repository, ATData atData) throws DataException;
+	CrossChainTradeData populateTradeData(Repository repository, ATData atData) throws DataException;
 
-	public CrossChainTradeData populateTradeData(Repository repository, ATStateData atStateData) throws DataException;
+	CrossChainTradeData populateTradeData(Repository repository, ATStateData atStateData) throws DataException;
 
-	public byte[] buildCancelMessage(String creatorQortalAddress);
+	byte[] buildCancelMessage(String creatorQortalAddress);
 
-	public byte[] findSecretA(Repository repository, CrossChainTradeData crossChainTradeData) throws DataException;
+	byte[] findSecretA(Repository repository, CrossChainTradeData crossChainTradeData) throws DataException;
 
 }

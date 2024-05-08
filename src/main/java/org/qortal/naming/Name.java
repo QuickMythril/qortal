@@ -16,8 +16,8 @@ import java.util.Objects;
 public class Name {
 
 	// Properties
-	private Repository repository;
-	private NameData nameData;
+	private final Repository repository;
+	private final NameData nameData;
 
 	// Useful constants
 	public static final int MIN_NAME_SIZE = 3;

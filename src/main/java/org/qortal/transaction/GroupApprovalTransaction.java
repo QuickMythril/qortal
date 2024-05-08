@@ -13,7 +13,7 @@ import java.util.List;
 public class GroupApprovalTransaction extends Transaction {
 
 	// Properties
-	private GroupApprovalTransactionData groupApprovalTransactionData;
+	private final GroupApprovalTransactionData groupApprovalTransactionData;
 
 	// Constructors
 

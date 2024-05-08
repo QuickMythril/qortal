@@ -84,6 +84,10 @@ public class GroupBanTransaction extends Transaction {
 		if (admin.getConfirmedBalance(Asset.QORT) < this.groupBanTransactionData.getFee())
 			return ValidationResult.NO_BALANCE;
 
+		// Can't ban if not group's current owner
+		if (!admin.getAddress().equals(groupData.getOwner()))
+			return ValidationResult.INVALID_GROUP_OWNER;
+
 		return ValidationResult.OK;
 	}
 

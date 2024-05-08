@@ -50,8 +50,8 @@ public class LegacyZcashAddress extends Address {
     public final boolean p2sh;
 
     /* Zcash P2SH header bytes */
-    private static int P2SH_HEADER_1 = 28;
-    private static int P2SH_HEADER_2 = 189;
+    private static final int P2SH_HEADER_1 = 28;
+    private static final int P2SH_HEADER_2 = 189;
 
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
@@ -164,7 +164,7 @@ public class LegacyZcashAddress extends Address {
      * @return textual form
      */
     public String toBase58() {
-        return this.encodeChecked(getVersion(), bytes);
+        return encodeChecked(getVersion(), bytes);
     }
 
     /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */

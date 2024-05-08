@@ -233,8 +233,7 @@ public class AddressesResource {
 					}
 
 				} catch (DataException e) {
-					continue;
-				}
+                }
 			}
 
 			// Sort by level
@@ -270,7 +269,7 @@ public class AddressesResource {
 
 			if (assetId == null)
 				assetId = Asset.QORT;
-			else if (!repository.getAssetRepository().assetExists(assetId))
+			else if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return Amounts.toBigDecimal(account.getConfirmedBalance(assetId));
@@ -484,9 +483,8 @@ public class AddressesResource {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 
 			List<AccountData> accounts = repository.getAccountRepository().getPenaltyAccounts();
-			List<AccountPenaltyData> penalties = accounts.stream().map(a -> new AccountPenaltyData(a.getAddress(), a.getBlocksMintedPenalty())).collect(Collectors.toList());
 
-			return penalties;
+            return accounts.stream().map(a -> new AccountPenaltyData(a.getAddress(), a.getBlocksMintedPenalty())).collect(Collectors.toList());
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
 		}

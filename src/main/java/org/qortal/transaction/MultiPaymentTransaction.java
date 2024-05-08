@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class MultiPaymentTransaction extends Transaction {
 
 	// Properties
-	private MultiPaymentTransactionData multiPaymentTransactionData;
+	private final MultiPaymentTransactionData multiPaymentTransactionData;
 
 	// Useful constants
 	private static final int MAX_PAYMENTS_COUNT = 400;

@@ -181,7 +181,7 @@ public class ApplyBootstrap {
 
 		List<String> javaCmd;
 		if (Files.exists(exeLauncher)) {
-			javaCmd = Arrays.asList(exeLauncher.toString());
+			javaCmd = List.of(exeLauncher.toString());
 		} else {
 			javaCmd = new ArrayList<>();
 			// Java runtime binary itself

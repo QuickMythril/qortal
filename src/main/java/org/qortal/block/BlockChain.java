@@ -42,7 +42,7 @@ public class BlockChain {
 
 	// Properties
 
-	private boolean isTestChain = false;
+	private final boolean isTestChain = false;
 
 	/** Transaction expiry period, starting from transaction's timestamp, in milliseconds. */
 	private long transactionExpiryPeriod;
@@ -98,10 +98,10 @@ public class BlockChain {
 	private Map<String, Long> featureTriggers;
 
 	/** Whether to use legacy, broken RIPEMD160 implementation when converting public keys to addresses. */
-	private boolean useBrokenMD160ForAddresses = false;
+	private final boolean useBrokenMD160ForAddresses = false;
 
 	/** Whether only one registered name is allowed per account. */
-	private boolean oneNamePerAccount = false;
+	private final boolean oneNamePerAccount = false;
 
 	/** Checkpoints */
 	public static class Checkpoint {
@@ -877,8 +877,8 @@ public class BlockChain {
 			if (detachedBlockData != null) {
 				LOGGER.error(String.format("Block %d's reference does not match any block's signature",
 						detachedBlockData.getHeight()));
-				LOGGER.error(String.format("Your chain may be invalid and you should consider bootstrapping" +
-						" or re-syncing from genesis."));
+				LOGGER.error("Your chain may be invalid and you should consider bootstrapping" +
+						" or re-syncing from genesis.");
 			}
 		}
 	}

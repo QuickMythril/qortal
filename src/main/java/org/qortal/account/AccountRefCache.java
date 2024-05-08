@@ -95,7 +95,7 @@ public class AccountRefCache implements AutoCloseable {
 		}
 	}
 
-	private Repository repository;
+	private final Repository repository;
 
 	/**
 	 * Constructs a new account reference cache, unique to passed <tt>repository</tt> handle.

@@ -8,8 +8,8 @@ import org.qortal.repository.Repository;
 public class Poll {
 
 	// Properties
-	private Repository repository;
-	private PollData pollData;
+	private final Repository repository;
+	private final PollData pollData;
 
 	// Other useful constants
 	public static final int MIN_NAME_SIZE = 3;

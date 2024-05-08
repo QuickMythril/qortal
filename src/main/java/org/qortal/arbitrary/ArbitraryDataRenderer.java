@@ -72,7 +72,7 @@ public class ArbitraryDataRenderer {
         }
 
         // Don't render data if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return ArbitraryDataRenderer.getResponse(response, 500, "QDN is disabled in settings");
         }
 
@@ -92,7 +92,7 @@ public class ArbitraryDataRenderer {
                 int attempts = 0;
                 while (!Controller.isStopping()) {
                     attempts++;
-                    if (!arbitraryDataReader.isBuilding()) {
+                    if (arbitraryDataReader.isBuilding()) {
                         try {
                             arbitraryDataReader.loadSynchronously(false);
                             break;

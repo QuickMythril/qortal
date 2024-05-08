@@ -23,7 +23,7 @@ public class RewardShareTransaction extends Transaction {
 
 	// Properties
 
-	private RewardShareTransactionData rewardShareTransactionData;
+	private final RewardShareTransactionData rewardShareTransactionData;
 	private boolean haveCheckedForExistingRewardShare = false;
 	private RewardShareData existingRewardShareData = null;
 
@@ -43,7 +43,7 @@ public class RewardShareTransaction extends Transaction {
 	}
 
 	private RewardShareData getExistingRewardShare() throws DataException {
-		if (this.haveCheckedForExistingRewardShare == false) {
+		if (!this.haveCheckedForExistingRewardShare) {
 			this.haveCheckedForExistingRewardShare = true;
 
 			// Look up any existing reward-share (using transaction's reward-share public key)
@@ -58,9 +58,9 @@ public class RewardShareTransaction extends Transaction {
 	}
 
 	private boolean doesRewardShareMatch(RewardShareData rewardShareData) {
-		return rewardShareData.getRecipient().equals(this.rewardShareTransactionData.getRecipient())
-				&& Arrays.equals(rewardShareData.getMinterPublicKey(), this.rewardShareTransactionData.getMinterPublicKey())
-				&& Arrays.equals(rewardShareData.getRewardSharePublicKey(), this.rewardShareTransactionData.getRewardSharePublicKey());
+		return !rewardShareData.getRecipient().equals(this.rewardShareTransactionData.getRecipient())
+				|| !Arrays.equals(rewardShareData.getMinterPublicKey(), this.rewardShareTransactionData.getMinterPublicKey())
+				|| !Arrays.equals(rewardShareData.getRewardSharePublicKey(), this.rewardShareTransactionData.getRewardSharePublicKey());
 	}
 
 	// Navigation
@@ -83,7 +83,7 @@ public class RewardShareTransaction extends Transaction {
 		// If we have an existing reward-share then minter/recipient/reward-share-public-key should all match.
 		// This is to prevent malicious actors using multiple (fake) reward-share public keys for the same minter/recipient combo,
 		// or reusing the same reward-share public key for a different minter/recipient pair.
-		if (existingRewardShareData != null && !this.doesRewardShareMatch(existingRewardShareData))
+		if (existingRewardShareData != null && this.doesRewardShareMatch(existingRewardShareData))
 			return ValidationResult.INVALID_PUBLIC_KEY;
 
 		final boolean isRecipientAlsoMinter = getCreator().getAddress().equals(this.rewardShareTransactionData.getRecipient());
@@ -129,7 +129,7 @@ public class RewardShareTransaction extends Transaction {
 		// If we have an existing reward-share then minter/recipient/reward-share-public-key should all match.
 		// This is to prevent malicious actors using multiple (fake) reward-share public keys for the same minter/recipient combo,
 		// or reusing the same reward-share public key for a different minter/recipient pair.
-		if (existingRewardShareData != null && !this.doesRewardShareMatch(existingRewardShareData))
+		if (existingRewardShareData != null && this.doesRewardShareMatch(existingRewardShareData))
 			return ValidationResult.INVALID_PUBLIC_KEY;
 
 		if (existingRewardShareData == null) {
@@ -200,13 +200,9 @@ public class RewardShareTransaction extends Transaction {
 			return false;
 		}
 
-		if (height >= startV3 && height <= endV3) {
-			// Not confirmable on algo V3 run
-			return false;
-		}
-
-		return true;
-	}
+        // Not confirmable on algo V3 run
+        return height < startV3 || height > endV3;
+    }
 
 	@Override
 	public void process() throws DataException {

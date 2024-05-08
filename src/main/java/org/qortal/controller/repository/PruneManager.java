@@ -23,8 +23,8 @@ public class PruneManager {
 
     private static PruneManager instance;
 
-    private boolean isTopOnly = Settings.getInstance().isTopOnly();
-    private int pruneBlockLimit = Settings.getInstance().getPruneBlockLimit();
+    private final boolean isTopOnly = Settings.getInstance().isTopOnly();
+    private final int pruneBlockLimit = Settings.getInstance().getPruneBlockLimit();
 
     private ExecutorService executorService;
 

@@ -278,7 +278,7 @@ public class RavencoinACCTv3TradeBot implements AcctTradeBot {
 
 		// Attempt to backup the trade bot data
 		// Include tradeBotData as an additional parameter, since it's not in the repository yet
-		TradeBot.backupTradeBotData(repository, Arrays.asList(tradeBotData));
+		TradeBot.backupTradeBotData(repository, List.of(tradeBotData));
 
 		// Check we have enough funds via xprv58 to fund P2SH to cover expectedForeignAmount
 		long p2shFee;
@@ -916,7 +916,7 @@ public class RavencoinACCTv3TradeBot implements AcctTradeBot {
 	}
 
 	private long calcFeeTimestamp(int lockTimeA, int tradeTimeout) {
-		return (lockTimeA - tradeTimeout * 60) * 1000L;
+		return (lockTimeA - tradeTimeout * 60L) * 1000L;
 	}
 
 }

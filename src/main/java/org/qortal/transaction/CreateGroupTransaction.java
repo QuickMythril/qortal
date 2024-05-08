@@ -16,7 +16,7 @@ import java.util.List;
 public class CreateGroupTransaction extends Transaction {
 
 	// Properties
-	private CreateGroupTransactionData createGroupTransactionData;
+	private final CreateGroupTransactionData createGroupTransactionData;
 
 	// Constructors
 

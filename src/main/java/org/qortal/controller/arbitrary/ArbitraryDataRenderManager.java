@@ -17,9 +17,9 @@ public class ArbitraryDataRenderManager extends Thread {
      * Map to keep track of authorized resources for rendering.
      * Keyed by resource ID, with the authorization time as the value.
      */
-    private Map<String, Long> authorizedResources = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Long> authorizedResources = Collections.synchronizedMap(new HashMap<>());
 
-    private static long AUTHORIZATION_TIMEOUT = 60 * 60 * 1000L; // 1 hour
+    private static final long AUTHORIZATION_TIMEOUT = 60 * 60 * 1000L; // 1 hour
 
 
     public ArbitraryDataRenderManager() {
@@ -69,19 +69,19 @@ public class ArbitraryDataRenderManager extends Thread {
             if (authorizedResourceKey != null && resource != null) {
                 // Check for exact match
                 if (Objects.equals(authorizedResourceKey, resource.getUniqueKey())) {
-                    return true;
+                    return false;
                 }
                 // Check for a broad authorization (which applies to all services and identifiers under an authorized name)
                 if (Objects.equals(authorizedResourceKey, broadResource.getUniqueKey())) {
-                    return true;
+                    return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     public void addToAuthorizedResources(ArbitraryDataResource resource) {
-        if (!this.isAuthorized(resource)) {
+        if (this.isAuthorized(resource)) {
             this.authorizedResources.put(resource.getUniqueKey(), NTP.getTime());
         }
     }

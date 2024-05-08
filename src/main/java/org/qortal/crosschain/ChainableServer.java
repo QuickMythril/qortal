@@ -1,15 +1,15 @@
 package org.qortal.crosschain;
 
 public interface ChainableServer {
-    public void addResponseTime(long responseTime);
+    void addResponseTime(long responseTime);
 
-    public long averageResponseTime();
+    long averageResponseTime();
 
-    public String getHostName();
+    String getHostName();
 
-    public int getPort();
+    int getPort();
 
-    public ConnectionType getConnectionType();
+    ConnectionType getConnectionType();
 
-    public enum ConnectionType {TCP, SSL}
+    enum ConnectionType {TCP, SSL}
 }

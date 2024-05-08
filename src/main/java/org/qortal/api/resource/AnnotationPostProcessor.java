@@ -94,7 +94,7 @@ public class AnnotationPostProcessor implements ReaderListener {
 	}
 
 	private void addApiErrorResponse(Operation operation, ApiError apiError) {
-		String statusCode = Integer.toString(apiError.getStatus()) + " " + apiError.name();
+		String statusCode = apiError.getStatus() + " " + apiError.name();
 
 		// Create response for this HTTP response code if it doesn't already exist
 		ApiResponse apiResponse = operation.getResponses().get(statusCode);

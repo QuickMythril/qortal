@@ -87,8 +87,7 @@ public class ArbitraryTransactionUtils {
 
         // If the latest PUT transaction has a newer timestamp, it will override the existing transaction
         // Any data relating to the older transaction is no longer needed
-        boolean hasNewerPut = (latestPut.getTimestamp() > arbitraryTransactionData.getTimestamp());
-        return hasNewerPut;
+        return (latestPut.getTimestamp() > arbitraryTransactionData.getTimestamp());
     }
 
     public static boolean completeFileExists(ArbitraryTransactionData transactionData) throws DataException {
@@ -185,23 +184,23 @@ public class ArbitraryTransactionUtils {
 
             // Check if the file has been created or modified recently
             if (timeSinceCreated > cleanupAfter) {
-                return false;
+                return true;
             }
             if (timeSinceModified > cleanupAfter) {
-                return false;
+                return true;
             }
 
         } catch (IOException e) {
             // Can't read file attributes, so assume it's recent so that we don't delete something accidentally
         }
-        return true;
+        return false;
     }
 
     public static boolean isFileHashRecent(byte[] hash, byte[] signature, long now, long cleanupAfter) throws DataException {
         ArbitraryDataFile arbitraryDataFile = ArbitraryDataFile.fromHash(hash, signature);
         if (arbitraryDataFile == null || !arbitraryDataFile.exists()) {
             // No hash, or file doesn't exist, so it's not recent
-            return false;
+            return true;
         }
 
         Path filePath = arbitraryDataFile.getFilePath();
@@ -214,7 +213,7 @@ public class ArbitraryTransactionUtils {
 
         ArbitraryDataFile arbitraryDataFile = ArbitraryDataFile.fromHash(completeHash, signature);
 
-        if (!ArbitraryTransactionUtils.isFileHashRecent(completeHash, signature, now, cleanupAfter)) {
+        if (ArbitraryTransactionUtils.isFileHashRecent(completeHash, signature, now, cleanupAfter)) {
             LOGGER.info("Deleting file {} because it can be rebuilt from chunks " +
                     "if needed", Base58.encode(completeHash));
 
@@ -253,7 +252,7 @@ public class ArbitraryTransactionUtils {
                 if (arbitraryDataFile.allChunksExist()) {
 
                     // Now delete the original file if it's not recent
-                    if (!ArbitraryTransactionUtils.isFileHashRecent(completeHash, signature, now, cleanupAfter)) {
+                    if (ArbitraryTransactionUtils.isFileHashRecent(completeHash, signature, now, cleanupAfter)) {
                         LOGGER.info("Deleting file {} because it can now be rebuilt from " +
                                 "chunks if needed", Base58.encode(completeHash));
 
@@ -398,10 +397,10 @@ public class ArbitraryTransactionUtils {
     public static ArbitraryResourceStatus getStatus(Service service, String name, String identifier, Boolean build, boolean updateCache) {
 
         // If "build" has been specified, build the resource before returning its status
-        if (build != null && build == true) {
+        if (build != null && build) {
             try {
                 ArbitraryDataReader reader = new ArbitraryDataReader(name, ArbitraryDataFile.ResourceIdType.NAME, service, identifier);
-                if (!reader.isBuilding()) {
+                if (reader.isBuilding()) {
                     reader.loadSynchronously(false);
                 }
             } catch (Exception e) {
