@@ -207,7 +207,7 @@ public class NamesDatabaseIntegrityCheck {
                         // FUTURE: check database integrity for names that have been updated and then the original name re-registered
                         else if (Objects.equals(updateNameTransactionData.getName(), registeredName)) {
                             String newName = updateNameTransactionData.getNewName();
-                            if (newName == null || newName.length() == 0) {
+                            if (newName == null || newName.isEmpty()) {
                                 // If new name is blank (or maybe null, just to be safe), it means that it stayed the same
                                 newName = registeredName;
                             }
@@ -326,11 +326,11 @@ public class NamesDatabaseIntegrityCheck {
         signatures.addAll(sellNameTransactions);
 
         List<byte[]> buyNameTransactions = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
-                TransactionType.BUY_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
+                TransactionType.BUY_NAME, Arrays.asList("name = ?"), Collections.singletonList(name));
         signatures.addAll(buyNameTransactions);
 
         List<byte[]> cancelSellNameTransactions = repository.getTransactionRepository().getSignaturesMatchingCustomCriteria(
-                TransactionType.CANCEL_SELL_NAME, Arrays.asList("name = ?"), Arrays.asList(name));
+                TransactionType.CANCEL_SELL_NAME, List.of("name = ?"), Collections.singletonList(name));
         signatures.addAll(cancelSellNameTransactions);
 
         List<TransactionData> transactions = new ArrayList<>();
@@ -352,12 +352,11 @@ public class NamesDatabaseIntegrityCheck {
         List<TransactionData> transactionsInvolvingName = this.fetchAllTransactionsInvolvingName(registeredName, repository);
 
         // Get the latest update for this name (excluding REGISTER_NAME transactions)
-        TransactionData latestUpdateToName = transactionsInvolvingName.stream()
+
+        return transactionsInvolvingName.stream()
                 .filter(txn -> txn.getType() != TransactionType.REGISTER_NAME)
                 .max(Comparator.comparing(TransactionData::getTimestamp))
                 .orElse(null);
-
-        return latestUpdateToName;
     }
 
     private List<String> fetchAllNames(Repository repository) throws DataException {

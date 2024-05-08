@@ -151,13 +151,13 @@ public class CrossChainHtlcResource {
 			int medianBlockTime = bitcoiny.getMedianBlockTime();
 
 			// Check P2SH is funded
-			long p2shBalance = bitcoiny.getConfirmedBalance(p2shAddress.toString());
+			long p2shBalance = bitcoiny.getConfirmedBalance(p2shAddress);
 
 			CrossChainBitcoinyHTLCStatus htlcStatus = new CrossChainBitcoinyHTLCStatus();
 			htlcStatus.bitcoinP2shAddress = p2shAddress;
 			htlcStatus.bitcoinP2shBalance = BigDecimal.valueOf(p2shBalance, 8);
 
-			List<TransactionOutput> fundingOutputs = bitcoiny.getUnspentOutputs(p2shAddress.toString());
+			List<TransactionOutput> fundingOutputs = bitcoiny.getUnspentOutputs(p2shAddress);
 
 			if (p2shBalance > 0L && !fundingOutputs.isEmpty()) {
 				htlcStatus.canRedeem = now >= medianBlockTime * 1000L;

@@ -10,9 +10,9 @@ import javax.xml.bind.*;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Scanner;
@@ -42,7 +42,7 @@ public class ApiRequest {
 		if (params != null && !params.isEmpty())
 			uri += "?" + getParamsString(params);
 
-		try (InputStream in = fetchStream(uri); Scanner scanner = new Scanner(in, "UTF8")) {
+		try (InputStream in = fetchStream(uri); Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
 			scanner.useDelimiter("\\A");
 			return scanner.hasNext() ? scanner.next() : "";
 		} catch (IOException e) {
@@ -129,19 +129,15 @@ public class ApiRequest {
 	public static String getParamsString(Map<String, String> params) {
 		StringBuilder result = new StringBuilder();
 
-		try {
-			for (Map.Entry<String, String> entry : params.entrySet()) {
-				result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-				result.append("=");
-				result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-				result.append("&");
-			}
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Cannot encode API request params", e);
-		}
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            result.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+            result.append("&");
+        }
 
-		String resultString = result.toString();
-		return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
+        String resultString = result.toString();
+		return !resultString.isEmpty() ? resultString.substring(0, resultString.length() - 1) : resultString;
 	}
 
 	/**
@@ -205,7 +201,7 @@ public class ApiRequest {
 					if (null != sniHostName) {
 						SSLParameters sslParameters = new SSLParameters();
 
-						sslParameters.setServerNames(Collections.<SNIServerName>singletonList(sniHostName));
+						sslParameters.setServerNames(Collections.singletonList(sniHostName));
 						ssl.setSSLParameters(sslParameters);
 					}
 				}

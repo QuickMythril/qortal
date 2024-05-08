@@ -92,9 +92,7 @@ public class TransferPrivsTransaction extends Transaction {
 	public boolean isConfirmableAtHeight(int height) {
 		if (height >= BlockChain.getInstance().getUnconfirmableRewardSharesHeight()) {
 			// Not confirmable in online accounts or distribution blocks
-			if (Block.isOnlineAccountsBlock(height) || Block.isBatchRewardDistributionBlock(height)) {
-				return false;
-			}
+            return !Block.isOnlineAccountsBlock(height) && !Block.isBatchRewardDistributionBlock(height);
 		}
 		return true;
 	}

@@ -17,7 +17,7 @@ public class CancelGroupBanTransaction extends Transaction {
 
 	// Properties
 
-	private CancelGroupBanTransactionData groupUnbanTransactionData;
+	private final CancelGroupBanTransactionData groupUnbanTransactionData;
 	private Account memberAccount = null;
 
 	// Constructors
@@ -79,6 +79,10 @@ public class CancelGroupBanTransaction extends Transaction {
 		// Check admin has enough funds
 		if (admin.getConfirmedBalance(Asset.QORT) < this.groupUnbanTransactionData.getFee())
 			return ValidationResult.NO_BALANCE;
+
+		// Can't unban if not group's current owner
+		if (!admin.getAddress().equals(groupData.getOwner()))
+			return ValidationResult.INVALID_GROUP_OWNER;
 
 		return ValidationResult.OK;
 	}

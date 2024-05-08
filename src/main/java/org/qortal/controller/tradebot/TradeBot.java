@@ -512,8 +512,7 @@ public class TradeBot implements Listener {
 		Message responseMessage = new TradePresencesMessage(safeTradePresences);
 		if (!peer.sendMessage(responseMessage)) {
 			peer.disconnect("failed to send TRADE_PRESENCES response");
-			return;
-		}
+        }
 	}
 
 	public void onTradePresencesMessage(Peer peer, Message message) {
@@ -523,8 +522,7 @@ public class TradeBot implements Listener {
 
 		long now = NTP.getTime();
 		// Timestamps before this are too far into the past
-		long pastThreshold = now;
-		// Timestamps after this are too far into the future
+        // Timestamps after this are too far into the future
 		long futureThreshold = now + PRESENCE_LIFETIME;
 
 		Map<ByteArray, Supplier<ACCT>> acctSuppliersByCodeHash = SupportedBlockchain.getAcctMap();
@@ -536,14 +534,14 @@ public class TradeBot implements Listener {
 				long timestamp = peersTradePresence.getTimestamp();
 
 				// Ignore if timestamp is out of bounds
-				if (timestamp < pastThreshold || timestamp > futureThreshold) {
-					if (timestamp < pastThreshold)
+				if (timestamp < now || timestamp > futureThreshold) {
+					if (timestamp < now)
 						LOGGER.trace("Ignoring trade presence {} from peer {} as timestamp {} is too old vs {}",
-								peersTradePresence.getAtAddress(), peer, timestamp, pastThreshold
+								peersTradePresence.getAtAddress(), peer, timestamp, now
 								);
 					else
 						LOGGER.trace("Ignoring trade presence {} from peer {} as timestamp {} is too new vs {}",
-								peersTradePresence.getAtAddress(), peer, timestamp, pastThreshold
+								peersTradePresence.getAtAddress(), peer, timestamp, now
 						);
 
 					continue;
@@ -724,8 +722,7 @@ public class TradeBot implements Listener {
 
 			} catch (DataException e) {
 				LOGGER.info("Unable to determine failed state of AT {}", crossChainTradeData.qortalAtAddress);
-				continue;
-			}
+            }
 		}
 
 		return updatedCrossChainTrades;

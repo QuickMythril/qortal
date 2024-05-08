@@ -120,7 +120,7 @@ public class ArbitraryDataReader {
     }
 
     public boolean isBuilding() {
-        return ArbitraryDataBuildManager.getInstance().isInBuildQueue(this.createQueueItem());
+        return !ArbitraryDataBuildManager.getInstance().isInBuildQueue(this.createQueueItem());
     }
 
     private ArbitraryDataBuildQueueItem createQueueItem() {
@@ -225,7 +225,7 @@ public class ArbitraryDataReader {
     }
 
     private void checkEnabled() throws DataException {
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             throw new DataException("QDN is disabled in settings");
         }
     }

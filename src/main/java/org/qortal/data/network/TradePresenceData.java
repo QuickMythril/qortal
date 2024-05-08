@@ -99,11 +99,8 @@ public class TradePresenceData {
 		if (this.atAddress != null && !this.atAddress.equals(otherTradePresenceData.atAddress))
 			return false;
 
-		if (!Arrays.equals(otherTradePresenceData.signature, this.signature))
-			return false;
-
-		return true;
-	}
+        return Arrays.equals(otherTradePresenceData.signature, this.signature);
+    }
 
 	@Override
 	public int hashCode() {

@@ -83,6 +83,10 @@ public class UpdateGroupTransaction extends Transaction {
 
 		Account owner = getOwner();
 
+		// Check creator is group's current owner
+		if (!owner.getAddress().equals(groupData.getOwner()))
+			return ValidationResult.INVALID_GROUP_OWNER;
+
 		// Check creator has enough funds
 		if (owner.getConfirmedBalance(Asset.QORT) < this.updateGroupTransactionData.getFee())
 			return ValidationResult.NO_BALANCE;

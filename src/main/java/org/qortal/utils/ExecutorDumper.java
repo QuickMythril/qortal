@@ -14,8 +14,7 @@ public abstract class ExecutorDumper {
 		if (executor instanceof ThreadPoolExecutor)
 			dumpThreadPoolExecutor((ThreadPoolExecutor) executor, checkDepth, skipClass);
 
-		return;
-	}
+    }
 
 	private static void dumpThreadPoolExecutor(ThreadPoolExecutor executor, int checkDepth, Class<?> skipClass) {
 		try {
@@ -63,12 +62,12 @@ public abstract class ExecutorDumper {
 							continue WORKER_LOOP;
 					}
 
-					System.out.println(String.format("[%d] %s:", thread.getId(), thread.getName()));
+					System.out.printf("[%d] %s:%n", thread.getId(), thread.getName());
 
 					for (int d = 0; d < stackTrace.length; ++d)
-						System.out.println(String.format("\t\t%s.%s at %s:%d",
+						System.out.printf("\t\t%s.%s at %s:%d%n",
 							stackTrace[d].getClassName(), stackTrace[d].getMethodName(),
-							stackTrace[d].getFileName(), stackTrace[d].getLineNumber()));
+							stackTrace[d].getFileName(), stackTrace[d].getLineNumber());
 				}
 			} finally {
 				mainLock.unlock();

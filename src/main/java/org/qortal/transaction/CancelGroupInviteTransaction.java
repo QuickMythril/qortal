@@ -17,7 +17,7 @@ public class CancelGroupInviteTransaction extends Transaction {
 
 	// Properties
 
-	private CancelGroupInviteTransactionData cancelGroupInviteTransactionData;
+	private final CancelGroupInviteTransactionData cancelGroupInviteTransactionData;
 	private Account inviteeAccount = null;
 
 	// Constructors

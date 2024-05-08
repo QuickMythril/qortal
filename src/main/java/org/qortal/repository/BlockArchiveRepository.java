@@ -16,7 +16,7 @@ public interface BlockArchiveRepository {
      * @return block data, or null if not found in archive.
      * @throws DataException
      */
-    public BlockData fromSignature(byte[] signature) throws DataException;
+    BlockData fromSignature(byte[] signature) throws DataException;
 
     /**
      * Return height of block in archive using block's signature.
@@ -25,7 +25,7 @@ public interface BlockArchiveRepository {
      * @return height, or 0 if not found in blockchain.
      * @throws DataException
      */
-    public int getHeightFromSignature(byte[] signature) throws DataException;
+    int getHeightFromSignature(byte[] signature) throws DataException;
 
     /**
      * Returns BlockData from archive using block height.
@@ -34,7 +34,7 @@ public interface BlockArchiveRepository {
      * @return block data, or null if not found in blockchain.
      * @throws DataException
      */
-    public BlockData fromHeight(int height) throws DataException;
+    BlockData fromHeight(int height) throws DataException;
 
     /**
      * Returns a list of BlockData objects from archive using
@@ -46,7 +46,7 @@ public interface BlockArchiveRepository {
      * requested blocks will be returned.
      * @throws DataException
      */
-    public List<BlockData> fromRange(int startHeight, int endHeight) throws DataException;
+    List<BlockData> fromRange(int startHeight, int endHeight) throws DataException;
 
     /**
      * Returns BlockData from archive using block reference.
@@ -60,7 +60,7 @@ public interface BlockArchiveRepository {
      * not found in the archive.
      * @throws DataException
      */
-    public BlockData fromReference(byte[] reference) throws DataException;
+    BlockData fromReference(byte[] reference) throws DataException;
 
     /**
      * Return height of block with timestamp just before passed timestamp.
@@ -69,7 +69,7 @@ public interface BlockArchiveRepository {
      * @return height, or 0 if not found in blockchain.
      * @throws DataException
      */
-    public int getHeightFromTimestamp(long timestamp) throws DataException;
+    int getHeightFromTimestamp(long timestamp) throws DataException;
 
     /**
      * Returns block timestamp for a given height.
@@ -78,28 +78,28 @@ public interface BlockArchiveRepository {
      * @return timestamp, or 0 if height is out of bounds.
      * @throws DataException
      */
-    public long getTimestampFromHeight(int height) throws DataException;
+    long getTimestampFromHeight(int height) throws DataException;
 
     /**
      * Returns block summaries for blocks signed by passed public key, or reward-share with minter with passed public key.
      */
-    public List<BlockSummaryData> getBlockSummariesBySigner(byte[] signerPublicKey, Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<BlockSummaryData> getBlockSummariesBySigner(byte[] signerPublicKey, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
     /**
      * Returns summaries of block signers, optionally limited to passed addresses.
      * This combines both the BlockArchive and the Blocks data into a single result set.
      */
-    public List<BlockSignerSummary> getBlockSigners(List<String> addresses, Integer limit, Integer offset, Boolean reverse) throws DataException;
+    List<BlockSignerSummary> getBlockSigners(List<String> addresses, Integer limit, Integer offset, Boolean reverse) throws DataException;
 
 
     /** Returns height of first unarchived block. */
-    public int getBlockArchiveHeight() throws DataException;
+    int getBlockArchiveHeight() throws DataException;
 
     /** Sets new height for block archiving.
      * <p>
      * NOTE: performs implicit <tt>repository.saveChanges()</tt>.
      */
-    public void setBlockArchiveHeight(int archiveHeight) throws DataException;
+    void setBlockArchiveHeight(int archiveHeight) throws DataException;
 
 
     /**
@@ -114,7 +114,7 @@ public interface BlockArchiveRepository {
      * @param signature
      * @throws DataException
      */
-    public BlockArchiveData getBlockArchiveDataForSignature(byte[] signature) throws DataException;
+    BlockArchiveData getBlockArchiveDataForSignature(byte[] signature) throws DataException;
 
     /**
      * Saves a block archive entry into the repository.
@@ -126,7 +126,7 @@ public interface BlockArchiveRepository {
      * @param blockArchiveData
      * @throws DataException
      */
-    public void save(BlockArchiveData blockArchiveData) throws DataException;
+    void save(BlockArchiveData blockArchiveData) throws DataException;
 
     /**
      * Deletes a block archive entry from the repository.
@@ -134,6 +134,6 @@ public interface BlockArchiveRepository {
      * @param blockArchiveData
      * @throws DataException
      */
-    public void delete(BlockArchiveData blockArchiveData) throws DataException;
+    void delete(BlockArchiveData blockArchiveData) throws DataException;
 
 }

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class ArbitraryDataCache {
 
@@ -68,15 +69,10 @@ public class ArbitraryDataCache {
     }
 
     private boolean shouldInvalidateResource() {
-        switch (this.resourceIdType) {
-
-            case NAME:
-                return this.shouldInvalidateName();
-
-            default:
-                // Other resource ID types remain constant, so no need to invalidate
-                return false;
-        }
+        if (Objects.requireNonNull(this.resourceIdType) == ResourceIdType.NAME) {
+            return this.shouldInvalidateName();
+        }// Other resource ID types remain constant, so no need to invalidate
+        return false;
     }
 
     private boolean shouldInvalidateName() {

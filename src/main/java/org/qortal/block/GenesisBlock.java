@@ -120,11 +120,8 @@ public class GenesisBlock extends Block {
 			return false;
 
 		// Validate transactions signature (last 64 bytes of block signature)
-		if (!Arrays.equals(signature, 64, 128, genesisBlockData.getTransactionsSignature(), 0, 64))
-			return false;
-
-		return true;
-	}
+        return Arrays.equals(signature, 64, 128, genesisBlockData.getTransactionsSignature(), 0, 64);
+    }
 
 	public List<AssetData> getInitialAssets() {
 		return Collections.unmodifiableList(initialAssets);
@@ -232,11 +229,8 @@ public class GenesisBlock extends Block {
 			return false;
 
 		// Validate transactions signature (last 64 bytes of block signature)
-		if (!Arrays.equals(signature, 64, 128, this.blockData.getTransactionsSignature(), 0, 64))
-			return false;
-
-		return true;
-	}
+        return Arrays.equals(signature, 64, 128, this.blockData.getTransactionsSignature(), 0, 64);
+    }
 
 	@Override
 	public ValidationResult isValid() throws DataException {

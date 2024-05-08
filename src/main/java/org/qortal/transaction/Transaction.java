@@ -607,18 +607,15 @@ public abstract class Transaction {
 			return !BlockChain.getInstance().getRequireGroupForApproval();
 
 		// Group even exist?
-		if (!this.repository.getGroupRepository().groupExists(txGroupId))
+		if (this.repository.getGroupRepository().groupExists(txGroupId))
 			return false;
 
 		GroupRepository groupRepository = this.repository.getGroupRepository();
 
 		// Is transaction's creator is group member?
 		PublicKeyAccount creator = this.getCreator();
-		if (groupRepository.memberExists(txGroupId, creator.getAddress()))
-			return true;
-
-		return false;
-	}
+        return groupRepository.memberExists(txGroupId, creator.getAddress());
+    }
 
 	private int countUnconfirmedByCreator(PublicKeyAccount creator) throws DataException {
 		List<TransactionData> unconfirmedTransactions = TransactionImporter.getInstance().unconfirmedTransactionsCache;
@@ -760,7 +757,7 @@ public abstract class Transaction {
 
 		GroupRepository groupRepository = this.repository.getGroupRepository();
 
-		if (!groupRepository.groupExists(txGroupId))
+		if (groupRepository.groupExists(txGroupId))
 			// Group no longer exists? Possibly due to blockchain orphaning undoing group creation?
 			return true; // stops tx being included in block but it will eventually expire
 
@@ -770,11 +767,8 @@ public abstract class Transaction {
 		// If transaction's creator is group admin (of group with ID txGroupId) then auto-approve
 		// This is disabled for null-owned groups, since these require approval from other admins
 		PublicKeyAccount creator = this.getCreator();
-		if (!groupOwnedByNullAccount && groupRepository.adminExists(txGroupId, creator.getAddress()))
-			return false;
-
-		return true;
-	}
+        return groupOwnedByNullAccount || !groupRepository.adminExists(txGroupId, creator.getAddress());
+    }
 
 	public void setInitialApprovalStatus() throws DataException {
 		if (this.needsGroupApproval()) {

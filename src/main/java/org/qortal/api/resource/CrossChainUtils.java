@@ -160,7 +160,7 @@ public class CrossChainUtils {
         // get all the AT address for the given blockchain
         List<String> atAddresses
                 = repository.getCrossChainRepository().getAllTradeBotData().stream()
-                    .filter(data -> foreignBlockchain.name().toLowerCase().equals(data.getForeignBlockchain().toLowerCase()))
+                    .filter(data -> foreignBlockchain.name().equalsIgnoreCase(data.getForeignBlockchain()))
                     //.filter( data -> data.getForeignKey().equals( xpriv )) // TODO
                     .map(data -> data.getAtAddress())
                     .collect(Collectors.toList());

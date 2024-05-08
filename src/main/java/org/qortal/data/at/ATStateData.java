@@ -3,12 +3,12 @@ package org.qortal.data.at;
 public class ATStateData {
 
 	// Properties
-	private String ATAddress;
+	private final String ATAddress;
 	private Integer height;
-	private byte[] stateData;
-	private byte[] stateHash;
-	private Long fees;
-	private boolean isInitial;
+	private final byte[] stateData;
+	private final byte[] stateHash;
+	private final Long fees;
+	private final boolean isInitial;
 
 	// Qortal-AT-specific
 	private Long sleepUntilMessageTimestamp;

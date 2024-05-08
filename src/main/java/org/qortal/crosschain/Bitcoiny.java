@@ -14,7 +14,6 @@ import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.qortal.api.model.SimpleForeignTransaction;
 import org.qortal.crypto.Crypto;
 import org.qortal.settings.Settings;
 import org.qortal.utils.Amounts;
@@ -149,12 +148,11 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		if (blockHeaders.size() < 11)
 			throw new ForeignBlockchainException("Not enough blocks to determine median block time");
 
-		List<Integer> blockTimestamps = blockHeaders.stream().map(blockHeader -> BitTwiddling.intFromLEBytes(blockHeader, TIMESTAMP_OFFSET)).collect(Collectors.toList());
+		List<Integer> blockTimestamps = blockHeaders.stream().map(blockHeader -> BitTwiddling.intFromLEBytes(blockHeader, TIMESTAMP_OFFSET)).sorted((a, b) -> Integer.compare(b, a)).collect(Collectors.toList());
 
 		// Descending order
-		blockTimestamps.sort((a, b) -> Integer.compare(b, a));
 
-		// Pick median
+        // Pick median
 		return blockTimestamps.get(5);
 	}
 
@@ -164,8 +162,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	 * @throws ForeignBlockchainException if error occurs
 	 */
 	public int getBlockchainHeight() throws ForeignBlockchainException {
-		int height = this.blockchainProvider.getCurrentHeight();
-		return height;
+        return this.blockchainProvider.getCurrentHeight();
 	}
 
 	/** Returns fee per transaction KB. To be overridden for testnet/regtest. */
@@ -256,16 +253,6 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	}
 
 	/**
-	 * Returns list of transaction hashes pertaining to passed address.
-	 * <p>
-	 * @return list of unspent outputs, or empty list if script unknown
-	 * @throws ForeignBlockchainException if there was an error.
-	 */
-	public List<TransactionHash> getAddressTransactions(String base58Address, boolean includeUnconfirmed) throws ForeignBlockchainException {
-		return this.blockchainProvider.getAddressTransactions(addressToScriptPubKey(base58Address), includeUnconfirmed);
-	}
-
-	/**
 	 * Returns list of raw, confirmed transactions involving given address.
 	 * <p>
 	 * @throws ForeignBlockchainException if there was an error
@@ -348,9 +335,8 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	 *
 	 * @param key58 public master key
 	 * @return the addresses this instance will look at when building a spend
-	 * @throws ForeignBlockchainException
 	 */
-	public List<String> getSpendingCandidateAddresses(String key58) throws ForeignBlockchainException {
+	public List<String> getSpendingCandidateAddresses(String key58) {
 
 		Wallet wallet = Wallet.fromWatchingKeyB58(this.params, key58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS);
 		wallet.setUTXOProvider(new WalletAwareUTXOProvider(this, wallet));
@@ -359,12 +345,9 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		List<ECKey> spendingKeys = wallet.getImportedKeys();
 		spendingKeys.addAll(wallet.getActiveKeyChain().getLeafKeys());
 
-		List<String> spendingCandidateAddresses
-				= spendingKeys.stream()
-					.map(spendingKey -> Address.fromKey(this.params, spendingKey, ScriptType.P2PKH ).toString())
-					.collect(Collectors.toList());
-
-		return spendingCandidateAddresses;
+        return spendingKeys.stream()
+            .map(spendingKey -> Address.fromKey(this.params, spendingKey, ScriptType.P2PKH ).toString())
+            .collect(Collectors.toList());
 	}
 
 	/**
@@ -386,7 +369,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 	 * @return unspent BTC balance, or null if unable to determine balance
 	 */
 	public Long getWalletBalance(String key58) throws ForeignBlockchainException {
-		Long balance = 0L;
+		long balance = 0L;
 
 		List<TransactionOutput> allUnspentOutputs = new ArrayList<>();
 		Set<String> walletAddresses = this.getWalletAddresses(key58);
@@ -398,29 +381,6 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 				continue;
 			}
 			balance += output.getValue().value;
-		}
-		return balance;
-	}
-
-	public Long getWalletBalanceFromBitcoinj(String key58) {
-		Context.propagate(bitcoinjContext);
-
-		Wallet wallet = walletFromDeterministicKey58(key58);
-		wallet.setUTXOProvider(new WalletAwareUTXOProvider(this, wallet));
-
-		Coin balance = wallet.getBalance();
-		if (balance == null)
-			return null;
-
-		return balance.value;
-	}
-
-	public Long getWalletBalanceFromTransactions(String key58) throws ForeignBlockchainException {
-		long balance = 0;
-		Comparator<SimpleTransaction> oldestTimestampFirstComparator = Comparator.comparingLong(SimpleTransaction::getTimestamp);
-		List<SimpleTransaction> transactions = getWalletTransactions(key58).stream().sorted(oldestTimestampFirstComparator).collect(Collectors.toList());
-		for (SimpleTransaction transaction : transactions) {
-			balance += transaction.getTotalAmount();
 		}
 		return balance;
 	}
@@ -601,15 +561,15 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 
 	/**
 	 * Get Old Wallet Keys
-	 *
+	 * <p>
 	 * Get wallet keys using the old key generation algorithm. This is used for diagnosing and repairing wallets
 	 * created before 2024.
 	 *
-	 * @param masterPrivateKey
+	 * @param masterPrivateKey Master Private Key
 	 *
 	 * @return the keys
 	 *
-	 * @throws ForeignBlockchainException
+	 * @throws ForeignBlockchainException Foreign Blockchain Exception
 	 */
 	private List<DeterministicKey> getOldWalletKeys(String masterPrivateKey) throws ForeignBlockchainException {
 		synchronized (this) {
@@ -757,7 +717,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 			Address address = Address.fromKey(this.params, keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS), ScriptType.P2PKH);
 
 			// if zero transactions, return address
-			if( 0 == getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).size() )
+			if(getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).isEmpty())
 				return address.toString();
 
 			// else try the next receive funds address
@@ -837,8 +797,6 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 							this.bitcoiny.spentKeys.add(key);
 							this.wallet.getActiveKeyChain().markKeyAsUsed((DeterministicKey) key);
 							areAllKeysUnspent = false;
-						} else {
-							// Key never been used - case (b)
 						}
 
 						continue;
@@ -899,94 +857,6 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 				.sum();
 	}
 
-	// Utility methods for others
-
-	public static List<SimpleForeignTransaction> simplifyWalletTransactions(List<BitcoinyTransaction> transactions) {
-		// Sort by oldest timestamp first
-		transactions.sort(Comparator.comparingInt(t -> t.timestamp));
-
-		// Manual 2nd-level sort same-timestamp transactions so that a transaction's input comes first
-		int fromIndex = 0;
-		do {
-			int timestamp = transactions.get(fromIndex).timestamp;
-
-			int toIndex;
-			for (toIndex = fromIndex + 1; toIndex < transactions.size(); ++toIndex)
-				if (transactions.get(toIndex).timestamp != timestamp)
-					break;
-
-			// Process same-timestamp sub-list
-			List<BitcoinyTransaction> subList = transactions.subList(fromIndex, toIndex);
-
-			// Only if necessary
-			if (subList.size() > 1) {
-				// Quick index lookup
-				Map<String, Integer> indexByTxHash = subList.stream().collect(Collectors.toMap(t -> t.txHash, t -> t.timestamp));
-
-				int restartIndex = 0;
-				boolean isSorted;
-				do {
-					isSorted = true;
-
-					for (int ourIndex = restartIndex; ourIndex < subList.size(); ++ourIndex) {
-						BitcoinyTransaction ourTx = subList.get(ourIndex);
-
-						for (BitcoinyTransaction.Input input : ourTx.inputs) {
-							Integer inputIndex = indexByTxHash.get(input.outputTxHash);
-
-							if (inputIndex != null && inputIndex > ourIndex) {
-								// Input tx is currently after current tx, so swap
-								BitcoinyTransaction tmpTx = subList.get(inputIndex);
-								subList.set(inputIndex, ourTx);
-								subList.set(ourIndex, tmpTx);
-
-								// Update index lookup too
-								indexByTxHash.put(ourTx.txHash, inputIndex);
-								indexByTxHash.put(tmpTx.txHash, ourIndex);
-
-								if (isSorted)
-									restartIndex = Math.max(restartIndex, ourIndex);
-
-								isSorted = false;
-								break;
-							}
-						}
-					}
-				} while (!isSorted);
-			}
-
-			fromIndex = toIndex;
-		} while (fromIndex < transactions.size());
-
-		// Simplify
-		List<SimpleForeignTransaction> simpleTransactions = new ArrayList<>();
-
-		// Quick lookup of txs in our wallet
-		Set<String> walletTxHashes = transactions.stream().map(t -> t.txHash).collect(Collectors.toSet());
-
-		for (BitcoinyTransaction transaction : transactions) {
-			SimpleForeignTransaction.Builder builder = new SimpleForeignTransaction.Builder();
-			builder.txHash(transaction.txHash);
-			builder.timestamp(transaction.timestamp);
-
-			builder.isSentNotReceived(false);
-
-			for (BitcoinyTransaction.Input input : transaction.inputs) {
-				// TODO: add input via builder
-
-				if (walletTxHashes.contains(input.outputTxHash))
-					builder.isSentNotReceived(true);
-			}
-
-			for (BitcoinyTransaction.Output output : transaction.outputs)
-				builder.output(output.addresses, output.value);
-
-			simpleTransactions.add(builder.build());
-		}
-
-		return simpleTransactions;
-	}
-
 	// Utility methods for us
 
 	protected static List<DeterministicKey> generateMoreKeys(DeterministicKeyChain keyChain) {
@@ -1023,15 +893,15 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 
 	/**
 	 * Repair Wallet
-	 *
+	 * <p>
 	 * Repair wallets generated before 2024 by moving all the address balances to the first address.
 	 *
-	 * @param privateMasterKey
+	 * @param privateMasterKey Private Master Key
 	 *
 	 * @return the transaction Id of the spend operation that moves the balances or the exception name if an exception
 	 * is thrown
 	 *
-	 * @throws ForeignBlockchainException
+	 * @throws ForeignBlockchainException Foreign Blockchain Excetion
 	 */
 	public String repairOldWallet(String privateMasterKey) throws ForeignBlockchainException {
 

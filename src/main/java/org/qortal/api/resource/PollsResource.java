@@ -67,8 +67,7 @@ public class PollsResource {
             ref = "reverse"
     ) @QueryParam("reverse") Boolean reverse) {
             try (final Repository repository = RepositoryManager.getRepository()) {
-		    List<PollData> allPollData = repository.getVotingRepository().getAllPolls(limit, offset, reverse);
-		    return allPollData;
+                return repository.getVotingRepository().getAllPolls(limit, offset, reverse);
             } catch (DataException e) {
 		    throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
             }

@@ -48,7 +48,7 @@ public enum Handshake {
 
 			String versionString = helloMessage.getVersionString();
 
-			Matcher matcher = peer.VERSION_PATTERN.matcher(versionString);
+			Matcher matcher = Peer.VERSION_PATTERN.matcher(versionString);
 			if (!matcher.lookingAt()) {
 				LOGGER.debug(() -> String.format("Peer %s sent invalid HELLO version string '%s'", peer, versionString));
 				return null;
@@ -70,15 +70,15 @@ public enum Handshake {
 			peer.setPeersVersion(versionString, version);
 
 			// Ensure the peer is running at least the version specified in MIN_PEER_VERSION
-			if (peer.isAtLeastVersion(MIN_PEER_VERSION) == false) {
+			if (peer.isAtLeastVersion(MIN_PEER_VERSION)) {
 				LOGGER.debug(String.format("Ignoring peer %s because it is on an old version (%s)", peer, versionString));
 				return null;
 			}
 
-			if (Settings.getInstance().getAllowConnectionsWithOlderPeerVersions() == false) {
+			if (!Settings.getInstance().getAllowConnectionsWithOlderPeerVersions()) {
 				// Ensure the peer is running at least the minimum version allowed for connections
 				final String minPeerVersion = Settings.getInstance().getMinPeerVersion();
-				if (peer.isAtLeastVersion(minPeerVersion) == false) {
+				if (peer.isAtLeastVersion(minPeerVersion)) {
 					LOGGER.debug(String.format("Ignoring peer %s because it is on an old version (%s)", peer, versionString));
 					return null;
 				}
@@ -275,7 +275,7 @@ public enum Handshake {
 
 	public final MessageType expectedMessageType;
 
-	private Handshake(MessageType expectedMessageType) {
+	Handshake(MessageType expectedMessageType) {
 		this.expectedMessageType = expectedMessageType;
 	}
 

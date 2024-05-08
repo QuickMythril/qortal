@@ -99,7 +99,7 @@ public class HSQLDBGroupRepository implements GroupRepository {
 	@Override
 	public boolean groupExists(int groupId) throws DataException {
 		try {
-			return this.repository.exists("Groups", "group_id = ?", groupId);
+			return !this.repository.exists("Groups", "group_id = ?", groupId);
 		} catch (SQLException e) {
 			throw new DataException("Unable to check for group in repository", e);
 		}

@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 public class Payment {
 
 	// Properties
-	private Repository repository;
+	private final Repository repository;
 
 	// Constructors
 

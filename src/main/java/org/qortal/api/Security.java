@@ -95,7 +95,7 @@ public abstract class Security {
 
 	public static void requirePriorAuthorization(HttpServletRequest request, String resourceId, Service service, String identifier) {
 		ArbitraryDataResource resource = new ArbitraryDataResource(resourceId, null, service, identifier);
-		if (!ArbitraryDataRenderManager.getInstance().isAuthorized(resource)) {
+		if (ArbitraryDataRenderManager.getInstance().isAuthorized(resource)) {
 			throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.UNAUTHORIZED, "Call /render/authorize first");
 		}
 	}

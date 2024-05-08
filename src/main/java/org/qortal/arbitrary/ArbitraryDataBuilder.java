@@ -104,7 +104,7 @@ public class ArbitraryDataBuilder {
         if (latestPut.getMethod() != Method.PUT) {
             throw new DataException("Expected PUT but received PATCH");
         }
-        if (transactionDataList.size() == 0) {
+        if (transactionDataList.isEmpty()) {
             throw new DataException(String.format("No transactions found for name %s, service %s, " +
                             "identifier: %s, since %d", name, service, this.identifierString(), latestPut.getTimestamp()));
         }
@@ -176,7 +176,7 @@ public class ArbitraryDataBuilder {
     }
 
     private void findLatestSignature() throws DataException {
-        if (this.transactions.size() == 0) {
+        if (this.transactions.isEmpty()) {
             throw new DataException("Unable to find latest signature from empty transaction list");
         }
 

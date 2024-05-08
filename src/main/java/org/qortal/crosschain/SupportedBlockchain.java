@@ -57,9 +57,9 @@ public enum SupportedBlockchain {
 		}
 	},
 
-	DIGIBYTE(Arrays.asList(
-			Triple.valueOf(DigibyteACCTv3.NAME, DigibyteACCTv3.CODE_BYTES_HASH, DigibyteACCTv3::getInstance)
-		)) {
+	DIGIBYTE(List.of(
+            Triple.valueOf(DigibyteACCTv3.NAME, DigibyteACCTv3.CODE_BYTES_HASH, DigibyteACCTv3::getInstance)
+    )) {
 		@Override
 		public ForeignBlockchain getInstance() {
 			return Digibyte.getInstance();
@@ -71,9 +71,9 @@ public enum SupportedBlockchain {
 		}
 	},
 
-	RAVENCOIN(Arrays.asList(
-			Triple.valueOf(RavencoinACCTv3.NAME, RavencoinACCTv3.CODE_BYTES_HASH, RavencoinACCTv3::getInstance)
-		)) {
+	RAVENCOIN(List.of(
+            Triple.valueOf(RavencoinACCTv3.NAME, RavencoinACCTv3.CODE_BYTES_HASH, RavencoinACCTv3::getInstance)
+    )) {
 		@Override
 		public ForeignBlockchain getInstance() {
 			return Ravencoin.getInstance();
@@ -85,9 +85,9 @@ public enum SupportedBlockchain {
 		}
 	},
 
-	PIRATECHAIN(Arrays.asList(
-			Triple.valueOf(PirateChainACCTv3.NAME, PirateChainACCTv3.CODE_BYTES_HASH, PirateChainACCTv3::getInstance)
-	)) {
+	PIRATECHAIN(List.of(
+            Triple.valueOf(PirateChainACCTv3.NAME, PirateChainACCTv3.CODE_BYTES_HASH, PirateChainACCTv3::getInstance)
+    )) {
 		@Override
 		public ForeignBlockchain getInstance() {
 			return PirateChain.getInstance();

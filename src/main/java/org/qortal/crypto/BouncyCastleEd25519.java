@@ -27,7 +27,7 @@ public abstract class BouncyCastleEd25519
         public static final int Ed25519ph = 2;
     }
 
-    protected static class F extends X25519Field {};
+    protected static class F extends X25519Field {}
 
     protected static final long M08L = 0x000000FFL;
     protected static final long M28L = 0x0FFFFFFFL;
@@ -130,8 +130,8 @@ public abstract class BouncyCastleEd25519
 
     protected static boolean checkContextVar(byte[] ctx , byte phflag)
     {
-        return ctx == null && phflag == 0x00
-                || ctx != null && ctx.length < 256;
+        return (ctx != null || phflag != 0x00)
+                && (ctx == null || ctx.length >= 256);
     }
 
     protected static int checkPoint(int[] x, int[] y)
@@ -179,14 +179,14 @@ public abstract class BouncyCastleEd25519
         int[] t = new int[8];
         decode32(p, 0, t, 0, 8);
         t[7] &= 0x7FFFFFFF;
-        return !Nat256.gte(t, P);
+        return Nat256.gte(t, P);
     }
 
     protected static boolean checkScalarVar(byte[] s)
     {
         int[] n = new int[SCALAR_INTS];
         decodeScalar(s, 0, n);
-        return !Nat256.gte(n, L);
+        return Nat256.gte(n, L);
     }
 
     protected static Digest createDigest()
@@ -227,9 +227,9 @@ public abstract class BouncyCastleEd25519
     protected static boolean decodePointVar(byte[] p, int pOff, boolean negate, PointAffine r)
     {
         byte[] py = Arrays.copyOfRange(p, pOff, pOff + POINT_BYTES);
-        if (!checkPointVar(py))
+        if (checkPointVar(py))
         {
-            return false;
+            return true;
         }
 
         int x_0 = (py[POINT_BYTES - 1] & 0x80) >>> 7;
@@ -247,13 +247,13 @@ public abstract class BouncyCastleEd25519
 
         if (!F.sqrtRatioVar(u, v, r.x))
         {
-            return false;
+            return true;
         }
 
         F.normalize(r.x);
         if (x_0 == 1 && F.isZeroVar(r.x))
         {
-            return false;
+            return true;
         }
 
         if (negate ^ (x_0 != (r.x[0] & 1)))
@@ -261,7 +261,7 @@ public abstract class BouncyCastleEd25519
             F.negate(r.x, r.x);
         }
 
-        return true;
+        return false;
     }
 
     protected static void decodeScalar(byte[] k, int kOff, int[] n)
@@ -430,7 +430,7 @@ public abstract class BouncyCastleEd25519
     protected static void implSign(byte[] sk, int skOff, byte[] ctx, byte phflag, byte[] m, int mOff, int mLen,
                                  byte[] sig, int sigOff)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -453,7 +453,7 @@ public abstract class BouncyCastleEd25519
     protected static void implSign(byte[] sk, int skOff, byte[] pk, int pkOff, byte[] ctx, byte phflag,
                                  byte[] m, int mOff, int mLen, byte[] sig, int sigOff)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -473,7 +473,7 @@ public abstract class BouncyCastleEd25519
     protected static boolean implVerify(byte[] sig, int sigOff, byte[] pk, int pkOff, byte[] ctx, byte phflag, byte[] m,
                                       int mOff, int mLen)
     {
-        if (!checkContextVar(ctx, phflag))
+        if (checkContextVar(ctx, phflag))
         {
             throw new IllegalArgumentException("ctx");
         }
@@ -481,17 +481,17 @@ public abstract class BouncyCastleEd25519
         byte[] R = Arrays.copyOfRange(sig, sigOff, sigOff + POINT_BYTES);
         byte[] S = Arrays.copyOfRange(sig, sigOff + POINT_BYTES, sigOff + SIGNATURE_SIZE);
 
-        if (!checkPointVar(R))
+        if (checkPointVar(R))
         {
             return false;
         }
-        if (!checkScalarVar(S))
+        if (checkScalarVar(S))
         {
             return false;
         }
 
         PointAffine pA = new PointAffine();
-        if (!decodePointVar(pk, pkOff, true, pA))
+        if (decodePointVar(pk, pkOff, true, pA))
         {
             return false;
         }
@@ -1012,23 +1012,23 @@ public abstract class BouncyCastleEd25519
     protected static byte[] reduceScalar(byte[] n)
     {
         long x00 =  decode32(n,  0)       & M32L;   // x00:32/--
-        long x01 = (decode24(n,  4) << 4) & M32L;   // x01:28/--
+        long x01 = ((long) decode24(n, 4) << 4) & M32L;   // x01:28/--
         long x02 =  decode32(n,  7)       & M32L;   // x02:32/--
-        long x03 = (decode24(n, 11) << 4) & M32L;   // x03:28/--
+        long x03 = ((long) decode24(n, 11) << 4) & M32L;   // x03:28/--
         long x04 =  decode32(n, 14)       & M32L;   // x04:32/--
-        long x05 = (decode24(n, 18) << 4) & M32L;   // x05:28/--
+        long x05 = ((long) decode24(n, 18) << 4) & M32L;   // x05:28/--
         long x06 =  decode32(n, 21)       & M32L;   // x06:32/--
-        long x07 = (decode24(n, 25) << 4) & M32L;   // x07:28/--
+        long x07 = ((long) decode24(n, 25) << 4) & M32L;   // x07:28/--
         long x08 =  decode32(n, 28)       & M32L;   // x08:32/--
-        long x09 = (decode24(n, 32) << 4) & M32L;   // x09:28/--
+        long x09 = ((long) decode24(n, 32) << 4) & M32L;   // x09:28/--
         long x10 =  decode32(n, 35)       & M32L;   // x10:32/--
-        long x11 = (decode24(n, 39) << 4) & M32L;   // x11:28/--
+        long x11 = ((long) decode24(n, 39) << 4) & M32L;   // x11:28/--
         long x12 =  decode32(n, 42)       & M32L;   // x12:32/--
-        long x13 = (decode24(n, 46) << 4) & M32L;   // x13:28/--
+        long x13 = ((long) decode24(n, 46) << 4) & M32L;   // x13:28/--
         long x14 =  decode32(n, 49)       & M32L;   // x14:32/--
-        long x15 = (decode24(n, 53) << 4) & M32L;   // x15:28/--
+        long x15 = ((long) decode24(n, 53) << 4) & M32L;   // x15:28/--
         long x16 =  decode32(n, 56)       & M32L;   // x16:32/--
-        long x17 = (decode24(n, 60) << 4) & M32L;   // x17:28/--
+        long x17 = ((long) decode24(n, 60) << 4) & M32L;   // x17:28/--
         long x18 =  n[63]                 & M08L;   // x18:08/--
         long t;
 

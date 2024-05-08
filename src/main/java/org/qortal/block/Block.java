@@ -1086,7 +1086,7 @@ public class Block {
 
 		// Online accounts should only be included in designated blocks; all others must be empty
 		if (!this.isOnlineAccountsBlock()) {
-			if (this.blockData.getOnlineAccountsCount() != 0 || accountIndexes.size() != 0) {
+			if (this.blockData.getOnlineAccountsCount() != 0 || !accountIndexes.isEmpty()) {
 				return ValidationResult.ONLINE_ACCOUNTS_INVALID;
 			}
 			// Not a designated online accounts block and account count is 0. Everything is correct so no need to validate further.
@@ -1265,13 +1265,10 @@ public class Block {
 			return ciyamAtResult;
 
 		// Check transactions
-		ValidationResult transactionsResult = this.areTransactionsValid();
-		if (transactionsResult != ValidationResult.OK)
-			return transactionsResult;
+        return this.areTransactionsValid();
 
 		// Block is valid
-		return ValidationResult.OK;
-	}
+    }
 
 	/** Returns whether block's transactions are valid. */
 	private ValidationResult areTransactionsValid() throws DataException {

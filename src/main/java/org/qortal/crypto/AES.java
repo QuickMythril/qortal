@@ -64,17 +64,15 @@ public class AES {
     public static SecretKey generateKey(int n) throws NoSuchAlgorithmException {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(n);
-        SecretKey key = keyGenerator.generateKey();
-        return key;
+        return keyGenerator.generateKey();
     }
 
     public static SecretKey getKeyFromPassword(String password, String salt)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), 65536, 256);
-        SecretKey secret = new SecretKeySpec(factory.generateSecret(spec)
+        return new SecretKeySpec(factory.generateSecret(spec)
                 .getEncoded(), "AES");
-        return secret;
     }
 
     public static IvParameterSpec generateIv() {
@@ -159,8 +157,7 @@ public class AES {
             InvalidAlgorithmParameterException, InvalidKeyException, IOException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance(algorithm);
         cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-        SealedObject sealedObject = new SealedObject(object, cipher);
-        return sealedObject;
+        return new SealedObject(object, cipher);
     }
 
     public static Serializable decryptObject(String algorithm, SealedObject sealedObject, SecretKey key,
@@ -169,8 +166,7 @@ public class AES {
             BadPaddingException, IllegalBlockSizeException, IOException {
         Cipher cipher = Cipher.getInstance(algorithm);
         cipher.init(Cipher.DECRYPT_MODE, key, iv);
-        Serializable unsealObject = (Serializable) sealedObject.getObject(cipher);
-        return unsealObject;
+        return (Serializable) sealedObject.getObject(cipher);
     }
 
     public static String encryptPasswordBased(String plainText, SecretKey key, IvParameterSpec iv)
@@ -195,8 +191,7 @@ public class AES {
         // To calculate the resulting file size, add 16 (for the IV), then round up to the nearest multiple of 16
         final int ivSize = 16;
         final int chunkSize = 16;
-        final int expectedSize = Math.round((inFileSize + ivSize) / chunkSize) * chunkSize + chunkSize;
-        return expectedSize;
+        return Math.round((inFileSize + ivSize) / chunkSize) * chunkSize + chunkSize;
     }
 
 }

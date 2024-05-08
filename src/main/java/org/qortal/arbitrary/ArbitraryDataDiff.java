@@ -345,7 +345,7 @@ public class ArbitraryDataDiff {
 
     private void copyFilePathToBaseDir(Path source, Path base, Path relativePath) throws IOException {
         if (!Files.exists(source)) {
-            throw new IOException(String.format("File not found: %s", source.toString()));
+            throw new IOException(String.format("File not found: %s", source));
         }
 
         // Ensure parent folders exist in the destination

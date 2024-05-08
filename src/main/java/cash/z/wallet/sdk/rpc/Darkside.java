@@ -73,7 +73,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -101,15 +101,13 @@ public final class Darkside {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              branchID_ = s;
+                branchID_ = input.readStringRequireUtf8();
               break;
             }
             case 26: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              chainName_ = s;
+                chainName_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -133,7 +131,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideMetaState_descriptor;
     }
@@ -235,7 +233,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -296,8 +294,7 @@ public final class Darkside {
           .equals(other.getBranchID())) return false;
       if (!getChainName()
           .equals(other.getChainName())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -405,8 +402,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideMetaState}
@@ -415,7 +411,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideMetaState)
         cash.z.wallet.sdk.rpc.Darkside.DarksideMetaStateOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideMetaState_descriptor;
       }
@@ -546,7 +542,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -752,14 +748,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -848,7 +844,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -871,9 +867,8 @@ public final class Darkside {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              block_ = s;
+                block_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -897,7 +892,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideBlock_descriptor;
     }
@@ -950,7 +945,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -994,8 +989,7 @@ public final class Darkside {
 
       if (!getBlock()
           .equals(other.getBlock())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -1099,8 +1093,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -1113,7 +1106,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideBlock)
         cash.z.wallet.sdk.rpc.Darkside.DarksideBlockOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideBlock_descriptor;
       }
@@ -1231,7 +1224,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -1330,14 +1323,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -1427,7 +1420,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -1450,9 +1443,8 @@ public final class Darkside {
               done = true;
               break;
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              url_ = s;
+                url_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -1476,7 +1468,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideBlocksURL_descriptor;
     }
@@ -1529,7 +1521,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -1573,8 +1565,7 @@ public final class Darkside {
 
       if (!getUrl()
           .equals(other.getUrl())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -1678,8 +1669,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -1693,7 +1683,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideBlocksURL)
         cash.z.wallet.sdk.rpc.Darkside.DarksideBlocksURLOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideBlocksURL_descriptor;
       }
@@ -1811,7 +1801,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -1910,14 +1900,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -2014,7 +2004,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -2042,9 +2032,8 @@ public final class Darkside {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
 
-              url_ = s;
+                url_ = input.readStringRequireUtf8();
               break;
             }
             default: {
@@ -2068,7 +2057,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideTransactionsURL_descriptor;
     }
@@ -2132,7 +2121,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -2185,8 +2174,7 @@ public final class Darkside {
           != other.getHeight()) return false;
       if (!getUrl()
           .equals(other.getUrl())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -2292,8 +2280,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * <pre>
@@ -2308,7 +2295,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideTransactionsURL)
         cash.z.wallet.sdk.rpc.Darkside.DarksideTransactionsURLOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideTransactionsURL_descriptor;
       }
@@ -2432,7 +2419,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -2562,14 +2549,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -2647,7 +2634,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -2695,7 +2682,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideHeight_descriptor;
     }
@@ -2721,7 +2708,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -2766,8 +2753,7 @@ public final class Darkside {
 
       if (getHeight()
           != other.getHeight()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -2871,8 +2857,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideHeight}
@@ -2881,7 +2866,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideHeight)
         cash.z.wallet.sdk.rpc.Darkside.DarksideHeightOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideHeight_descriptor;
       }
@@ -2998,7 +2983,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -3052,14 +3037,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -3149,7 +3134,7 @@ public final class Darkside {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
+    public com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
     }
@@ -3207,7 +3192,7 @@ public final class Darkside {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+    public static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideEmptyBlocks_descriptor;
     }
@@ -3255,7 +3240,7 @@ public final class Darkside {
 
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
-    public final boolean isInitialized() {
+    public boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
@@ -3318,8 +3303,7 @@ public final class Darkside {
           != other.getNonce()) return false;
       if (getCount()
           != other.getCount()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+        return unknownFields.equals(other.unknownFields);
     }
 
     @java.lang.Override
@@ -3427,8 +3411,7 @@ public final class Darkside {
     @java.lang.Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
+        return new Builder(parent);
     }
     /**
      * Protobuf type {@code cash.z.wallet.sdk.rpc.DarksideEmptyBlocks}
@@ -3437,7 +3420,7 @@ public final class Darkside {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:cash.z.wallet.sdk.rpc.DarksideEmptyBlocks)
         cash.z.wallet.sdk.rpc.Darkside.DarksideEmptyBlocksOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
+      public static com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return cash.z.wallet.sdk.rpc.Darkside.internal_static_cash_z_wallet_sdk_rpc_DarksideEmptyBlocks_descriptor;
       }
@@ -3566,7 +3549,7 @@ public final class Darkside {
       }
 
       @java.lang.Override
-      public final boolean isInitialized() {
+      public boolean isInitialized() {
         return true;
       }
 
@@ -3682,14 +3665,14 @@ public final class Darkside {
         return this;
       }
       @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder setUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
       @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
+      public Builder mergeUnknownFields(
+              final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
       }
 
@@ -3769,7 +3752,7 @@ public final class Darkside {
       getDescriptor() {
     return descriptor;
   }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
+  private static final com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
