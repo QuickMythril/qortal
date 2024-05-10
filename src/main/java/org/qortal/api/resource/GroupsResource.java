@@ -184,7 +184,7 @@ public class GroupsResource {
 			@Parameter(ref = "limit") @QueryParam("limit") Integer limit, @Parameter(ref = "offset") @QueryParam("offset") Integer offset,
 			@Parameter(ref="reverse") @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getGroupRepository().groupExists(groupId))
+			if (repository.getGroupRepository().groupExists(groupId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.GROUP_UNKNOWN);
 
 			int adminCount = repository.getGroupRepository().countGroupAdmins(groupId);

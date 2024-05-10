@@ -142,11 +142,11 @@ public enum ApiError {
 	private final int code; // API error code
 	private final int status; // HTTP status code
 
-	private ApiError(int code) {
+	ApiError(int code) {
 		this(code, 400); // defaults to "400 - BAD REQUEST"
 	}
 
-	private ApiError(int code, int status) {
+	ApiError(int code, int status) {
 		this.code = code;
 		this.status = status;
 	}

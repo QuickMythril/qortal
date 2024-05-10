@@ -39,7 +39,7 @@ public class MessageTransaction extends Transaction {
 
 	// Properties
 
-	private MessageTransactionData messageTransactionData;
+	private final MessageTransactionData messageTransactionData;
 
 	/** Cached, lazy-instantiated payment data. Use {@link #getPaymentData()} instead! */
 	private PaymentData paymentData = null;
@@ -145,7 +145,7 @@ public class MessageTransaction extends Transaction {
 			return true;
 
 		// Group even exist?
-		if (!this.repository.getGroupRepository().groupExists(txGroupId))
+		if (this.repository.getGroupRepository().groupExists(txGroupId))
 			return false;
 
 		GroupRepository groupRepository = this.repository.getGroupRepository();
@@ -157,11 +157,8 @@ public class MessageTransaction extends Transaction {
 
 		// If recipient address present, check they belong to group too.
 		String recipient = this.messageTransactionData.getRecipient();
-		if (recipient != null && !groupRepository.memberExists(txGroupId, recipient))
-			return false;
-
-		return true;
-	}
+        return recipient == null || groupRepository.memberExists(txGroupId, recipient);
+    }
 
 	@Override
 	public ValidationResult isFeeValid() throws DataException {
@@ -199,10 +196,8 @@ public class MessageTransaction extends Transaction {
 	public boolean isConfirmable() {
 		// After feature trigger timestamp, only messages to an AT address can confirm
 		if (this.transactionData.getTimestamp() >= BlockChain.getInstance().getMemPoWTransactionUpdatesTimestamp()) {
-			if (this.messageTransactionData.getRecipient() == null || !this.messageTransactionData.getRecipient().toUpperCase().startsWith("A")) {
-				// Message isn't to an AT address, so this transaction is unconfirmable
-				return false;
-			}
+            // Message isn't to an AT address, so this transaction is unconfirmable
+            return this.messageTransactionData.getRecipient() != null && this.messageTransactionData.getRecipient().toUpperCase().startsWith("A");
 		}
 		return true;
 	}

@@ -142,7 +142,7 @@ public class ArbitraryMetadataManager {
         }
 
         // If we've already tried too many times in a short space of time, make sure to give up
-        if (useRateLimiter && !this.shouldMakeMetadataRequestForSignature(signature58)) {
+        if (useRateLimiter && this.shouldMakeMetadataRequestForSignature(signature58)) {
             LOGGER.trace("Skipping metadata request for signature {} due to rate limit", signature58);
             return null;
         }
@@ -210,7 +210,7 @@ public class ArbitraryMetadataManager {
 
         if (request == null) {
             // Not attempted yet
-            return true;
+            return false;
         }
 
         // Extract the components
@@ -220,7 +220,7 @@ public class ArbitraryMetadataManager {
 
         if (lastAttemptTimestamp == null) {
             // Not attempted yet
-            return true;
+            return false;
         }
 
         long timeSinceLastAttempt = NTP.getTime() - lastAttemptTimestamp;
@@ -231,7 +231,7 @@ public class ArbitraryMetadataManager {
 
             if (networkBroadcastCount < 2) {
                 // We've made less than 2 total attempts
-                return true;
+                return false;
             }
         }
 
@@ -239,18 +239,16 @@ public class ArbitraryMetadataManager {
         if (timeSinceLastAttempt > 60 * 60 * 1000L) {
             // We haven't tried for at least 60 minutes
 
-            if (networkBroadcastCount < 3) {
-                // We've made less than 3 total attempts
-                return true;
-            }
+            // We've made less than 3 total attempts
+            return networkBroadcastCount >= 3;
         }
 
-        return false;
+        return true;
     }
 
     public boolean isSignatureRateLimited(byte[] signature) {
         String signature58 = Base58.encode(signature);
-        return !this.shouldMakeMetadataRequestForSignature(signature58);
+        return this.shouldMakeMetadataRequestForSignature(signature58);
     }
 
     public long lastRequestForSignature(byte[] signature) {
@@ -301,7 +299,7 @@ public class ArbitraryMetadataManager {
 
     public void onNetworkArbitraryMetadataMessage(Peer peer, Message message) {
         // Don't process if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return;
         }
 
@@ -373,7 +371,7 @@ public class ArbitraryMetadataManager {
 
     public void onNetworkGetArbitraryMetadataMessage(Peer peer, Message message) {
         // Don't respond if QDN is disabled
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             return;
         }
 
@@ -460,7 +458,7 @@ public class ArbitraryMetadataManager {
                     LOGGER.debug("Rebroadcasting metadata request from peer {} for signature {} to our other peers... totalRequestTime: {}, requestHops: {}", peer, Base58.encode(signature), totalRequestTime, requestHops);
                     Network.getInstance().broadcast(
                             broadcastPeer ->
-                                    !broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
+                                    broadcastPeer.isAtLeastVersion(RELAY_MIN_PEER_VERSION) ? null :
                                     broadcastPeer == peer || Objects.equals(broadcastPeer.getPeerData().getAddress().getHost(), peer.getPeerData().getAddress().getHost()) ? null : relayGetArbitraryMetadataMessage);
 
                 }

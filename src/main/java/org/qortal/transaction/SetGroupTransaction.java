@@ -40,7 +40,7 @@ public class SetGroupTransaction extends Transaction {
 		int defaultGroupId = this.setGroupTransactionData.getDefaultGroupId();
 
 		// Check group exists
-		if (!this.repository.getGroupRepository().groupExists(defaultGroupId))
+		if (this.repository.getGroupRepository().groupExists(defaultGroupId))
 			return ValidationResult.GROUP_DOES_NOT_EXIST;
 
 		Account creator = getCreator();

@@ -137,7 +137,7 @@ public class HSQLDBImportExport {
                     String existingTradePrivateKey = (String) existingTradeBotDataItem.get("tradePrivateKey");
                     // Check if we already have an entry for this trade
                     boolean found = allTradeBotData.stream().anyMatch(tradeBotData -> Base58.encode(tradeBotData.getTradePrivateKey()).equals(existingTradePrivateKey));
-                    if (found == false)
+                    if (!found)
                         // Add the data from the backup file to our "allTradeBotDataJson" array as it's not currently in the db
                         allTradeBotDataJson.put(existingTradeBotDataItem);
                 }
@@ -264,8 +264,8 @@ public class HSQLDBImportExport {
             try {
                 Files.createDirectories(backupPath);
             } catch (IOException e) {
-                LOGGER.info(String.format("Unable to create %s folder", backupPath.toString()));
-                throw new DataException(String.format("Unable to create %s folder", backupPath.toString()));
+                LOGGER.info(String.format("Unable to create %s folder", backupPath));
+                throw new DataException(String.format("Unable to create %s folder", backupPath));
             }
         }
 

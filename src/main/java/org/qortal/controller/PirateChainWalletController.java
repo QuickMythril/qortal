@@ -48,7 +48,7 @@ public class PirateChainWalletController extends Thread {
     private boolean shouldLoadWallet = false;
     private String loadStatus = null;
 
-    private static String qdnWalletSignature = "EsfUw54perxkEtfoUoL7Z97XPrNsZRZXePVZPz3cwRm9qyEPSofD5KmgVpDqVitQp7LhnZRmL6z2V9hEe1YS45T";
+    private static final String qdnWalletSignature = "EsfUw54perxkEtfoUoL7Z97XPrNsZRZXePVZPz3cwRm9qyEPSofD5KmgVpDqVitQp7LhnZRmL6z2V9hEe1YS45T";
 
 
     private PirateChainWalletController() {
@@ -75,11 +75,11 @@ public class PirateChainWalletController extends Thread {
                     continue;
                 }
 
-                if (!LiteWalletJni.isLoaded()) {
+                if (LiteWalletJni.isLoaded()) {
                     this.loadLibrary();
 
                     // If still not loaded, sleep to prevent too many requests
-                    if (!LiteWalletJni.isLoaded()) {
+                    if (LiteWalletJni.isLoaded()) {
                         Thread.sleep(5 * 1000);
                         continue;
                     }
@@ -172,7 +172,7 @@ public class PirateChainWalletController extends Thread {
             List<Peer> handshakedPeers = Network.getInstance().getImmutableHandshakedPeers();
             if (handshakedPeers.size() < Settings.getInstance().getMinBlockchainPeers()) {
                 // Wait for more peers
-                this.loadStatus = String.format("Searching for peers...");
+                this.loadStatus = "Searching for peers...";
                 return;
             }
 
@@ -279,7 +279,7 @@ public class PirateChainWalletController extends Thread {
 
     private boolean initWithEntropy58(String entropy58, boolean isNullSeedWallet) {
         // If the JNI library isn't loaded yet then we can't proceed
-        if (!LiteWalletJni.isLoaded()) {
+        if (LiteWalletJni.isLoaded()) {
             shouldLoadWallet = true;
             return false;
         }
@@ -343,7 +343,7 @@ public class PirateChainWalletController extends Thread {
     }
 
     public void ensureInitialized() throws ForeignBlockchainException {
-        if (!LiteWalletJni.isLoaded() || this.currentWallet == null || !this.currentWallet.isInitialized()) {
+        if (LiteWalletJni.isLoaded() || this.currentWallet == null || this.currentWallet.isInitialized()) {
             throw new ForeignBlockchainException("Pirate wallet isn't initialized yet");
         }
     }
@@ -374,7 +374,7 @@ public class PirateChainWalletController extends Thread {
     }
 
     public String getSyncStatus() {
-        if (this.currentWallet == null || !this.currentWallet.isInitialized()) {
+        if (this.currentWallet == null || this.currentWallet.isInitialized()) {
             if (this.loadStatus != null) {
                 return this.loadStatus;
             }

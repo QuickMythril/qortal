@@ -119,7 +119,7 @@ public class ArbitraryResource {
 
 			// Ensure that "default" and "identifier" parameters cannot coexist
 			boolean defaultRes = Boolean.TRUE.equals(defaultResource);
-			if (defaultRes == true && identifier != null) {
+			if (defaultRes && identifier != null) {
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, "identifier cannot be specified when requesting a default resource");
 			}
 
@@ -242,7 +242,7 @@ public class ArbitraryResource {
 															@PathParam("name") String name,
 															@QueryParam("build") Boolean build) {
 
-		if (!Settings.getInstance().isQDNAuthBypassEnabled())
+		if (Settings.getInstance().isQDNAuthBypassEnabled())
 			Security.requirePriorAuthorizationOrApiKey(request, name, service, null, null);
 
 		return ArbitraryTransactionUtils.getStatus(service, name, null, build, true);
@@ -263,7 +263,7 @@ public class ArbitraryResource {
 											    @PathParam("name") String name,
 											    @PathParam("identifier") String identifier) {
 
-		if (!Settings.getInstance().isQDNAuthBypassEnabled())
+		if (Settings.getInstance().isQDNAuthBypassEnabled())
 			Security.requirePriorAuthorizationOrApiKey(request, name, service, identifier, null);
 
 		return this.getFileProperties(service, name, identifier);
@@ -285,7 +285,7 @@ public class ArbitraryResource {
 													 @PathParam("identifier") String identifier,
 													 @QueryParam("build") Boolean build) {
 
-		if (!Settings.getInstance().isQDNAuthBypassEnabled())
+		if (Settings.getInstance().isQDNAuthBypassEnabled())
 			Security.requirePriorAuthorizationOrApiKey(request, name, service, identifier, null);
 
 		return ArbitraryTransactionUtils.getStatus(service, name, identifier, build, true);
@@ -458,9 +458,7 @@ public class ArbitraryResource {
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 
-			List<ArbitraryTransactionData> hostedTransactions = ArbitraryDataStorageManager.getInstance().listAllHostedTransactions(repository, limit, offset);
-
-			return hostedTransactions;
+            return ArbitraryDataStorageManager.getInstance().listAllHostedTransactions(repository, limit, offset);
 
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
@@ -644,7 +642,7 @@ public class ArbitraryResource {
 								   @QueryParam("attempts") Integer attempts) {
 
 		// Authentication can be bypassed in the settings, for those running public QDN nodes
-		if (!Settings.getInstance().isQDNAuthBypassEnabled()) {
+		if (Settings.getInstance().isQDNAuthBypassEnabled()) {
 			Security.checkApiCallAllowed(request);
 		}
 
@@ -678,7 +676,7 @@ public class ArbitraryResource {
 								   @QueryParam("attempts") Integer attempts) {
 
 		// Authentication can be bypassed in the settings, for those running public QDN nodes
-		if (!Settings.getInstance().isQDNAuthBypassEnabled()) {
+		if (Settings.getInstance().isQDNAuthBypassEnabled()) {
 			Security.checkApiCallAllowed(request, null);
 		}
 
@@ -1258,7 +1256,7 @@ public class ArbitraryResource {
 			}
 
 			// Finish here if user has requested a preview
-			if (preview != null && preview == true) {
+			if (preview != null && preview) {
 				return this.preview(path, service);
 			}
 
@@ -1308,7 +1306,7 @@ public class ArbitraryResource {
 				// Synchronous
 				while (!Controller.isStopping()) {
 					attempts++;
-					if (!arbitraryDataReader.isBuilding()) {
+					if (arbitraryDataReader.isBuilding()) {
 						try {
 							arbitraryDataReader.loadSynchronously(rebuild);
 							break;

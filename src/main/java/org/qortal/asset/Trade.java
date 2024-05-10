@@ -11,10 +11,10 @@ import org.qortal.repository.Repository;
 public class Trade {
 
 	// Properties
-	private Repository repository;
-	private TradeData tradeData;
+	private final Repository repository;
+	private final TradeData tradeData;
 
-	private AssetRepository assetRepository;
+	private final AssetRepository assetRepository;
 
 	private OrderData initiatingOrder;
 	private OrderData targetOrder;

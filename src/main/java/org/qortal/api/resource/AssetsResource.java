@@ -168,7 +168,7 @@ public class AssetsResource {
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			for (long assetId : assetIds)
-				if (!repository.getAssetRepository().assetExists(assetId))
+				if (repository.getAssetRepository().assetExists(assetId))
 					throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return repository.getAccountRepository().getAssetBalances(addresses, assetIds, balanceOrdering, excludeZero, limit, offset, reverse);
@@ -212,10 +212,10 @@ public class AssetsResource {
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
-			if (!repository.getAssetRepository().assetExists(otherAssetId))
+			if (repository.getAssetRepository().assetExists(otherAssetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return repository.getAssetRepository().getOpenOrders(assetId, otherAssetId, limit, offset, reverse);
@@ -257,10 +257,10 @@ public class AssetsResource {
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
-			if (!repository.getAssetRepository().assetExists(otherAssetId))
+			if (repository.getAssetRepository().assetExists(otherAssetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			List<OrderData> orders = repository.getAssetRepository().getAggregatedOpenOrders(assetId, otherAssetId, limit, offset, reverse);
@@ -305,14 +305,14 @@ public class AssetsResource {
 				assetIds = Collections.singletonList(Asset.QORT);
 			else
 				for (long assetId : assetIds)
-					if (!repository.getAssetRepository().assetExists(assetId))
+					if (repository.getAssetRepository().assetExists(assetId))
 						throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			if (otherAssetIds.isEmpty())
 				otherAssetIds = Collections.singletonList(Asset.QORT);
 			else
 				for (long assetId : otherAssetIds)
-					if (!repository.getAssetRepository().assetExists(assetId))
+					if (repository.getAssetRepository().assetExists(assetId))
 						throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return repository.getAssetRepository().getRecentTrades(assetIds, otherAssetIds, limit, offset, reverse);
@@ -355,10 +355,10 @@ public class AssetsResource {
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
-			if (!repository.getAssetRepository().assetExists(otherAssetId))
+			if (repository.getAssetRepository().assetExists(otherAssetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			List<TradeData> trades = repository.getAssetRepository().getTrades(assetId, otherAssetId, limit, offset, reverse);
@@ -553,10 +553,10 @@ public class AssetsResource {
 			if (publicKey == null)
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.ADDRESS_UNKNOWN);
 
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
-			if (!repository.getAssetRepository().assetExists(otherAssetId))
+			if (repository.getAssetRepository().assetExists(otherAssetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return repository.getAssetRepository().getAccountsOrders(publicKey, assetId, otherAssetId, isClosed, isFulfilled, limit, offset, reverse);
@@ -600,7 +600,7 @@ public class AssetsResource {
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			return repository.getTransactionRepository().getAssetTransactions(assetId, confirmationStatus, limit, offset, reverse);
@@ -641,7 +641,7 @@ public class AssetsResource {
 		ref = "reverse"
 	) @QueryParam("reverse") Boolean reverse) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			if (!repository.getAssetRepository().assetExists(assetId))
+			if (repository.getAssetRepository().assetExists(assetId))
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_ASSET_ID);
 
 			if (address != null && !Crypto.isValidAddress(address))

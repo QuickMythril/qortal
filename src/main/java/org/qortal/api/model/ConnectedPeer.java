@@ -17,7 +17,7 @@ public class ConnectedPeer {
 
     public enum Direction {
         INBOUND,
-        OUTBOUND;
+        OUTBOUND
     }
 
     public Direction direction;

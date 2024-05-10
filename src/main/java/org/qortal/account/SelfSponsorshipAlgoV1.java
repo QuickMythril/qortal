@@ -340,7 +340,7 @@ public class SelfSponsorshipAlgoV1 {
             return true;
         }
         transactionDataList.removeIf(t -> t.getTimestamp() >= this.snapshotTimestamp);
-        return transactionDataList.size() == 0;
+        return transactionDataList.isEmpty();
     }
 
     private static List<TransactionData> fetchTransactions(Repository repository, List<TransactionType> txTypes, String address, boolean reverse) throws DataException {

@@ -145,9 +145,7 @@ public class AtResource {
 			ATStateData atStateData = repository.getATRepository().getLatestATState(atAddress);
 			byte[] stateData = atStateData.getStateData();
 
-			byte[] dataBytes = MachineState.extractDataBytes(stateData);
-
-			return dataBytes;
+            return MachineState.extractDataBytes(stateData);
 		} catch (ApiException e) {
 			throw e;
 		} catch (DataException e) {

@@ -2,7 +2,7 @@ package org.qortal.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.qortal.ApplyRestart;;
+import org.qortal.ApplyRestart;
 import org.qortal.globalization.Translator;
 import org.qortal.gui.SysTray;
 import org.qortal.repository.RepositoryManager;

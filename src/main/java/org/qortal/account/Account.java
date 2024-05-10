@@ -212,11 +212,8 @@ public class Account {
 			return true;
 
 		// Founders can always mint, unless they have a penalty
-		if (Account.isFounder(accountData.getFlags()) && accountData.getBlocksMintedPenalty() == 0)
-			return true;
-
-		return false;
-	}
+        return Account.isFounder(accountData.getFlags()) && accountData.getBlocksMintedPenalty() == 0;
+    }
 
 	/** Returns account's blockMinted (0+) or null if account not found in repository. */
 	public Integer getBlocksMinted() throws DataException {
@@ -249,11 +246,8 @@ public class Account {
 		if (level != null && level >= BlockChain.getInstance().getMinAccountLevelToRewardShare())
 			return true;
 
-		if (Account.isFounder(accountData.getFlags()) && accountData.getBlocksMintedPenalty() == 0)
-			return true;
-
-		return false;
-	}
+        return Account.isFounder(accountData.getFlags()) && accountData.getBlocksMintedPenalty() == 0;
+    }
 
 	// Account level
 

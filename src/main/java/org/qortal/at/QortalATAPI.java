@@ -35,9 +35,9 @@ public class QortalATAPI extends API {
 	private static final Logger LOGGER = LogManager.getLogger(QortalATAPI.class);
 
 	// Properties
-	private Repository repository;
-	private ATData atData;
-	private long blockTimestamp;
+	private final Repository repository;
+	private final ATData atData;
+	private final long blockTimestamp;
 	private final CiyamAtSettings ciyamAtSettings;
 
 	/** List of generated AT transactions */
@@ -86,8 +86,7 @@ public class QortalATAPI extends API {
 			}
 
 			// Can we skip?
-			if (!wakeDueToHeight && !wakeDueToMessage)
-				return false;
+            return wakeDueToHeight || wakeDueToMessage;
 		}
 
 		return true;

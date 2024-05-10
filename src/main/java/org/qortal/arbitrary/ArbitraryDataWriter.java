@@ -126,7 +126,7 @@ public class ArbitraryDataWriter {
     }
 
     private void checkEnabled() throws DataException {
-        if (!Settings.getInstance().isQdnEnabled()) {
+        if (Settings.getInstance().isQdnEnabled()) {
             throw new DataException("QDN is disabled in settings");
         }
     }
@@ -207,7 +207,7 @@ public class ArbitraryDataWriter {
                 break;
 
             default:
-                throw new DataException(String.format("Unknown method specified: %s", method.toString()));
+                throw new DataException(String.format("Unknown method specified: %s", method));
         }
     }
 
@@ -421,10 +421,7 @@ public class ArbitraryDataWriter {
         if (this.arbitraryDataFile.chunkCount() > 1) {
             return true;
         }
-        if (this.title != null || this.description != null || this.tags != null || this.category != null) {
-            return true;
-        }
-        return false;
+        return this.title != null || this.description != null || this.tags != null || this.category != null;
     }
 
 

@@ -235,7 +235,7 @@ public enum QortalFunctionCode {
 	private static final Map<Short, QortalFunctionCode> map = Arrays.stream(QortalFunctionCode.values())
 			.collect(Collectors.toMap(functionCode -> functionCode.value, functionCode -> functionCode));
 
-	private QortalFunctionCode(int value, int paramCount, boolean returnsValue) {
+	QortalFunctionCode(int value, int paramCount, boolean returnsValue) {
 		this.value = (short) value;
 		this.paramCount = paramCount;
 		this.returnsValue = returnsValue;

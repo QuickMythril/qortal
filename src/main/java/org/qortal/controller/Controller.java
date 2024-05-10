@@ -775,7 +775,7 @@ public class Controller extends Thread {
 
 	public static final Predicate<Peer> hasOldVersion = peer -> {
 		final String minPeerVersion = Settings.getInstance().getMinPeerVersion();
-		return peer.isAtLeastVersion(minPeerVersion) == false;
+		return peer.isAtLeastVersion(minPeerVersion);
 	};
 
 	public static final Predicate<Peer> hasInvalidSigner = peer -> {
@@ -1921,8 +1921,7 @@ public class Controller extends Thread {
 			// Disregard peers that don't have a recent block
 			if (peerChainTipData.getTimestamp() == null || peerChainTipData.getTimestamp() < minLatestBlockTimestamp) {
 				iterator.remove();
-				continue;
-			}
+            }
 		}
 
 		return peers;

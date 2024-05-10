@@ -44,7 +44,7 @@ public class JoinGroupTransaction extends Transaction {
 		int groupId = this.joinGroupTransactionData.getGroupId();
 
 		// Check group exists
-		if (!this.repository.getGroupRepository().groupExists(groupId))
+		if (this.repository.getGroupRepository().groupExists(groupId))
 			return ValidationResult.GROUP_DOES_NOT_EXIST;
 
 		Account joiner = getJoiner();

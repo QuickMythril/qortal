@@ -78,7 +78,7 @@ public class PirateChain extends Bitcoiny {
 
 			@Override
 			public Collection<Server> getServers() {
-				return Arrays.asList();
+				return List.of();
 			}
 
 			@Override
@@ -325,8 +325,7 @@ public class PirateChain extends Bitcoiny {
 									JSONObject incomingMetadata = incomingMetadatas.getJSONObject(j);
 									if (incomingMetadata.has("value")) {
 										//String address = incomingMetadata.getString("address");
-										Long value = incomingMetadata.getLong("value");
-										amount = value; // TODO: figure out how to parse transactions with multiple incomingMetadata entries
+                                        amount = incomingMetadata.getLong("value"); // TODO: figure out how to parse transactions with multiple incomingMetadata entries
 									}
 
 									if (incomingMetadata.has("memo") && !incomingMetadata.isNull("memo")) {

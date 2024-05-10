@@ -106,8 +106,8 @@ public class SimpleForeignTransaction {
 	public static class Builder {
 		private String txHash;
 		private long timestamp;
-		private List<AddressAmount> inputs = new ArrayList<>();
-		private List<Output> outputs = new ArrayList<>();
+		private final List<AddressAmount> inputs = new ArrayList<>();
+		private final List<Output> outputs = new ArrayList<>();
 		private Boolean isSentNotReceived;
 
 		public Builder txHash(String txHash) {

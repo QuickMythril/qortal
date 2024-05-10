@@ -293,11 +293,9 @@ public class ArbitraryDataTransactionBuilder {
             final byte[] metadataHash = (metadataFile != null) ? metadataFile.getHash() : null;
             final List<PaymentData> payments = new ArrayList<>();
 
-            ArbitraryTransactionData transactionData = new ArbitraryTransactionData(baseTransactionData,
+            this.arbitraryTransactionData = new ArbitraryTransactionData(baseTransactionData,
                     version, service.value, nonce, size, name, identifier, method,
                     secret, compression, data, dataType, metadataHash, payments);
-
-            this.arbitraryTransactionData = transactionData;
 
         } catch (DataException | IOException e) {
             if (arbitraryDataFile != null) {
@@ -321,10 +319,7 @@ public class ArbitraryDataTransactionBuilder {
         if (!Objects.equals(existingMetadata.getCategory(), this.category)) {
             return false;
         }
-        if (!Objects.equals(existingMetadata.getTags(), this.tags)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(existingMetadata.getTags(), this.tags);
     }
 
     private boolean hasMetadata() {

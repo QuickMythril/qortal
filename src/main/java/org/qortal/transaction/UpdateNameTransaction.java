@@ -20,7 +20,7 @@ import java.util.Objects;
 public class UpdateNameTransaction extends Transaction {
 
 	// Properties
-	private UpdateNameTransactionData updateNameTransactionData;
+	private final UpdateNameTransactionData updateNameTransactionData;
 
 	// Constructors
 

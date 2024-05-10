@@ -12,7 +12,7 @@ public final class NullAccount extends PublicKeyAccount {
 		super(repository, PUBLIC_KEY, ADDRESS);
 	}
 
-	protected NullAccount() {
+	private NullAccount() {
 	}
 
 	@Override

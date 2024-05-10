@@ -73,8 +73,7 @@ public class BlockArchiveReader {
         if (serializedBlock == null) {
             return null;
         }
-        Integer serializationVersion = serializedBlock.getB();
-        return serializationVersion;
+        return serializedBlock.getB();
     }
 
     public BlockTransformation fetchBlockAtHeight(int height) {
@@ -188,8 +187,7 @@ public class BlockArchiveReader {
 
             if (height >= startHeight && height <= endHeight) {
                 // Found the correct file
-                String filename = (String) pair.getKey();
-                return filename;
+                return (String) pair.getKey();
             }
         }
 

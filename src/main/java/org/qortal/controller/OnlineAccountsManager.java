@@ -283,13 +283,10 @@ public class OnlineAccountsManager {
             return false;
         }
 
-        if (existingOnlineAccountData.getNonce() == null || existingOnlineAccountData.getNonce() < 0) {
-            // Existing data has no usable nonce value(s) so we want to replace it with the new one
-            return true;
-        }
+        // Existing data has no usable nonce value(s) so we want to replace it with the new one
+        return existingOnlineAccountData.getNonce() == null || existingOnlineAccountData.getNonce() < 0;
 
         // Both new and old data have nonce values so the new data isn't considered superior
-        return false;
     }
 
 
@@ -490,7 +487,7 @@ public class OnlineAccountsManager {
 
         // Don't submit if we're more than 2 hours out of sync (unless we're in recovery mode)
         final Long minLatestBlockTimestamp = now - (2 * 60 * 60 * 1000L);
-        if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp) && !Synchronizer.getInstance().getRecoveryMode()) {
+        if (!Controller.getInstance().isUpToDate(minLatestBlockTimestamp) && Synchronizer.getInstance().getRecoveryMode()) {
             return;
         }
 
@@ -538,7 +535,6 @@ public class OnlineAccountsManager {
 
                     if (++i > 1 + 1) {
                         iterator.remove();
-                        continue;
                     }
                 }
             } catch (DataException e) {

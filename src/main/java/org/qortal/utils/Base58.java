@@ -16,8 +16,8 @@
  */
 package org.qortal.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -91,12 +91,8 @@ public class Base58 {
         // Create the return string from the encoded bytes
         //
         String encodedResult;
-        try {
-            byte[] stringBytes = Arrays.copyOfRange(encoded, encodedOffset, encoded.length);
-            encodedResult = new String(stringBytes, "US-ASCII");
-        } catch (UnsupportedEncodingException exc) {
-            encodedResult = "";             // Should never happen
-        }
+        byte[] stringBytes = Arrays.copyOfRange(encoded, encodedOffset, encoded.length);
+        encodedResult = new String(stringBytes, StandardCharsets.US_ASCII);
         return encodedResult;
     }
 
@@ -111,7 +107,7 @@ public class Base58 {
         //
         // Nothing to do if we have an empty string
         //
-        if (string.length() == 0)
+        if (string.isEmpty())
             return null;
         //
         // Convert the input string to a byte sequence
@@ -155,8 +151,7 @@ public class Base58 {
         // Return the decoded result prefixed with the number of leading zeroes
         // that were in the original string
         //
-        byte[] output = Arrays.copyOfRange(decoded, decodedOffset-zeroCount, decoded.length);
-        return output;
+        return Arrays.copyOfRange(decoded, decodedOffset-zeroCount, decoded.length);
     }
 
     /**
