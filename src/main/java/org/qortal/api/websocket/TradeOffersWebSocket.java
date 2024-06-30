@@ -67,7 +67,7 @@ public class TradeOffersWebSocket extends ApiWebSocket implements Listener {
 			return;
 		}
 
-		EventBus.INSTANCE.addListener(this::listen);
+		EventBus.INSTANCE.addListener(this);
 	}
 
 	@Override

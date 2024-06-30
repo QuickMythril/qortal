@@ -757,7 +757,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 			Address address = Address.fromKey(this.params, keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS), ScriptType.P2PKH);
 
 			// if zero transactions, return address
-			if( 0 == getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).size() )
+			if(getAddressTransactions(ScriptBuilder.createOutputScript(address).getProgram(), true).isEmpty())
 				return address.toString();
 
 			// else try the next receive funds address

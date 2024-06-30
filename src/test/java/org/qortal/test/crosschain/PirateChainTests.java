@@ -11,7 +11,6 @@ import org.qortal.crypto.Crypto;
 import org.qortal.transform.TransformationException;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.qortal.crosschain.BitcoinyHTLC.Status.*;

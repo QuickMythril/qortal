@@ -208,8 +208,7 @@ public class ArbitraryDataCleanupManager extends Thread {
 									Base58.encode(arbitraryTransactionData.getSignature())));
 
 							ArbitraryTransactionUtils.convertFileToChunks(arbitraryTransactionData, now, STALE_FILE_TIMEOUT);
-							continue;
-						}
+                        }
 					}
 
 				} catch (DataException e) {
@@ -284,8 +283,7 @@ public class ArbitraryDataCleanupManager extends Thread {
 				}
 
 			} catch (DataException e) {
-				continue;
-			}
+            }
 		}
 
 		return pathList;

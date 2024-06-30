@@ -1024,7 +1024,7 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 		String tag5 = null;
 
 		if (tags != null) {
-			if (tags.size() > 0) tag1 = tags.get(0);
+			if (!tags.isEmpty()) tag1 = tags.get(0);
 			if (tags.size() > 1) tag2 = tags.get(1);
 			if (tags.size() > 2) tag3 = tags.get(2);
 			if (tags.size() > 3) tag4 = tags.get(3);

@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.qortal.account.Account;
 import org.qortal.account.PrivateKeyAccount;
 import org.qortal.asset.Asset;
-import org.qortal.at.AT;
 import org.qortal.block.Block;
 import org.qortal.data.at.ATData;
 import org.qortal.data.at.ATStateData;

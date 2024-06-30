@@ -86,7 +86,7 @@ public class BlocksResource {
 		    // Check the database first
 			BlockData blockData = repository.getBlockRepository().fromSignature(signature);
 			if (blockData != null) {
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 				return blockData;
@@ -95,7 +95,7 @@ public class BlocksResource {
             // Not found, so try the block archive
 			blockData = repository.getBlockArchiveRepository().fromSignature(signature);
 			if (blockData != null) {
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 				return blockData;
@@ -304,7 +304,7 @@ public class BlocksResource {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			BlockData blockData = repository.getBlockRepository().getLastBlock();
 
-			if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+			if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 				blockData.setOnlineAccountsSignatures(null);
 			}
 
@@ -474,7 +474,7 @@ public class BlocksResource {
 			// Firstly check the database
 			BlockData blockData = repository.getBlockRepository().fromHeight(height);
 			if (blockData != null) {
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 				return blockData;
@@ -483,7 +483,7 @@ public class BlocksResource {
 			// Not found, so try the archive
 			blockData = repository.getBlockArchiveRepository().fromHeight(height);
 			if (blockData != null) {
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 				return blockData;
@@ -596,7 +596,7 @@ public class BlocksResource {
 			if (height > 1) {
 				// Found match in Blocks table
 				blockData = repository.getBlockRepository().fromHeight(height);
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 				return blockData;
@@ -614,7 +614,7 @@ public class BlocksResource {
 				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.BLOCK_UNKNOWN);
 			}
 
-			if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+			if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 				blockData.setOnlineAccountsSignatures(null);
 			}
 
@@ -651,7 +651,7 @@ public class BlocksResource {
 										 @QueryParam("includeOnlineSignatures") Boolean includeOnlineSignatures) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			List<BlockData> blocks = new ArrayList<>();
-			boolean shouldReverse = (reverse != null && reverse == true);
+			boolean shouldReverse = (reverse != null && reverse);
 
 			int i = 0;
 			while (i < count) {
@@ -664,7 +664,7 @@ public class BlocksResource {
 						break;
 					}
 				}
-				if (includeOnlineSignatures == null || includeOnlineSignatures == false) {
+				if (includeOnlineSignatures == null || !includeOnlineSignatures) {
 					blockData.setOnlineAccountsSignatures(null);
 				}
 

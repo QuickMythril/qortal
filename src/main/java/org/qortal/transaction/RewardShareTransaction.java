@@ -43,7 +43,7 @@ public class RewardShareTransaction extends Transaction {
 	}
 
 	private RewardShareData getExistingRewardShare() throws DataException {
-		if (this.haveCheckedForExistingRewardShare == false) {
+		if (!this.haveCheckedForExistingRewardShare) {
 			this.haveCheckedForExistingRewardShare = true;
 
 			// Look up any existing reward-share (using transaction's reward-share public key)

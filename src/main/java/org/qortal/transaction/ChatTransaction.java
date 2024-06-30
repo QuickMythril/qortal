@@ -168,7 +168,7 @@ public class ChatTransaction extends Transaction {
 
 		// Check for blocked author by registered name
 		List<NameData> names = this.repository.getNameRepository().getNamesByOwner(this.chatTransactionData.getSender());
-		if (names != null && names.size() > 0) {
+		if (names != null && !names.isEmpty()) {
 			for (NameData nameData : names) {
 				if (nameData != null && nameData.getName() != null) {
 					if (ListUtils.isNameBlocked(nameData.getName())) {

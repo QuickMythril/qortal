@@ -119,7 +119,7 @@ public class ArbitraryResource {
 
 			// Ensure that "default" and "identifier" parameters cannot coexist
 			boolean defaultRes = Boolean.TRUE.equals(defaultResource);
-			if (defaultRes == true && identifier != null) {
+			if (defaultRes && identifier != null) {
 				throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, "identifier cannot be specified when requesting a default resource");
 			}
 
@@ -491,7 +491,7 @@ public class ArbitraryResource {
 			
 			List<ArbitraryTransactionData> transactionDataList;
 
-			if (query == null || query.equals("")) {
+			if (query == null || query.isEmpty()) {
 				transactionDataList = ArbitraryDataStorageManager.getInstance().listAllHostedTransactions(repository, limit, offset);
 			} else {
 				transactionDataList = ArbitraryDataStorageManager.getInstance().searchHostedTransactions(repository,query, limit, offset);
@@ -1258,7 +1258,7 @@ public class ArbitraryResource {
 			}
 
 			// Finish here if user has requested a preview
-			if (preview != null && preview == true) {
+			if (preview != null && preview) {
 				return this.preview(path, service);
 			}
 

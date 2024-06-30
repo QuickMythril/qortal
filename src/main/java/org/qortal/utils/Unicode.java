@@ -141,7 +141,7 @@ public abstract class Unicode {
 			while ((line = bufferedReader.readLine()) != null) {
 				line = line.trim();
 
-				if (line.startsWith("#") || line.length() == 0)
+				if (line.startsWith("#") || line.isEmpty())
 					continue;
 
 				String[] charCodes = line.split(",");

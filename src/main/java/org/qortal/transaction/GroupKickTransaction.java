@@ -82,6 +82,10 @@ public class GroupKickTransaction extends Transaction {
 		if (!admin.getAddress().equals(groupData.getOwner()) && groupRepository.adminExists(groupId, member.getAddress()))
 			return ValidationResult.INVALID_GROUP_OWNER;
 
+		// Can't kick if not group's current owner
+		if (!admin.getAddress().equals(groupData.getOwner()))
+			return ValidationResult.INVALID_GROUP_OWNER;
+
 		// Check creator has enough funds
 		if (admin.getConfirmedBalance(Asset.QORT) < this.groupKickTransactionData.getFee())
 			return ValidationResult.NO_BALANCE;

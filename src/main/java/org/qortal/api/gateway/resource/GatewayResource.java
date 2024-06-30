@@ -41,7 +41,7 @@ public class GatewayResource {
     private ArbitraryResourceStatus getStatus(Service service, String name, String identifier, Boolean build) {
 
         // If "build=true" has been specified in the query string, build the resource before returning its status
-        if (build != null && build == true) {
+        if (build != null && build) {
             try {
                 ArbitraryDataReader reader = new ArbitraryDataReader(name, ArbitraryDataFile.ResourceIdType.NAME, service, null);
                 if (!reader.isBuilding()) {
@@ -80,7 +80,7 @@ public class GatewayResource {
     
     private HttpServletResponse parsePath(String inPath, String qdnContext, String secret58, boolean includeResourceIdInPrefix, boolean async) {
 
-        if (inPath == null || inPath.equals("")) {
+        if (inPath == null || inPath.isEmpty()) {
             // Assume not a real file
             return ArbitraryDataRenderer.getResponse(response, 404, "Error 404: File Not Found");
         }
@@ -140,7 +140,7 @@ public class GatewayResource {
         }
 
         String prefix = StringUtils.join(prefixParts, "/");
-        if (prefix != null && prefix.length() > 0) {
+        if (prefix != null && !prefix.isEmpty()) {
             prefix = "/" + prefix;
         }
 

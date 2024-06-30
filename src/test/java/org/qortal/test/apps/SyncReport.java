@@ -180,8 +180,7 @@ public class SyncReport {
 
 				// Sync went bad
 				syncEvent = null;
-				continue;
-			}
+            }
 		}
 
 		for (SyncEvent se : syncEvents) {

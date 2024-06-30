@@ -5290,7 +5290,7 @@ public final class Service {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vendor_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, vendor_);
       }
-      if (taddrSupport_ != false) {
+      if (taddrSupport_) {
         output.writeBool(3, taddrSupport_);
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(chainName_)) {
@@ -5341,7 +5341,7 @@ public final class Service {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vendor_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, vendor_);
       }
-      if (taddrSupport_ != false) {
+      if (taddrSupport_) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(3, taddrSupport_);
       }
@@ -5729,7 +5729,7 @@ public final class Service {
           vendor_ = other.vendor_;
           onChanged();
         }
-        if (other.getTaddrSupport() != false) {
+        if (other.getTaddrSupport()) {
           setTaddrSupport(other.getTaddrSupport());
         }
         if (!other.getChainName().isEmpty()) {

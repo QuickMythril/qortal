@@ -28,7 +28,7 @@ public class BlocksWebSocket extends ApiWebSocket implements Listener {
 	public void configure(WebSocketServletFactory factory) {
 		factory.register(BlocksWebSocket.class);
 
-		EventBus.INSTANCE.addListener(this::listen);
+		EventBus.INSTANCE.addListener(this);
 	}
 
 	@Override

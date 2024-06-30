@@ -29,7 +29,7 @@ public class TradePresenceWebSocket extends ApiWebSocket implements Listener {
 
 		populateCurrentInfo();
 
-		EventBus.INSTANCE.addListener(this::listen);
+		EventBus.INSTANCE.addListener(this);
 	}
 
 	@Override

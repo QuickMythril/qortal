@@ -199,7 +199,7 @@ public class ArbitraryDataRenderer {
     }
 
     private String getFilename(String directory, String userPath) {
-        if (userPath == null || userPath.endsWith("/") || userPath.equals("")) {
+        if (userPath == null || userPath.endsWith("/") || userPath.isEmpty()) {
             // Locate index file
             List<String> indexFiles = ArbitraryDataRenderer.indexFiles();
             for (String indexFile : indexFiles) {

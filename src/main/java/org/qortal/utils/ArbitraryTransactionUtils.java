@@ -398,7 +398,7 @@ public class ArbitraryTransactionUtils {
     public static ArbitraryResourceStatus getStatus(Service service, String name, String identifier, Boolean build, boolean updateCache) {
 
         // If "build" has been specified, build the resource before returning its status
-        if (build != null && build == true) {
+        if (build != null && build) {
             try {
                 ArbitraryDataReader reader = new ArbitraryDataReader(name, ArbitraryDataFile.ResourceIdType.NAME, service, identifier);
                 if (!reader.isBuilding()) {

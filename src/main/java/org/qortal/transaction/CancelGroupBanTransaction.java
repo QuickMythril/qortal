@@ -70,6 +70,10 @@ public class CancelGroupBanTransaction extends Transaction {
 		if (!this.repository.getGroupRepository().adminExists(groupId, admin.getAddress()))
 			return ValidationResult.NOT_GROUP_ADMIN;
 
+		// Can't unban if not group's current owner
+		if (!admin.getAddress().equals(groupData.getOwner()))
+			return ValidationResult.INVALID_GROUP_OWNER;
+
 		Account member = getMember();
 
 		// Check ban actually exists

@@ -605,7 +605,7 @@ public class ArbitraryDataFileListManager {
                         }
 
                         // Add the chunk hashes
-                        if (arbitraryDataFile.getChunkHashes().size() > 0) {
+                        if (!arbitraryDataFile.getChunkHashes().isEmpty()) {
                             requestedHashes.addAll(arbitraryDataFile.getChunkHashes());
                         }
                         // Add complete file if there are no hashes
@@ -641,7 +641,7 @@ public class ArbitraryDataFileListManager {
         }
 
         // We should only respond if we have at least one hash
-        if (hashes.size() > 0) {
+        if (!hashes.isEmpty()) {
 
             // Firstly we should keep track of the requesting peer, to allow for potential direct connections later
             ArbitraryDataFileManager.getInstance().addRecentDataRequest(requestingPeer);

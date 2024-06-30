@@ -132,7 +132,7 @@ public class AT {
 		// Nothing happened?
 		if (state.getSteps() == 0 && Arrays.equals(stateHash, latestAtStateData.getStateHash()))
 			// We currently want to execute frozen ATs, to maintain backwards support.
-			if (state.isFrozen() == false)
+			if (!state.isFrozen())
 				// this.atStateData will be null
 				return Collections.emptyList();
 

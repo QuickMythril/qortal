@@ -564,13 +564,40 @@ public class Controller extends Thread {
 
 		// If GUI is enabled, we're no longer starting up but actually running now
 		Gui.getInstance().notifyRunning();
+
+		// Check every 10 minutes to see if the block minter is running
+		Timer timer = new Timer();
+
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				if (blockMinter.isAlive()) {
+					LOGGER.debug("Block minter is running? {}", blockMinter.isAlive());
+				} else if (!blockMinter.isAlive()) {
+					LOGGER.debug("Block minter is running? {}", blockMinter.isAlive());
+					blockMinter.shutdown();
+
+					try {
+						// Wait 10 seconds before restart
+						TimeUnit.SECONDS.sleep(10);
+
+						// Start new block minter thread
+						LOGGER.info("Restarting block minter");
+						blockMinter.start();
+					} catch (InterruptedException e) {
+						// Couldn't start new block minter thread
+						LOGGER.info("Starting block minter failed {}", e);
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}, 10*60*1000, 10*60*1000);
 	}
 
 	/** Called by AdvancedInstaller's launch EXE in single-instance mode, when an instance is already running. */
 	public static void secondaryMain(String[] args) {
 		// Return as we don't want to run more than one instance
 	}
-
 
 	// Main thread
 
@@ -775,7 +802,7 @@ public class Controller extends Thread {
 
 	public static final Predicate<Peer> hasOldVersion = peer -> {
 		final String minPeerVersion = Settings.getInstance().getMinPeerVersion();
-		return peer.isAtLeastVersion(minPeerVersion) == false;
+		return !peer.isAtLeastVersion(minPeerVersion);
 	};
 
 	public static final Predicate<Peer> hasInvalidSigner = peer -> {
@@ -1921,8 +1948,7 @@ public class Controller extends Thread {
 			// Disregard peers that don't have a recent block
 			if (peerChainTipData.getTimestamp() == null || peerChainTipData.getTimestamp() < minLatestBlockTimestamp) {
 				iterator.remove();
-				continue;
-			}
+            }
 		}
 
 		return peers;
@@ -2002,5 +2028,4 @@ public class Controller extends Thread {
 	public StatsSnapshot getStatsSnapshot() {
 		return this.stats;
 	}
-
 }

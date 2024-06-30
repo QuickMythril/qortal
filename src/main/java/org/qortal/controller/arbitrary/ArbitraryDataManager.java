@@ -230,8 +230,7 @@ public class ArbitraryDataManager extends Thread {
 					// Remove transactions that we already have local data for
 					if (hasLocalData(arbitraryTransaction)) {
 						iterator.remove();
-						continue;
-					}
+                    }
 				}
 
 				if (signatures.isEmpty()) {
@@ -313,8 +312,7 @@ public class ArbitraryDataManager extends Thread {
 					// Remove transactions that we already have local data for
 					if (hasLocalMetadata(arbitraryTransaction)) {
 						iterator.remove();
-						continue;
-					}
+                    }
 				}
 
 				if (signatures.isEmpty()) {

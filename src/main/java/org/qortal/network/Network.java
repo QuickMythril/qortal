@@ -810,7 +810,7 @@ public class Network {
                 .filter(peer -> peer.hasReachedMaxConnectionAge())
                 .collect(Collectors.toList());
 
-        if (peersToDisconnect != null && peersToDisconnect.size() > 0) {
+        if (peersToDisconnect != null && !peersToDisconnect.isEmpty()) {
             for (Peer peer : peersToDisconnect) {
                 LOGGER.debug("Forcing disconnection of peer {} because connection age ({} ms) " +
                         "has reached the maximum ({} ms)", peer, peer.getConnectionAge(), peer.getMaxConnectionAge());

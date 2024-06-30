@@ -43,7 +43,7 @@ public class TradeBotWebSocket extends ApiWebSocket implements Listener {
 			// No output this time
 		}
 
-		EventBus.INSTANCE.addListener(this::listen);
+		EventBus.INSTANCE.addListener(this);
 	}
 
 	@Override

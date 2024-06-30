@@ -82,7 +82,7 @@ public class HTMLParser {
     }
 
     public static boolean isHtmlFile(String path) {
-        if (path.endsWith(".html") || path.endsWith(".htm") || path.equals("")) {
+        if (path.endsWith(".html") || path.endsWith(".htm") || path.isEmpty()) {
             return true;
         }
         return false;

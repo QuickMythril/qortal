@@ -207,7 +207,7 @@ public class NamesDatabaseIntegrityCheck {
                         // FUTURE: check database integrity for names that have been updated and then the original name re-registered
                         else if (Objects.equals(updateNameTransactionData.getName(), registeredName)) {
                             String newName = updateNameTransactionData.getNewName();
-                            if (newName == null || newName.length() == 0) {
+                            if (newName == null || newName.isEmpty()) {
                                 // If new name is blank (or maybe null, just to be safe), it means that it stayed the same
                                 newName = registeredName;
                             }

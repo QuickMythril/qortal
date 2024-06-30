@@ -724,8 +724,7 @@ public class TradeBot implements Listener {
 
 			} catch (DataException e) {
 				LOGGER.info("Unable to determine failed state of AT {}", crossChainTradeData.qortalAtAddress);
-				continue;
-			}
+            }
 		}
 
 		return updatedCrossChainTrades;

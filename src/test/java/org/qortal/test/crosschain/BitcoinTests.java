@@ -1,7 +1,5 @@
 package org.qortal.test.crosschain;
 
-import org.junit.Ignore;
-import org.junit.Test;
 import org.qortal.crosschain.Bitcoin;
 import org.qortal.crosschain.Bitcoiny;
 

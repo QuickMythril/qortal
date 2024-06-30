@@ -233,8 +233,7 @@ public class AddressesResource {
 					}
 
 				} catch (DataException e) {
-					continue;
-				}
+                }
 			}
 
 			// Sort by level

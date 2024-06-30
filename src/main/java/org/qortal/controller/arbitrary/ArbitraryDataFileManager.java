@@ -43,7 +43,7 @@ public class ArbitraryDataFileManager extends Thread {
     /**
      * Map to keep track of hashes that we might need to relay
      */
-    public List<ArbitraryRelayInfo> arbitraryRelayMap = Collections.synchronizedList(new ArrayList<>());
+    public final List<ArbitraryRelayInfo> arbitraryRelayMap = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * List to keep track of any arbitrary data file hash responses
@@ -53,7 +53,7 @@ public class ArbitraryDataFileManager extends Thread {
     /**
      * List to keep track of peers potentially available for direct connections, based on recent requests
      */
-    private List<ArbitraryDirectConnectionInfo> directConnectionInfo = Collections.synchronizedList(new ArrayList<>());
+    private final List<ArbitraryDirectConnectionInfo> directConnectionInfo = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Map to keep track of peers requesting QDN data that we hold.
