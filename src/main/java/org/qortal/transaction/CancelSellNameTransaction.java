@@ -65,9 +65,7 @@ public class CancelSellNameTransaction extends Transaction {
 
 		// Check name is currently for sale
 		if (!nameData.isForSale()) {
-			// Only validate after feature-trigger timestamp, due to a small number of double cancelations in the chain history
-			if (this.cancelSellNameTransactionData.getTimestamp() > BlockChain.getInstance().getCancelSellNameValidationTimestamp())
-				return ValidationResult.NAME_NOT_FOR_SALE;
+			return ValidationResult.NAME_NOT_FOR_SALE;
 		}
 
 		// Check transaction creator matches name's current owner

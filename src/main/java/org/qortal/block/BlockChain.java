@@ -81,7 +81,6 @@ public class BlockChain {
 		unconfirmableRewardSharesHeight,
 		disableTransferPrivsTimestamp,
 		enableTransferPrivsTimestamp,
-		cancelSellNameValidationTimestamp,
 		disableRewardshareHeight,
 		enableRewardshareHeight,
 		onlyMintWithNameHeight,
@@ -617,10 +616,6 @@ public class BlockChain {
 
 	public long getEnableTransferPrivsTimestamp() {
 		return this.featureTriggers.get(FeatureTrigger.enableTransferPrivsTimestamp.name()).longValue();
-	}
-
-	public long getCancelSellNameValidationTimestamp() {
-		return this.featureTriggers.get(FeatureTrigger.cancelSellNameValidationTimestamp.name()).longValue();
 	}
 
 	public int getDisableRewardshareHeight() {
