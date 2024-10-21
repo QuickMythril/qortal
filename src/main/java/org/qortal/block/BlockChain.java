@@ -80,7 +80,12 @@ public class BlockChain {
 		arbitraryOptionalFeeTimestamp,
 		unconfirmableRewardSharesHeight,
 		disableTransferPrivsTimestamp,
-		enableTransferPrivsTimestamp
+		enableTransferPrivsTimestamp,
+		cancelSellNameValidationTimestamp,
+		disableRewardshareHeight,
+		enableRewardshareHeight,
+		onlyMintWithNameHeight,
+		groupMemberCheckHeight
 	}
 
 	// Custom transaction fees
@@ -200,6 +205,7 @@ public class BlockChain {
 	private int minAccountLevelToRewardShare;
 	private int maxRewardSharesPerFounderMintingAccount;
 	private int founderEffectiveMintingLevel;
+	private int mintingGroupId;
 
 	/** Minimum time to retain online account signatures (ms) for block validity checks. */
 	private long onlineAccountSignaturesMinLifetime;
@@ -524,6 +530,10 @@ public class BlockChain {
 		return this.onlineAccountSignaturesMaxLifetime;
 	}
 
+	public int getMintingGroupId() {
+		return this.mintingGroupId;
+	}
+
 	public CiyamAtSettings getCiyamAtSettings() {
 		return this.ciyamAtSettings;
 	}
@@ -608,6 +618,26 @@ public class BlockChain {
 
 	public long getEnableTransferPrivsTimestamp() {
 		return this.featureTriggers.get(FeatureTrigger.enableTransferPrivsTimestamp.name()).longValue();
+	}
+
+	public long getCancelSellNameValidationTimestamp() {
+		return this.featureTriggers.get(FeatureTrigger.cancelSellNameValidationTimestamp.name()).longValue();
+	}
+
+	public int getDisableRewardshareHeight() {
+		return this.featureTriggers.get(FeatureTrigger.disableRewardshareHeight.name()).intValue();
+	}
+
+	public int getEnableRewardshareHeight() {
+		return this.featureTriggers.get(FeatureTrigger.enableRewardshareHeight.name()).intValue();
+	}
+
+	public int getOnlyMintWithNameHeight() {
+		return this.featureTriggers.get(FeatureTrigger.onlyMintWithNameHeight.name()).intValue();
+	}
+
+	public int getGroupMemberCheckHeight() {
+		return this.featureTriggers.get(FeatureTrigger.groupMemberCheckHeight.name()).intValue();
 	}
 
 	// More complex getters for aspects that change by height or timestamp
@@ -805,10 +835,12 @@ public class BlockChain {
 		boolean isLite = Settings.getInstance().isLite();
 		boolean canBootstrap = Settings.getInstance().getBootstrap();
 		boolean needsArchiveRebuild = false;
+		int checkHeight = 0;
 		BlockData chainTip;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			chainTip = repository.getBlockRepository().getLastBlock();
+			checkHeight = repository.getBlockRepository().getBlockchainHeight();
 
 			// Ensure archive is (at least partially) intact, and force a bootstrap if it isn't
 			if (!isTopOnly && archiveEnabled && canBootstrap) {
@@ -820,6 +852,17 @@ public class BlockChain {
 					// Don't backup if there are no minting accounts, as this can cause problems
 					if (!repository.getAccountRepository().getMintingAccounts().isEmpty()) {
 						Controller.getInstance().exportRepositoryData();
+					}
+				}
+			}
+
+			if (!canBootstrap) {
+				if (checkHeight > 2) {
+					LOGGER.info("Retrieved block 2 from archive. Syncing from genesis block resumed!");
+				} else {
+					needsArchiveRebuild = (repository.getBlockArchiveRepository().fromHeight(2) == null);
+					if (needsArchiveRebuild) {
+						LOGGER.info("Couldn't retrieve block 2 from archive. Bootstrapping is disabled. Syncing from genesis block!");
 					}
 				}
 			}
@@ -856,11 +899,12 @@ public class BlockChain {
 
 		// Check first block is Genesis Block
 		if (!isGenesisBlockValid() || needsArchiveRebuild) {
-			try {
-				rebuildBlockchain();
-
-			} catch (InterruptedException e) {
-				throw new DataException(String.format("Interrupted when trying to rebuild blockchain: %s", e.getMessage()));
+			if (checkHeight < 3) {
+				try {
+					rebuildBlockchain();
+				} catch (InterruptedException e) {
+					throw new DataException(String.format("Interrupted when trying to rebuild blockchain: %s", e.getMessage()));
+				}
 			}
 		}
 

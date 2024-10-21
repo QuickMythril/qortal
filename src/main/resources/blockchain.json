@@ -37,6 +37,7 @@
 	"blockRewardBatchStartHeight": 1508000,
 	"blockRewardBatchSize": 1000,
 	"blockRewardBatchAccountsBlockCount": 25,
+	"mintingGroupId": 694,
 	"rewardsByHeight": [
 		{ "height": 1, "reward": 5.00 },
 		{ "height": 259201, "reward": 4.75 },
@@ -103,7 +104,12 @@
 		"arbitraryOptionalFeeTimestamp": 1680278400000,
 		"unconfirmableRewardSharesHeight": 1575500,
 		"disableTransferPrivsTimestamp": 1706745000000,
-		"enableTransferPrivsTimestamp": 1709251200000
+		"enableTransferPrivsTimestamp": 1709251200000,
+		"cancelSellNameValidationTimestamp": 1676986362069,
+		"disableRewardshareHeight": 1899100,
+		"enableRewardshareHeight": 1905100,
+		"onlyMintWithNameHeight": 1900300,
+		"groupMemberCheckHeight": 1902700
 	},
 	"checkpoints": [
 		{ "height": 1136300, "signature": "3BbwawEF2uN8Ni5ofpJXkukoU8ctAPxYoFB7whq9pKfBnjfZcpfEJT4R95NvBDoTP8WDyWvsUvbfHbcr9qSZuYpSKZjUQTvdFf6eqznHGEwhZApWfvXu6zjGCxYCp65F4jsVYYJjkzbjmkCg5WAwN5voudngA23kMK6PpTNygapCzXt" }

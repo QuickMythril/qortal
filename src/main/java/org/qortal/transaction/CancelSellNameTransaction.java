@@ -3,6 +3,7 @@ package org.qortal.transaction;
 import com.google.common.base.Utf8;
 import org.qortal.account.Account;
 import org.qortal.asset.Asset;
+import org.qortal.block.BlockChain;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.data.naming.NameData;
 import org.qortal.data.transaction.CancelSellNameTransactionData;
@@ -63,8 +64,11 @@ public class CancelSellNameTransaction extends Transaction {
 			return ValidationResult.NAME_DOES_NOT_EXIST;
 
 		// Check name is currently for sale
-		if (!nameData.isForSale())
-			return ValidationResult.NAME_NOT_FOR_SALE;
+		if (!nameData.isForSale()) {
+			// Only validate after feature-trigger timestamp, due to a small number of double cancelations in the chain history
+			if (this.cancelSellNameTransactionData.getTimestamp() > BlockChain.getInstance().getCancelSellNameValidationTimestamp())
+				return ValidationResult.NAME_NOT_FOR_SALE;
+		}
 
 		// Check transaction creator matches name's current owner
 		Account owner = getOwner();
