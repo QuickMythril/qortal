@@ -40,7 +40,7 @@ public class PruneManager {
     }
 
     public void start() {
-        this.executorService = Executors.newCachedThreadPool(new DaemonThreadFactory());
+        this.executorService = Executors.newCachedThreadPool(new DaemonThreadFactory(Settings.getInstance().getPruningThreadPriority()));
 
         if (Settings.getInstance().isTopOnly()) {
             // Top-only-sync

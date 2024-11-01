@@ -269,7 +269,7 @@ public enum Handshake {
 	private static final int POW_DIFFICULTY_POST_131 = 2; // leading zero bits
 
 
-	private static final ExecutorService responseExecutor = Executors.newFixedThreadPool(Settings.getInstance().getNetworkPoWComputePoolSize(), new DaemonThreadFactory("Network-PoW"));
+	private static final ExecutorService responseExecutor = Executors.newFixedThreadPool(Settings.getInstance().getNetworkPoWComputePoolSize(), new DaemonThreadFactory("Network-PoW", Settings.getInstance().getHandshakeThreadPriority()));
 
 	private static final byte[] ZERO_CHALLENGE = new byte[ChallengeMessage.CHALLENGE_LENGTH];
 

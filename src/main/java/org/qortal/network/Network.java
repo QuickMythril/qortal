@@ -168,7 +168,7 @@ public class Network {
                 Settings.getInstance().getMaxNetworkThreadPoolSize(),
                 NETWORK_EPC_KEEPALIVE, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(),
-                new NamedThreadFactory("Network-EPC"));
+                new NamedThreadFactory("Network-EPC", Settings.getInstance().getNetworkThreadPriority()));
         networkEPC = new NetworkProcessor(networkExecutor);
     }
 

@@ -13,6 +13,7 @@ import org.qortal.block.Block;
 import org.qortal.block.BlockChain;
 import org.qortal.block.BlockChain.BlockTimingByHeight;
 import org.qortal.controller.arbitrary.*;
+import org.qortal.controller.hsqldb.HSQLDBDataCacheManager;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.controller.repository.PruneManager;
 import org.qortal.controller.tradebot.TradeBot;
@@ -35,6 +36,7 @@ import org.qortal.network.Peer;
 import org.qortal.network.PeerAddress;
 import org.qortal.network.message.*;
 import org.qortal.repository.*;
+import org.qortal.repository.hsqldb.HSQLDBRepository;
 import org.qortal.repository.hsqldb.HSQLDBRepositoryFactory;
 import org.qortal.settings.Settings;
 import org.qortal.transaction.Transaction;
@@ -408,6 +410,15 @@ public class Controller extends Thread {
 			try (final Repository repository = RepositoryManager.getRepository()) {
 				RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
+
+				if( Settings.getInstance().isDbCacheEnabled() ) {
+					LOGGER.info("Db Cache Starting ...");
+					HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager((HSQLDBRepository) repositoryFactory.getRepository());
+					hsqldbDataCacheManager.start();
+				}
+				else {
+					LOGGER.info("Db Cache Disabled");
+				}
 			}
 		} catch (DataException e) {
 			// If exception has no cause or message then repository is in use by some other process.

@@ -1215,7 +1215,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 				sponseeSql.append(")");
 
 				// Create a new array to hold both
-				String[] combinedArray = new String[realRewardShareRecipients.length + 1];
+				Object[] combinedArray = new Object[realRewardShareRecipients.length + 1];
 
 				// Add the single string to the first position
 				combinedArray[0] = account;
@@ -1439,7 +1439,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 		sql.append(String.join(", ", Collections.nCopies(addressCount, "?")));
 		sql.append(") ");
 		sql.append("AND a.account = tx.recipient AND a.public_key != ats.creator AND asset_id = 0 ");
-		String[] sponsees = addresses.toArray(new String[addressCount]);
+		Object[] sponsees = addresses.toArray(new Object[addressCount]);
 		ResultSet buySellResultSet = this.repository.checkedExecute(sql.toString(), sponsees);
 
 		return buySellResultSet;
@@ -1456,7 +1456,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 		sql.append(String.join(", ", Collections.nCopies(addressCount, "?")));
 		sql.append(") ");
 		sql.append("AND a.account != tx.recipient AND asset_id = 0 ");
-		String[] sponsees = addresses.toArray(new String[addressCount]);
+		Object[] sponsees = addresses.toArray(new Object[addressCount]);
 
 		return this.repository.checkedExecute(sql.toString(), sponsees);
 	}
@@ -1490,7 +1490,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 		txTypeTotalsSql.append(") and type in (10, 12, 40) ");
 		txTypeTotalsSql.append("group by type order by type");
 
-		String[] sponsees = sponseeAddresses.toArray(new String[sponseeCount]);
+		Object[] sponsees = sponseeAddresses.toArray(new Object[sponseeCount]);
 		ResultSet txTypeResultSet = this.repository.checkedExecute(txTypeTotalsSql.toString(), sponsees);
 		return txTypeResultSet;
 	}
@@ -1502,7 +1502,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 		avgBalanceSql.append(String.join(", ", Collections.nCopies(sponseeCount, "?")));
 		avgBalanceSql.append(") and ASSET_ID = 0");
 
-		String[] sponsees = sponseeAddresses.toArray(new String[sponseeCount]);
+		Object[] sponsees = sponseeAddresses.toArray(new Object[sponseeCount]);
 		return this.repository.checkedExecute(avgBalanceSql.toString(), sponsees);
 	}
 
@@ -1538,7 +1538,7 @@ public class HSQLDBAccountRepository implements AccountRepository {
 		namesSql.append(String.join(", ", Collections.nCopies(sponseeCount, "?")));
 		namesSql.append(")");
 
-		String[] sponsees = sponseeAddresses.toArray(new String[sponseeCount]);
+		Object[] sponsees = sponseeAddresses.toArray(new Object[sponseeCount]);
 		ResultSet namesResultSet = this.repository.checkedExecute(namesSql.toString(), sponsees);
 		return namesResultSet;
 	}
