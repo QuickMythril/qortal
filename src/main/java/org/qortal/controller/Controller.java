@@ -101,7 +101,7 @@ public class Controller extends Thread {
 	private final long buildTimestamp; // seconds
 	private final String[] savedArgs;
 
-	private ExecutorService callbackExecutor = Executors.newFixedThreadPool(3);
+	private ExecutorService callbackExecutor = Executors.newFixedThreadPool(4);
 	private volatile boolean notifyGroupMembershipChange = false;
 
 	/** Latest blocks on our chain. Note: tail/last is the latest block. */
@@ -408,7 +408,7 @@ public class Controller extends Thread {
 			RepositoryManager.setRequestedCheckpoint(Boolean.TRUE);
 
 			try (final Repository repository = RepositoryManager.getRepository()) {
-				RepositoryManager.rebuildTransactionSequences(repository);
+				// RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
 
 				if( Settings.getInstance().isDbCacheEnabled() ) {

@@ -11,6 +11,8 @@ import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
 import org.qortal.utils.NTP;
 
+import static java.lang.Thread.MIN_PRIORITY;
+
 public class AtStatesTrimmer implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(AtStatesTrimmer.class);
@@ -18,6 +20,7 @@ public class AtStatesTrimmer implements Runnable {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("AT States trimmer");
+		Thread.currentThread().setPriority(MIN_PRIORITY);
 
 		if (Settings.getInstance().isLite()) {
 			// Nothing to trim in lite mode

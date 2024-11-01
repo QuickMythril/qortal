@@ -41,6 +41,7 @@ public class ArbitraryDataCacheManager extends Thread {
     @Override
     public void run() {
         Thread.currentThread().setName("Arbitrary Data Cache Manager");
+        Thread.currentThread().setPriority(NORM_PRIORITY);
 
         try {
             while (!Controller.isStopping()) {

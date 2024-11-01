@@ -72,6 +72,7 @@ public class ArbitraryDataStorageManager extends Thread {
     @Override
     public void run() {
         Thread.currentThread().setName("Arbitrary Data Storage Manager");
+        Thread.currentThread().setPriority(NORM_PRIORITY);
         try {
             while (!isStopping) {
                 Thread.sleep(1000);

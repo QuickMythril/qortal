@@ -12,6 +12,8 @@ import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
 import org.qortal.utils.NTP;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class OnlineAccountsSignaturesTrimmer implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(OnlineAccountsSignaturesTrimmer.class);
@@ -20,6 +22,7 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 
 	public void run() {
 		Thread.currentThread().setName("Online Accounts trimmer");
+		Thread.currentThread().setPriority(NORM_PRIORITY);
 
 		if (Settings.getInstance().isLite()) {
 			// Nothing to trim in lite mode

@@ -64,6 +64,7 @@ public class BlockMinter extends Thread {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("BlockMinter");
+		Thread.currentThread().setPriority(MAX_PRIORITY);
 
 		if (Settings.getInstance().isTopOnly() || Settings.getInstance().isLite()) {
 			// Top only and lite nodes do not sign blocks

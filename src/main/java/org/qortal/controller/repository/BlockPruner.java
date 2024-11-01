@@ -11,6 +11,8 @@ import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
 import org.qortal.utils.NTP;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class BlockPruner implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(BlockPruner.class);
@@ -18,6 +20,7 @@ public class BlockPruner implements Runnable {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("Block pruner");
+		Thread.currentThread().setPriority(NORM_PRIORITY);
 
 		if (Settings.getInstance().isLite()) {
 			// Nothing to prune in lite mode

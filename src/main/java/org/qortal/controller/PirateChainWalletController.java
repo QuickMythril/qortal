@@ -65,6 +65,7 @@ public class PirateChainWalletController extends Thread {
     @Override
     public void run() {
         Thread.currentThread().setName("Pirate Chain Wallet Controller");
+        Thread.currentThread().setPriority(MIN_PRIORITY);
 
         try {
             while (running && !Controller.isStopping()) {

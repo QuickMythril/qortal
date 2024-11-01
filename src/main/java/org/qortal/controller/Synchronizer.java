@@ -132,6 +132,7 @@ public class Synchronizer extends Thread {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("Synchronizer");
+		Thread.currentThread().setPriority(MAX_PRIORITY);
 
 		if (Settings.getInstance().isLite()) {
 			// Lite nodes don't need to sync

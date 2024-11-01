@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class ArbitraryDataFileRequestThread implements Runnable {
 
     private static final Logger LOGGER = LogManager.getLogger(ArbitraryDataFileRequestThread.class);
@@ -28,6 +30,7 @@ public class ArbitraryDataFileRequestThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName("Arbitrary Data File Request Thread");
+        Thread.currentThread().setPriority(NORM_PRIORITY);
 
         try {
             while (!Controller.isStopping()) {

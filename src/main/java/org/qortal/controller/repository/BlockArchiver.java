@@ -15,6 +15,8 @@ import org.qortal.utils.NTP;
 
 import java.io.IOException;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class BlockArchiver implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(BlockArchiver.class);
@@ -23,6 +25,7 @@ public class BlockArchiver implements Runnable {
 
 	public void run() {
 		Thread.currentThread().setName("Block archiver");
+		Thread.currentThread().setPriority(NORM_PRIORITY);
 
 		if (!Settings.getInstance().isArchiveEnabled() || Settings.getInstance().isLite()) {
 			return;
