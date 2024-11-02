@@ -33,9 +33,10 @@ public class AddressLevelPairing {
 	public int getLevel() {
 		return level;
 	}
+
 	@Override
 	public String toString() {
-		return "SponsorshipReport{" +
+		return "AddressLevelPairing{" +
 				"address='" + address + '\'' +
 				", level=" + level +
 				'}';

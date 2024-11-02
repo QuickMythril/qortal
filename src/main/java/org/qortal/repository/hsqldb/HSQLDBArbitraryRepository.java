@@ -7,6 +7,8 @@ import org.qortal.arbitrary.ArbitraryDataFile;
 import org.qortal.arbitrary.metadata.ArbitraryDataTransactionMetadata;
 import org.qortal.arbitrary.misc.Category;
 import org.qortal.arbitrary.misc.Service;
+import org.qortal.controller.arbitrary.ArbitraryDataManager;
+import org.qortal.data.arbitrary.ArbitraryResourceCache;
 import org.qortal.data.arbitrary.ArbitraryResourceData;
 import org.qortal.data.arbitrary.ArbitraryResourceMetadata;
 import org.qortal.data.arbitrary.ArbitraryResourceStatus;
@@ -18,6 +20,7 @@ import org.qortal.data.transaction.BaseTransactionData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.repository.ArbitraryRepository;
 import org.qortal.repository.DataException;
+import org.qortal.settings.Settings;
 import org.qortal.transaction.ArbitraryTransaction;
 import org.qortal.transaction.Transaction.ApprovalStatus;
 import org.qortal.utils.Base58;
@@ -28,6 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 
@@ -723,6 +727,50 @@ public class HSQLDBArbitraryRepository implements ArbitraryRepository {
 	public List<ArbitraryResourceData> searchArbitraryResources(Service service, String query, String identifier, List<String> names, String title, String description, boolean prefixOnly,
 																List<String> exactMatchNames, boolean defaultResource, SearchMode mode, Integer minLevel, Boolean followedOnly, Boolean excludeBlocked,
 																Boolean includeMetadata, Boolean includeStatus, Long before, Long after, Integer limit, Integer offset, Boolean reverse) throws DataException {
+
+		if(Settings.getInstance().isDbCacheEnabled()) {
+
+			List<ArbitraryResourceData> list
+				= HSQLDBCacheUtils.callCache(
+					ArbitraryResourceCache.getInstance(),
+					service, query, identifier, names, title, description, prefixOnly, exactMatchNames,
+					defaultResource, mode, minLevel, followedOnly, excludeBlocked, includeMetadata, includeStatus,
+					before, after, limit, offset, reverse);
+
+			if( !list.isEmpty() ) {
+				List<ArbitraryResourceData> results
+					= HSQLDBCacheUtils.filterList(
+						list,
+						ArbitraryResourceCache.getInstance().getLevelByName(),
+						Optional.ofNullable(mode),
+						Optional.ofNullable(service),
+						Optional.ofNullable(query),
+						Optional.ofNullable(identifier),
+						Optional.ofNullable(names),
+						Optional.ofNullable(title),
+						Optional.ofNullable(description),
+						prefixOnly,
+						Optional.ofNullable(exactMatchNames),
+						defaultResource,
+						Optional.ofNullable(minLevel),
+						Optional.ofNullable(() -> ListUtils.followedNames()),
+						Optional.ofNullable(ListUtils::blockedNames),
+						Optional.ofNullable(includeMetadata),
+						Optional.ofNullable(includeStatus),
+						Optional.ofNullable(before),
+						Optional.ofNullable(after),
+						Optional.ofNullable(limit),
+						Optional.ofNullable(offset),
+						Optional.ofNullable(reverse)
+				);
+
+				return results;
+			}
+			else {
+				LOGGER.info("Db Enabled Cache has zero candidates.");
+			}
+		}
+
 		StringBuilder sql = new StringBuilder(512);
 		List<Object> bindParams = new ArrayList<>();
 

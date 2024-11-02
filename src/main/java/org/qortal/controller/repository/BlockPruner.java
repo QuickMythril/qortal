@@ -11,6 +11,8 @@ import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
 import org.qortal.utils.NTP;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class BlockPruner implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(BlockPruner.class);
@@ -48,72 +50,81 @@ public class BlockPruner implements Runnable {
 			}
 
 			while (!Controller.isStopping()) {
-				repository.discardChanges();
+				try {
+					repository.discardChanges();
 
-				Thread.sleep(Settings.getInstance().getBlockPruneInterval());
+					Thread.sleep(Settings.getInstance().getBlockPruneInterval());
 
-				BlockData chainTip = Controller.getInstance().getChainTip();
-				if (chainTip == null || NTP.getTime() == null)
-					continue;
+					BlockData chainTip = Controller.getInstance().getChainTip();
+					if (chainTip == null || NTP.getTime() == null)
+						continue;
 
-				// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-				if (Synchronizer.getInstance().isSynchronizing()) {
-					continue;
-				}
+					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
+					if (Synchronizer.getInstance().isSynchronizing()) {
+						continue;
+					}
 
-				// Don't attempt to prune if we're not synced yet
-				final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
-				if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
-					continue;
-				}
+					// Don't attempt to prune if we're not synced yet
+					final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
+					if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
+						continue;
+					}
 
-				// Prune all blocks up until our latest minus pruneBlockLimit
-				final int ourLatestHeight = chainTip.getHeight();
-				int upperPrunableHeight = ourLatestHeight - Settings.getInstance().getPruneBlockLimit();
+					// Prune all blocks up until our latest minus pruneBlockLimit
+					final int ourLatestHeight = chainTip.getHeight();
+					int upperPrunableHeight = ourLatestHeight - Settings.getInstance().getPruneBlockLimit();
 
-				// In archive mode we are only allowed to trim blocks that have already been archived
-				if (archiveMode) {
-					upperPrunableHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1;
-				}
+					// In archive mode we are only allowed to trim blocks that have already been archived
+					if (archiveMode) {
+						upperPrunableHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1;
+					}
 
-				int upperBatchHeight = pruneStartHeight + Settings.getInstance().getBlockPruneBatchSize();
-				int upperPruneHeight = Math.min(upperBatchHeight, upperPrunableHeight);
+					int upperBatchHeight = pruneStartHeight + Settings.getInstance().getBlockPruneBatchSize();
+					int upperPruneHeight = Math.min(upperBatchHeight, upperPrunableHeight);
 
-				if (pruneStartHeight >= upperPruneHeight) {
-					continue;
-				}
+					if (pruneStartHeight >= upperPruneHeight) {
+						continue;
+					}
 
-				LOGGER.debug(String.format("Pruning blocks between %d and %d...", pruneStartHeight, upperPruneHeight));
+					LOGGER.info(String.format("Pruning blocks between %d and %d...", pruneStartHeight, upperPruneHeight));
 
-				int numBlocksPruned = repository.getBlockRepository().pruneBlocks(pruneStartHeight, upperPruneHeight);
-				repository.saveChanges();
-
-				if (numBlocksPruned > 0) {
-					LOGGER.debug(String.format("Pruned %d block%s between %d and %d",
-							numBlocksPruned, (numBlocksPruned != 1 ? "s" : ""),
-							pruneStartHeight, upperPruneHeight));
-				} else {
-					final int nextPruneHeight = upperPruneHeight + 1;
-					repository.getBlockRepository().setBlockPruneHeight(nextPruneHeight);
+					int numBlocksPruned = repository.getBlockRepository().pruneBlocks(pruneStartHeight, upperPruneHeight);
 					repository.saveChanges();
-					LOGGER.debug(String.format("Bumping block base prune height to %d", pruneStartHeight));
 
-					// Can we move onto next batch?
-					if (upperPrunableHeight > nextPruneHeight) {
-						pruneStartHeight = nextPruneHeight;
+					if (numBlocksPruned > 0) {
+						LOGGER.info(String.format("Pruned %d block%s between %d and %d",
+								numBlocksPruned, (numBlocksPruned != 1 ? "s" : ""),
+								pruneStartHeight, upperPruneHeight));
+					} else {
+						final int nextPruneHeight = upperPruneHeight + 1;
+						repository.getBlockRepository().setBlockPruneHeight(nextPruneHeight);
+						repository.saveChanges();
+						LOGGER.info(String.format("Bumping block base prune height to %d", pruneStartHeight));
+
+						// Can we move onto next batch?
+						if (upperPrunableHeight > nextPruneHeight) {
+							pruneStartHeight = nextPruneHeight;
+						}
+						else {
+							// We've pruned up to the upper prunable height
+							// Back off for a while to save CPU for syncing
+							repository.discardChanges();
+							Thread.sleep(10*60*1000L);
+						}
+					}
+				} catch (InterruptedException e) {
+					if(Controller.isStopping()) {
+						LOGGER.info("Block Pruning Shutting Down");
 					}
 					else {
-						// We've pruned up to the upper prunable height
-						// Back off for a while to save CPU for syncing
-						repository.discardChanges();
-						Thread.sleep(10*60*1000L);
+						LOGGER.warn("Block Pruning interrupted. Trying again. Report this error immediately to the developers.", e);
 					}
+				} catch (Exception e) {
+					LOGGER.warn("Block Pruning stopped working. Trying again. Report this error immediately to the developers.", e);
 				}
 			}
-		} catch (DataException e) {
-			LOGGER.warn(String.format("Repository issue trying to prune blocks: %s", e.getMessage()));
-		} catch (InterruptedException e) {
-			// Time to exit
+		} catch (Exception e) {
+			LOGGER.error("Block Pruning is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
 	}
 
