@@ -54,6 +54,7 @@ public class Settings {
 
 	// Settings, and other config files
 	private String userPath;
+	private String settingsFilePath;
 
 	// General
 	private String localeLang = Locale.getDefault().getLanguage();
@@ -556,6 +557,7 @@ public class Settings {
 
 		// Minor fix-up
 		settings.userPath = path;
+		settings.settingsFilePath = path + filename;
 
 		// Successfully read settings now in effect
 		instance = settings;
@@ -1131,5 +1133,67 @@ public class Settings {
 
 	public Integer getThreadCountPerMessageTypeWarningThreshold() {
 		return this.threadCountPerMessageTypeWarningThreshold;
+	}
+
+	public synchronized boolean setAndSaveSetting(String setting, String value) {
+	    try {
+	        Field field = this.getClass().getDeclaredField(setting);
+	        field.setAccessible(true);
+	        // Cast the value to the correct type
+	        Object castValue = castToFieldType(field.getType(), value);
+	        field.set(this, castValue);
+	        // Save to settings file
+	        saveToFile();
+	        return true;
+	    } catch (NoSuchFieldException | IllegalAccessException | JAXBException | IOException e) {
+	        LOGGER.error("Failed to set and save setting: " + setting, e);
+	        return false;
+	    } catch (Exception e) {
+	        LOGGER.error("Unexpected error when setting and saving setting: " + setting, e);
+	        return false;
+	    }
+	}
+
+	private Object castToFieldType(Class<?> fieldType, String value) {
+	    if (fieldType == boolean.class || fieldType == Boolean.class) return Boolean.parseBoolean(value);
+	    if (fieldType == int.class || fieldType == Integer.class) return Integer.parseInt(value);
+	    if (fieldType == long.class || fieldType == Long.class) return Long.parseLong(value);
+	    if (fieldType == double.class || fieldType == Double.class) return Double.parseDouble(value);
+	    if (fieldType == float.class || fieldType == Float.class) return Float.parseFloat(value);
+	    if (fieldType == String.class) return value;
+	    // Handle arrays of strings
+	    if (fieldType == String[].class) {
+	        // Assume value is a comma-separated list
+	        return value.split(",");
+	    }
+    	// Handle List<String>
+    	if (List.class.isAssignableFrom(fieldType)) {
+    	    // Assume value is a comma-separated list
+    	    return Arrays.asList(value.split(","));
+    	}
+    	// Handle enums
+    	if (fieldType.isEnum()) {
+        	return Enum.valueOf((Class<Enum>) fieldType, value);
+    	}
+	    // For other types, return the value as is
+    	return value;
+	}
+
+	private void saveToFile() throws JAXBException, IOException {
+	    JAXBContext jc = JAXBContextFactory.createContext(new Class[]{Settings.class}, null);
+    	Marshaller marshaller = jc.createMarshaller();
+	    marshaller.setProperty(MarshallerProperties.MEDIA_TYPE, "application/json");
+	    marshaller.setProperty(MarshallerProperties.JSON_INCLUDE_ROOT, false);
+	    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    	// Write to a temporary file first
+    	File tempFile = new File(this.settingsFilePath + ".tmp");
+    	try (FileWriter writer = new FileWriter(tempFile)) {
+    	    marshaller.marshal(this, writer);
+    	}
+	    // Rename the temp file to the actual settings file
+	    File settingsFile = new File(this.settingsFilePath);
+	    if (!tempFile.renameTo(settingsFile)) {
+	        throw new IOException("Failed to rename temp settings file to " + this.settingsFilePath);
+	    }
 	}
 }

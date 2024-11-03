@@ -198,6 +198,32 @@ public class AdminResource {
 		}
 	}
 
+	@POST
+	@Path("/settings/{setting}")
+	@Operation(
+		summary = "Set a single node setting",
+		requestBody = @RequestBody(
+			required = true,
+			content = @Content(
+				mediaType = MediaType.TEXT_PLAIN,
+				schema = @Schema(type = "string", example = "new_value")
+			)
+		),
+		responses = {
+			@ApiResponse(
+				description = "\"true\" if success, \"false\" otherwise",
+				content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string"))
+			)
+		}
+	)
+	@SecurityRequirement(name = "apiKey")
+	public String setSetting(@HeaderParam(Security.API_KEY_HEADER) String apiKey, @PathParam("setting") String setting, String value) {
+		Security.checkApiCallAllowed(request);
+
+		boolean success = Settings.getInstance().setAndSaveSetting(setting, value);
+		return success ? "true" : "false";
+	}
+
 	@GET
 	@Path("/stop")
 	@Operation(
