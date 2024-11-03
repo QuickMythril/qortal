@@ -96,7 +96,8 @@
 		"arbitraryOptionalFeeTimestamp": 0,
 		"unconfirmableRewardSharesHeight": 99999999,
 		"disableTransferPrivsTimestamp": 9999999999500,
-		"enableTransferPrivsTimestamp": 9999999999950
+		"enableTransferPrivsTimestamp": 9999999999950,
+		"cancelSellNameValidationTimestamp": 9999999999999
 	},
 	"genesisInfo": {
 		"version": 4,
