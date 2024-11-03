@@ -98,7 +98,8 @@
 		"disableTransferPrivsTimestamp": 9999999999500,
 		"enableTransferPrivsTimestamp": 9999999999950,
 		"cancelSellNameValidationTimestamp": 9999999999999,
-		"disableRewardshareHeight": 9999999999990
+		"disableRewardshareHeight": 9999999999990,
+		"enableRewardshareHeight": 9999999999999
 	},
 	"genesisInfo": {
 		"version": 4,
