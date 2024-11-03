@@ -100,7 +100,8 @@
 		"cancelSellNameValidationTimestamp": 9999999999999,
 		"disableRewardshareHeight": 9999999999990,
 		"enableRewardshareHeight": 9999999999999,
-		"onlyMintWithNameHeight": 9999999999999
+		"onlyMintWithNameHeight": 9999999999999,
+		"groupMemberCheckHeight": 9999999999999
 	},
 	"genesisInfo": {
 		"version": 4,
