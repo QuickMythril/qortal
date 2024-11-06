@@ -91,6 +91,7 @@ public class ArbitraryDataManager extends Thread {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("Arbitrary Data Manager");
+		Thread.currentThread().setPriority(NORM_PRIORITY);
 
 		// Create data directory in case it doesn't exist yet
 		this.createDataDirectory();

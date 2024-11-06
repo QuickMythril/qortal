@@ -12,6 +12,8 @@ import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
 import org.qortal.utils.NTP;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class OnlineAccountsSignaturesTrimmer implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(OnlineAccountsSignaturesTrimmer.class);
@@ -33,53 +35,62 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 			int trimStartHeight = repository.getBlockRepository().getOnlineAccountsSignaturesTrimHeight();
 
 			while (!Controller.isStopping()) {
-				repository.discardChanges();
+				try {
+					repository.discardChanges();
 
-				Thread.sleep(Settings.getInstance().getOnlineSignaturesTrimInterval());
+					Thread.sleep(Settings.getInstance().getOnlineSignaturesTrimInterval());
 
-				BlockData chainTip = Controller.getInstance().getChainTip();
-				if (chainTip == null || NTP.getTime() == null)
-					continue;
+					BlockData chainTip = Controller.getInstance().getChainTip();
+					if (chainTip == null || NTP.getTime() == null)
+						continue;
 
-				// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-				if (Synchronizer.getInstance().isSynchronizing())
-					continue;
+					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
+					if (Synchronizer.getInstance().isSynchronizing())
+						continue;
 
-				// Trim blockchain by removing 'old' online accounts signatures
-				long upperTrimmableTimestamp = NTP.getTime() - BlockChain.getInstance().getOnlineAccountSignaturesMaxLifetime();
-				int upperTrimmableHeight = repository.getBlockRepository().getHeightFromTimestamp(upperTrimmableTimestamp);
+					// Trim blockchain by removing 'old' online accounts signatures
+					long upperTrimmableTimestamp = NTP.getTime() - BlockChain.getInstance().getOnlineAccountSignaturesMaxLifetime();
+					int upperTrimmableHeight = repository.getBlockRepository().getHeightFromTimestamp(upperTrimmableTimestamp);
 
-				int upperBatchHeight = trimStartHeight + Settings.getInstance().getOnlineSignaturesTrimBatchSize();
-				int upperTrimHeight = Math.min(upperBatchHeight, upperTrimmableHeight);
+					int upperBatchHeight = trimStartHeight + Settings.getInstance().getOnlineSignaturesTrimBatchSize();
+					int upperTrimHeight = Math.min(upperBatchHeight, upperTrimmableHeight);
 
-				if (trimStartHeight >= upperTrimHeight)
-					continue;
+					if (trimStartHeight >= upperTrimHeight)
+						continue;
 
-				int numSigsTrimmed = repository.getBlockRepository().trimOldOnlineAccountsSignatures(trimStartHeight, upperTrimHeight);
-				repository.saveChanges();
+					int numSigsTrimmed = repository.getBlockRepository().trimOldOnlineAccountsSignatures(trimStartHeight, upperTrimHeight);
+					repository.saveChanges();
 
-				if (numSigsTrimmed > 0) {
-					final int finalTrimStartHeight = trimStartHeight;
-					LOGGER.debug(() -> String.format("Trimmed %d online accounts signature%s between blocks %d and %d",
-							numSigsTrimmed, (numSigsTrimmed != 1 ? "s" : ""),
-							finalTrimStartHeight, upperTrimHeight));
-				} else {
-					// Can we move onto next batch?
-					if (upperTrimmableHeight > upperBatchHeight) {
-						trimStartHeight = upperBatchHeight;
-
-						repository.getBlockRepository().setOnlineAccountsSignaturesTrimHeight(trimStartHeight);
-						repository.saveChanges();
-
+					if (numSigsTrimmed > 0) {
 						final int finalTrimStartHeight = trimStartHeight;
-						LOGGER.debug(() -> String.format("Bumping online accounts signatures base trim height to %d", finalTrimStartHeight));
+						LOGGER.info(() -> String.format("Trimmed %d online accounts signature%s between blocks %d and %d",
+								numSigsTrimmed, (numSigsTrimmed != 1 ? "s" : ""),
+								finalTrimStartHeight, upperTrimHeight));
+					} else {
+						// Can we move onto next batch?
+						if (upperTrimmableHeight > upperBatchHeight) {
+							trimStartHeight = upperBatchHeight;
+
+							repository.getBlockRepository().setOnlineAccountsSignaturesTrimHeight(trimStartHeight);
+							repository.saveChanges();
+
+							final int finalTrimStartHeight = trimStartHeight;
+							LOGGER.info(() -> String.format("Bumping online accounts signatures base trim height to %d", finalTrimStartHeight));
+						}
 					}
+				} catch (InterruptedException e) {
+					if(Controller.isStopping()) {
+						LOGGER.info("Online Accounts Signatures Trimming Shutting Down");
+					}
+					else {
+						LOGGER.warn("Online Accounts Signatures Trimming interrupted. Trying again. Report this error immediately to the developers.", e);
+					}
+				} catch (Exception e) {
+					LOGGER.warn("Online Accounts Signatures Trimming stopped working. Trying again. Report this error immediately to the developers.", e);
 				}
 			}
-		} catch (DataException e) {
-			LOGGER.warn(String.format("Repository issue trying to trim online accounts signatures: %s", e.getMessage()));
-		} catch (InterruptedException e) {
-			// Time to exit
+		} catch (Exception e) {
+			LOGGER.error("Online Accounts Signatures Trimming is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
 	}
 

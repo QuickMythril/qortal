@@ -80,7 +80,7 @@ public class OnlineAccountsManager {
     // one for the transition period.
     private static long[] POW_VERIFY_WORK_BUFFER = new long[getPoWBufferSize() / 8];
 
-    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4, new NamedThreadFactory("OnlineAccounts"));
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4, new NamedThreadFactory("OnlineAccounts", Thread.NORM_PRIORITY));
     private volatile boolean isStopping = false;
 
     private final Set<OnlineAccountData> onlineAccountsImportQueue = ConcurrentHashMap.newKeySet();

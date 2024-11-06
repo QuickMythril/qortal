@@ -164,11 +164,11 @@ public class Network {
         maxPeers = Settings.getInstance().getMaxPeers();
 
         // We'll use a cached thread pool but with more aggressive timeout.
-        ExecutorService networkExecutor = new ThreadPoolExecutor(1,
+        ExecutorService networkExecutor = new ThreadPoolExecutor(2,
                 Settings.getInstance().getMaxNetworkThreadPoolSize(),
                 NETWORK_EPC_KEEPALIVE, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(),
-                new NamedThreadFactory("Network-EPC"));
+                new NamedThreadFactory("Network-EPC", Settings.getInstance().getNetworkThreadPriority()));
         networkEPC = new NetworkProcessor(networkExecutor);
     }
 

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 
+import static java.lang.Thread.NORM_PRIORITY;
 import static org.qortal.data.arbitrary.ArbitraryResourceStatus.Status.NOT_PUBLISHED;
 
 
@@ -28,6 +29,7 @@ public class ArbitraryDataBuilderThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName("Arbitrary Data Builder Thread");
+        Thread.currentThread().setPriority(NORM_PRIORITY);
         ArbitraryDataBuildManager buildManager = ArbitraryDataBuildManager.getInstance();
 
         while (!Controller.isStopping()) {
