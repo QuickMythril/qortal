@@ -1,3 +1,118 @@
+let customQDNHistoryPaths = []; // Array to track visited paths
+let currentIndex = -1; // Index to track the current position in the history
+let isManualNavigation = true; // Flag to control when to add new paths. set to false when navigating through a back/forward call
+
+
+function resetVariables(){
+let customQDNHistoryPaths = [];
+let currentIndex = -1;
+let isManualNavigation = true;
+}
+
+function getNameAfterService(url) {
+    try {
+        const parsedUrl = new URL(url);
+        const pathParts = parsedUrl.pathname.split('/');
+
+        // Find the index of "WEBSITE" or "APP" and get the next part
+        const serviceIndex = pathParts.findIndex(part => part === 'WEBSITE' || part === 'APP');
+
+        if (serviceIndex !== -1 && pathParts[serviceIndex + 1]) {
+            return pathParts[serviceIndex + 1];
+        } else {
+            return null; // Return null if "WEBSITE" or "APP" is not found or has no following part
+        }
+    } catch (error) {
+        console.error("Invalid URL provided:", error);
+        return null;
+    }
+}
+
+
+
+function parseUrl(url) {
+    try {
+        const parsedUrl = new URL(url);
+
+        // Check if isManualNavigation query exists and is set to "false"
+        const isManual = parsedUrl.searchParams.get("isManualNavigation");
+
+        if (isManual !== null && isManual == "false") {
+            isManualNavigation = false
+            // Optional: handle this condition if needed (e.g., return or adjust the response)
+        }
+
+
+        // Remove theme, identifier, and time queries if they exist
+        parsedUrl.searchParams.delete("theme");
+        parsedUrl.searchParams.delete("identifier");
+        parsedUrl.searchParams.delete("time");
+        parsedUrl.searchParams.delete("isManualNavigation");
+        // Extract the pathname and remove the prefix if it matches "render/APP" or "render/WEBSITE"
+        const path = parsedUrl.pathname.replace(/^\/render\/(APP|WEBSITE)\/[^/]+/, "");
+
+        // Combine the path with remaining query params (if any)
+        return path + parsedUrl.search;
+    } catch (error) {
+        console.error("Invalid URL provided:", error);
+        return null;
+    }
+}
+
+// Tell the client to open a new tab. Done when an app is linking to another app
+function openNewTab(data){
+window.parent.postMessage({
+action: 'SET_TAB',
+requestedHandler:'UI',
+payload: data
+}, '*');
+}
+// sends navigation information to the client in order to manage back/forward navigation
+function sendNavigationInfoToParent(isDOMContentLoaded){
+window.parent.postMessage({
+action: 'NAVIGATION_HISTORY',
+requestedHandler:'UI',
+payload: {
+customQDNHistoryPaths,
+currentIndex,
+isDOMContentLoaded: isDOMContentLoaded ? true : false
+}
+}, '*');
+
+}
+
+
+function handleQDNResourceDisplayed(pathurl, isDOMContentLoaded) {
+// make sure that an empty string the root path
+const path = pathurl || '/'
+    if (!isManualNavigation) {
+    isManualNavigation = true
+        // If the navigation is automatic (back/forward), do not add new entries
+        return;
+    }
+
+
+    // If it's a new path, add it to the history array and adjust the index
+    if (customQDNHistoryPaths[currentIndex] !== path) {
+
+           customQDNHistoryPaths = customQDNHistoryPaths.slice(0, currentIndex + 1);
+
+
+
+        // Add the new path and move the index to the new position
+        customQDNHistoryPaths.push(path);
+        currentIndex = customQDNHistoryPaths.length - 1;
+            sendNavigationInfoToParent(isDOMContentLoaded)
+    } else {
+        currentIndex = customQDNHistoryPaths.length - 1
+        sendNavigationInfoToParent(isDOMContentLoaded)
+    }
+
+
+    // Reset isManualNavigation after handling
+    isManualNavigation = true;
+}
+
 function httpGet(url) {
     var request = new XMLHttpRequest();
     request.open("GET", url, false);
@@ -156,7 +271,7 @@ function convertToResourceUrl(url, isLink) {
     return buildResourceUrl(c.service, c.name, c.identifier, c.path, isLink);
 }
 
-window.addEventListener("message", (event) => {
+window.addEventListener("message", async (event) => {
     if (event == null || event.data == null || event.data.length == 0) {
         return;
     }
@@ -199,10 +314,51 @@ window.addEventListener("message", (event) => {
             if (data.identifier != null) url = url.concat("/" + data.identifier);
             return httpGetAsyncWithEvent(event, url);
 
-        case "LINK_TO_QDN_RESOURCE":
-            if (data.service == null) data.service = "WEBSITE"; // Default to WEBSITE
-            window.location = buildResourceUrl(data.service, data.name, data.identifier, data.path, true);
-            return;
+       case "LINK_TO_QDN_RESOURCE":
+           if (data.service == null) data.service = "WEBSITE"; // Default to WEBSITE
+
+           const nameOfCurrentApp = getNameAfterService(window.location.href);
+           // Check to see if the link is an external app. If it is, request that the client opens a new tab instead of manipulating the window's history stack.
+           if (nameOfCurrentApp !== data.name) {
+               // Attempt to open a new tab and wait for a response
+               const navigationPromise = new Promise((resolve, reject) => {
+                   function handleMessage(event) {
+                       if (event.data?.action === 'SET_TAB_SUCCESS' && event.data.payload?.name === data.name) {
+                           window.removeEventListener('message', handleMessage);
+                           resolve();
+                       }
+                   }
+
+                   window.addEventListener('message', handleMessage);
+
+                   // Send the message to the parent window
+                   openNewTab({
+                       name: data.name,
+                       service: data.service,
+                       identifier: data.identifier,
+                       path: data.path
+                   });
+
+                   // Set a timeout to reject the promise if no response is received within 200ms
+                   setTimeout(() => {
+                       window.removeEventListener('message', handleMessage);
+                       reject(new Error("No response within 200ms"));
+                   }, 200);
+               });
+
+               // Handle the promise, and if it times out, fall back to the else block
+               navigationPromise
+                   .then(() => {
+                       console.log('Tab opened successfully');
+                   })
+                   .catch(() => {
+                       console.warn('No response, proceeding with window.location');
+                       window.location = buildResourceUrl(data.service, data.name, data.identifier, data.path, true);
+                   });
+           } else {
+               window.location = buildResourceUrl(data.service, data.name, data.identifier, data.path, true);
+           }
+           return;
 
         case "LIST_QDN_RESOURCES":
             url = "/arbitrary/resources?";
@@ -351,10 +507,18 @@ window.addEventListener("message", (event) => {
             if (data.inverse != null) url = url.concat("&inverse=" + data.inverse);
             return httpGetAsyncWithEvent(event, url);
 
+
+         case "PERFORMING_NON_MANUAL":
+                    isManualNavigation = false
+                    currentIndex = data.currentIndex
+                    return;
+
         default:
             // Pass to parent (UI), in case they can fulfil this request
             event.data.requestedHandler = "UI";
             parent.postMessage(event.data, '*', [event.ports[0]]);
+
+
             return;
     }
 
@@ -523,7 +687,8 @@ const qortalRequestWithTimeout = (request, timeout) =>
 /**
  * Send current page details to UI
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', (event) => {
+resetVariables()
     qortalRequest({
         action: "QDN_RESOURCE_DISPLAYED",
         service: _qdnService,
@@ -531,6 +696,10 @@ document.addEventListener('DOMContentLoaded', () => {
         identifier: _qdnIdentifier,
         path: _qdnPath
     });
+    // send to the client the first path when the app loads.
+    const firstPath = parseUrl(window?.location?.href || "")
+    handleQDNResourceDisplayed(firstPath, true);
+  // Increment counter when page fully loads
 });
 
 /**
@@ -538,12 +707,20 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 navigation.addEventListener('navigate', (event) => {
     const url = new URL(event.destination.url);
+
     let fullpath = url.pathname + url.hash;
+    const processedPath = (fullpath.startsWith(_qdnBase)) ? fullpath.slice(_qdnBase.length) : fullpath;
     qortalRequest({
         action: "QDN_RESOURCE_DISPLAYED",
         service: _qdnService,
         name: _qdnName,
         identifier: _qdnIdentifier,
-        path: (fullpath.startsWith(_qdnBase)) ? fullpath.slice(_qdnBase.length) : fullpath
+        path: processedPath
     });
+
+   // Put a timeout so that the DOMContentLoaded listener's logic executes before the navigate listener
+   setTimeout(()=> {
+    handleQDNResourceDisplayed(processedPath);
+   }, 100)
 });
+

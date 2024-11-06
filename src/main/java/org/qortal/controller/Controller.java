@@ -13,6 +13,7 @@ import org.qortal.block.Block;
 import org.qortal.block.BlockChain;
 import org.qortal.block.BlockChain.BlockTimingByHeight;
 import org.qortal.controller.arbitrary.*;
+import org.qortal.controller.hsqldb.HSQLDBDataCacheManager;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.controller.repository.PruneManager;
 import org.qortal.controller.tradebot.TradeBot;
@@ -35,6 +36,7 @@ import org.qortal.network.Peer;
 import org.qortal.network.PeerAddress;
 import org.qortal.network.message.*;
 import org.qortal.repository.*;
+import org.qortal.repository.hsqldb.HSQLDBRepository;
 import org.qortal.repository.hsqldb.HSQLDBRepositoryFactory;
 import org.qortal.settings.Settings;
 import org.qortal.transaction.Transaction;
@@ -99,7 +101,7 @@ public class Controller extends Thread {
 	private final long buildTimestamp; // seconds
 	private final String[] savedArgs;
 
-	private ExecutorService callbackExecutor = Executors.newFixedThreadPool(3);
+	private ExecutorService callbackExecutor = Executors.newFixedThreadPool(4);
 	private volatile boolean notifyGroupMembershipChange = false;
 
 	/** Latest blocks on our chain. Note: tail/last is the latest block. */
@@ -406,8 +408,17 @@ public class Controller extends Thread {
 			RepositoryManager.setRequestedCheckpoint(Boolean.TRUE);
 
 			try (final Repository repository = RepositoryManager.getRepository()) {
-				RepositoryManager.rebuildTransactionSequences(repository);
+				// RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
+
+				if( Settings.getInstance().isDbCacheEnabled() ) {
+					LOGGER.info("Db Cache Starting ...");
+					HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager((HSQLDBRepository) repositoryFactory.getRepository());
+					hsqldbDataCacheManager.start();
+				}
+				else {
+					LOGGER.info("Db Cache Disabled");
+				}
 			}
 		} catch (DataException e) {
 			// If exception has no cause or message then repository is in use by some other process.
@@ -489,7 +500,6 @@ public class Controller extends Thread {
 			@Override
 			public void run() {
 				Thread.currentThread().setName("Shutdown hook");
-
 				Controller.getInstance().shutdown();
 			}
 		});
@@ -569,10 +579,31 @@ public class Controller extends Thread {
 		// If GUI is enabled, we're no longer starting up but actually running now
 		Gui.getInstance().notifyRunning();
 
-		// Check every 10 minutes to see if the block minter is running
-		Timer timer = new Timer();
+		// Check every 10 minutes if we have enough connected peers
+		Timer checkConnectedPeers = new Timer();
 
-		timer.schedule(new TimerTask() {
+		checkConnectedPeers.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				// Get the connected peers
+				int myConnectedPeers = Network.getInstance().getImmutableHandshakedPeers().size();
+				LOGGER.debug("Node have {} connected peers", myConnectedPeers);
+				if (myConnectedPeers == 0) {
+					// Restart node if we have 0 peers
+					LOGGER.info("Node have no connected peers, restarting node");
+					try {
+						RestartNode.attemptToRestart();
+					} catch (Exception e) {
+						LOGGER.error("Unable to restart the node", e);
+					}
+				}
+			}
+		}, 10*60*1000, 10*60*1000);
+
+		// Check every 10 minutes to see if the block minter is running
+		Timer checkBlockMinter = new Timer();
+
+		checkBlockMinter.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				if (blockMinter.isAlive()) {

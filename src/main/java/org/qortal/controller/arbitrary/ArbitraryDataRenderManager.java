@@ -36,6 +36,7 @@ public class ArbitraryDataRenderManager extends Thread {
     @Override
     public void run() {
         Thread.currentThread().setName("Arbitrary Data Render Manager");
+        Thread.currentThread().setPriority(NORM_PRIORITY);
 
         try {
             while (!isStopping) {

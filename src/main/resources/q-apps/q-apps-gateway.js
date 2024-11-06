@@ -1,5 +1,57 @@
 console.log("Gateway mode");
 
+function sendRequestToExtension(
+  requestType,
+  payload,
+  timeout = 750
+) {
+  return new Promise((resolve, reject) => {
+    const requestId = Math.random().toString(36).substring(2, 15); // Generate a unique ID for the request
+    const detail = {
+      type: requestType,
+      payload,
+      requestId,
+      timeout: timeout / 1000,
+    };
+
+    // Store the timeout ID so it can be cleared later
+    const timeoutId = setTimeout(() => {
+      document.removeEventListener("qortalExtensionResponses", handleResponse);
+      reject(new Error("Request timed out"));
+    }, timeout); // Adjust timeout as necessary
+
+    function handleResponse(event) {
+      const { requestId: responseId, data } = event.detail;
+      if (requestId === responseId) {
+        // Match the response with the request
+        document.removeEventListener("qortalExtensionResponses", handleResponse);
+        clearTimeout(timeoutId); // Clear the timeout upon successful response
+        resolve(data);
+      }
+    }
+
+    document.addEventListener("qortalExtensionResponses", handleResponse);
+    document.dispatchEvent(
+      new CustomEvent("qortalExtensionRequests", { detail })
+    );
+  });
+}
+
+ const isExtensionInstalledFunc = async () => {
+  try {
+    const response = await sendRequestToExtension(
+      "REQUEST_IS_INSTALLED",
+      {},
+      750
+    );
+    return response;
+  } catch (error) {
+    // not installed
+  }
+};
+
+
+
 function qdnGatewayShowModal(message) {
     const modalElementId = "qdnGatewayModal";
 
@@ -32,7 +84,7 @@ function qdnGatewayShowModal(message) {
     document.body.appendChild(modalElement);
 }
 
-window.addEventListener("message", (event) => {
+window.addEventListener("message", async (event) => {
     if (event == null || event.data == null || event.data.length == 0) {
         return;
     }
@@ -43,7 +95,7 @@ window.addEventListener("message", (event) => {
         // Gateway mode only cares about requests that were intended for the UI
         return;
     }
-
+    
     let response;
     let data = event.data;
 
@@ -59,6 +111,8 @@ window.addEventListener("message", (event) => {
         case "GET_LIST_ITEMS":
         case "ADD_LIST_ITEMS":
         case "DELETE_LIST_ITEM":
+            const isExtInstalledRes = await isExtensionInstalledFunc()
+            if(isExtInstalledRes?.version) return;
             const errorString = "Interactive features were requested, but these are not yet supported when viewing via a gateway. To use interactive features, please access using the Qortal UI desktop app. More info at: https://qortal.org";
             response = "{\"error\": \"" + errorString + "\"}"
 

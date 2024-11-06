@@ -15,11 +15,13 @@ import org.qortal.utils.NTP;
 
 import java.io.IOException;
 
+import static java.lang.Thread.NORM_PRIORITY;
+
 public class BlockArchiver implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(BlockArchiver.class);
 
-	private static final long INITIAL_SLEEP_PERIOD = 5 * 60 * 1000L + 1234L; // ms
+	private static final long INITIAL_SLEEP_PERIOD = 15 * 60 * 1000L; // ms
 
 	public void run() {
 		Thread.currentThread().setName("Block archiver");
@@ -45,71 +47,78 @@ public class BlockArchiver implements Runnable {
 			LOGGER.info("Starting block archiver from height {}...", startHeight);
 
 			while (!Controller.isStopping()) {
-				repository.discardChanges();
-
-				Thread.sleep(Settings.getInstance().getArchiveInterval());
-
-				BlockData chainTip = Controller.getInstance().getChainTip();
-				if (chainTip == null || NTP.getTime() == null) {
-					continue;
-				}
-
-				// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-				if (Synchronizer.getInstance().isSynchronizing()) {
-					continue;
-				}
-
-				// Don't attempt to archive if we're not synced yet
-				final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
-				if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
-					continue;
-				}
-
-
-				// Build cache of blocks
 				try {
-					final int maximumArchiveHeight = BlockArchiveWriter.getMaxArchiveHeight(repository);
-					BlockArchiveWriter writer = new BlockArchiveWriter(startHeight, maximumArchiveHeight, repository);
-					BlockArchiveWriter.BlockArchiveWriteResult result = writer.write();
-					switch (result) {
-						case OK:
-							// Increment block archive height
-							startHeight += writer.getWrittenCount();
-							repository.getBlockArchiveRepository().setBlockArchiveHeight(startHeight);
-							repository.saveChanges();
-							break;
+					repository.discardChanges();
 
-						case STOPPING:
-							return;
+					Thread.sleep(Settings.getInstance().getArchiveInterval());
 
-							// We've reached the limit of the blocks we can archive
-							// Sleep for a while to allow more to become available
-						case NOT_ENOUGH_BLOCKS:
-							// We didn't reach our file size target, so that must mean that we don't have enough blocks
-							// yet or something went wrong. Sleep for a while and then try again.
-							repository.discardChanges();
-							Thread.sleep(60 * 60 * 1000L); // 1 hour
-							break;
-
-						case BLOCK_NOT_FOUND:
-							// We tried to archive a block that didn't exist. This is a major failure and likely means
-							// that a bootstrap or re-sync is needed. Try again every minute until then.
-							LOGGER.info("Error: block not found when building archive. If this error persists, " +
-									"a bootstrap or re-sync may be needed.");
-							repository.discardChanges();
-							Thread.sleep( 60 * 1000L); // 1 minute
-							break;
+					BlockData chainTip = Controller.getInstance().getChainTip();
+					if (chainTip == null || NTP.getTime() == null) {
+						continue;
 					}
 
-				} catch (IOException | TransformationException e) {
-					LOGGER.info("Caught exception when creating block cache", e);
-				}
+					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
+					if (Synchronizer.getInstance().isSynchronizing()) {
+						continue;
+					}
 
+					// Don't attempt to archive if we're not synced yet
+					final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
+					if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
+						continue;
+					}
+
+					// Build cache of blocks
+					try {
+						final int maximumArchiveHeight = BlockArchiveWriter.getMaxArchiveHeight(repository);
+						BlockArchiveWriter writer = new BlockArchiveWriter(startHeight, maximumArchiveHeight, repository);
+						BlockArchiveWriter.BlockArchiveWriteResult result = writer.write();
+						switch (result) {
+							case OK:
+								// Increment block archive height
+								startHeight += writer.getWrittenCount();
+								repository.getBlockArchiveRepository().setBlockArchiveHeight(startHeight);
+								repository.saveChanges();
+								break;
+
+							case STOPPING:
+								return;
+
+								// We've reached the limit of the blocks we can archive
+								// Sleep for a while to allow more to become available
+							case NOT_ENOUGH_BLOCKS:
+								// We didn't reach our file size target, so that must mean that we don't have enough blocks
+								// yet or something went wrong. Sleep for a while and then try again.
+								repository.discardChanges();
+								Thread.sleep(2 * 60 * 60 * 1000L); // 1 hour
+								break;
+
+							case BLOCK_NOT_FOUND:
+								// We tried to archive a block that didn't exist. This is a major failure and likely means
+								// that a bootstrap or re-sync is needed. Try again every minute until then.
+								LOGGER.info("Error: block not found when building archive. If this error persists, " +
+										"a bootstrap or re-sync may be needed.");
+								repository.discardChanges();
+								Thread.sleep(60 * 1000L); // 1 minute
+								break;
+						}
+
+					} catch (IOException | TransformationException e) {
+						LOGGER.info("Caught exception when creating block cache", e);
+					}
+				} catch (InterruptedException e) {
+					if(Controller.isStopping()) {
+						LOGGER.info("Block Archiving Shutting Down");
+					}
+					else {
+						LOGGER.warn("Block Archiving interrupted. Trying again. Report this error immediately to the developers.", e);
+					}
+				} catch (Exception e) {
+					LOGGER.warn("Block Archiving stopped working. Trying again. Report this error immediately to the developers.", e);
+				}
 			}
-		} catch (DataException e) {
-			LOGGER.info("Caught exception when creating block cache", e);
-		} catch (InterruptedException e) {
-			// Do nothing
+		} catch (Exception e) {
+			LOGGER.error("Block Archiving is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
 
 	}

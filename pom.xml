@@ -22,12 +22,12 @@
 		<dagger.version>1.2.2</dagger.version>
 		<extendedset.version>0.12.3</extendedset.version>
 		<git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
-		<grpc.version>1.66.0</grpc.version>
-		<guava.version>33.3.0-jre</guava.version>
+		<grpc.version>1.68.1</grpc.version>
+		<guava.version>33.3.1-jre</guava.version>
 		<hamcrest-library.version>2.2</hamcrest-library.version>
 		<homoglyph.version>1.2.1</homoglyph.version>
 		<hsqldb.version>2.5.1</hsqldb.version>
-		<icu4j.version>75.1</icu4j.version>
+		<icu4j.version>76.1</icu4j.version>
 		<java-diff-utils.version>4.12</java-diff-utils.version>
 		<javax.servlet-api.version>4.0.1</javax.servlet-api.version>
 		<jaxb-runtime.version>2.3.9</jaxb-runtime.version>
@@ -49,7 +49,7 @@
 		<maven-reproducible-build-plugin.version>0.17</maven-reproducible-build-plugin.version>
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
 		<maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
-		<maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
+		<maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
 		<protobuf.version>3.25.3</protobuf.version>
 		<replacer.version>1.5.3</replacer.version>
 		<simplemagic.version>1.17</simplemagic.version>

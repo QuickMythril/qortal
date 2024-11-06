@@ -118,8 +118,12 @@ public class Synchronizer extends Thread {
 	}
 
 	public static Synchronizer getInstance() {
-		if (instance == null)
+		if (instance == null) {
 			instance = new Synchronizer();
+			instance.setPriority(Settings.getInstance().getSynchronizerThreadPriority());
+
+			LOGGER.info("thread priority = " + instance.getPriority());
+		}
 
 		return instance;
 	}

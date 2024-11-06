@@ -71,6 +71,7 @@ public class ArbitraryDataCleanupManager extends Thread {
 	@Override
 	public void run() {
 		Thread.currentThread().setName("Arbitrary Data Cleanup Manager");
+		Thread.currentThread().setPriority(NORM_PRIORITY);
 
 		// Paginate queries when fetching arbitrary transactions
 		final int limit = 100;
