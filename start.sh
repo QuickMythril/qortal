@@ -201,6 +201,9 @@ if [ "$RESPONSE" = "n" ] || [ "$RESPONSE" = "N" ]; then
     # Combine custom JVM arguments
     JVM_ARGS="-Xms${CUSTOM_XMS} -Xmx${CUSTOM_XMX} ${CUSTOM_GC} -XX:MetaspaceSize=${CUSTOM_METASPACE_SIZE} -XX:MaxMetaspaceSize=${CUSTOM_MAX_METASPACE_SIZE} ${CUSTOM_GC_LOGGING_PARAMS} ${CUSTOM_OOM_ERROR_PARAMS} ${CUSTOM_STRING_OPTS} ${ADDITIONAL_JVM_ARGS}"
 
+    echo "User-defined JVM settings:"
+    echo "${JVM_ARGS}"
+
 else
     JVM_ARGS="${DEFAULT_JVM_ARGS}"
 fi
