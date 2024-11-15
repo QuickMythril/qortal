@@ -38,18 +38,27 @@ if [ ! -e qortal.jar ] && [ -f target/qortal*.jar ]; then
     cp target/qortal*.jar qortal.jar
 fi
 
-# Detect total RAM in MB
-if [ "$(uname)" = "Darwin" ]; then
+# Detect OS and RAM
+OS=$(uname 2>/dev/null || echo "Windows")
+RAM_MB=0
+
+if [ "$OS" = "Darwin" ]; then
     # macOS
     RAM_MB=$(($(sysctl -n hw.memsize) / 1024 / 1024))
-elif [ "$(uname)" = "Linux" ]; then
+elif [ "$OS" = "Linux" ]; then
     # Linux
     RAM_MB=$(awk '/MemTotal/ { printf "%.0f", $2/1024 }' /proc/meminfo)
+elif command -v wmic > /dev/null 2>&1; then
+    # Windows
+    OS="Windows"
+    RAM_BYTES=$(wmic memorychip get capacity | awk 'NR>1 && $1 ~ /^[0-9]+$/ {sum+=$1} END {print sum}')
+    RAM_MB=$(($RAM_BYTES / 1024 / 1024))
 else
-    echo "Unsupported operating system: $(uname)"
+    echo "Unsupported operating system: $(uname 2>/dev/null || echo 'Unknown')"
     exit 1
 fi
 
+echo "Operating System: $OS"
 echo "Detected total RAM: ${RAM_MB} MB"
 
 # Set default JVM parameters based on RAM
