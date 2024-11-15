@@ -66,34 +66,45 @@ if [ "$RAM_MB" -lt 2048 ]; then
     # Less than 2 GB RAM
     DEFAULT_XMS="512m"
     DEFAULT_XMX="1g"
+    # Sets initial heap size to 512 MB and maximum heap size to 1 GB.
     DEFAULT_GC="-XX:+UseSerialGC"
+    # Uses Serial Garbage Collector to minimize resource usage.
 elif [ "$RAM_MB" -lt 4096 ]; then
     # 2 GB to 4 GB RAM
     DEFAULT_XMS="1g"
     DEFAULT_XMX="2g"
+    # Sets initial heap size to 1 GB and maximum heap size to 2 GB.
     DEFAULT_GC="-XX:+UseSerialGC"
+    # Continues to use Serial GC for low-memory systems.
 elif [ "$RAM_MB" -lt 8192 ]; then
     # 4 GB to 8 GB RAM
     DEFAULT_XMS="2g"
     DEFAULT_XMX="4g"
+    # Sets initial heap size to 2 GB and maximum heap size to 4 GB.
     DEFAULT_GC="-XX:+UseG1GC"
+    # Uses G1 Garbage Collector for better performance.
 elif [ "$RAM_MB" -lt 16384 ]; then
     # 8 GB to 16 GB RAM
     DEFAULT_XMS="4g"
     DEFAULT_XMX="6g"
+    # Sets initial heap size to 4 GB and maximum heap size to 6 GB.
     DEFAULT_GC="-XX:+UseG1GC"
+    # Continues with G1GC.
 else
     # More than 16 GB RAM
     if [ "$version_major" -ge 15 ]; then
-        # Java 15 or higher, use ZGC
         DEFAULT_XMS="6g"
         DEFAULT_XMX="8g"
+        # Sets initial heap size to 6 GB and maximum heap size to 8 GB.
         DEFAULT_GC="-XX:+UseZGC"
+        # If Java version is 15 or higher, uses Z Garbage Collector.
+        # For systems with large amounts of RAM and recent Java versions, ZGC can offer low-latency garbage collection, which is beneficial for high-throughput applications like blockchain nodes.
     else
-        # Java version less than 15, use G1GC
         DEFAULT_XMS="6g"
         DEFAULT_XMX="8g"
+        # Sets initial heap size to 6 GB and maximum heap size to 8 GB.
         DEFAULT_GC="-XX:+UseG1GC"
+        # If Java version is less than 15, uses G1GC.
     fi
 fi
 
