@@ -13,72 +13,72 @@ import java.util.List;
 
 public class HSQLDBMessageRepository implements MessageRepository {
 
-	protected HSQLDBRepository repository;
+    protected HSQLDBRepository repository;
 
-	public HSQLDBMessageRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBMessageRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	@Override
-	public List<MessageTransactionData> getMessagesByParticipants(byte[] senderPublicKey,
-			String recipient, Integer limit, Integer offset, Boolean reverse) throws DataException {
-		if (senderPublicKey == null && recipient == null)
-			throw new DataException("At least one of senderPublicKey or recipient required to fetch matching messages");
+    @Override
+    public List<MessageTransactionData> getMessagesByParticipants(byte[] senderPublicKey, String recipient, Integer limit, Integer offset, Boolean reverse) throws DataException {
+        if (senderPublicKey == null && recipient == null) {
+            throw new DataException("At least one of senderPublicKey or recipient is required to fetch messages");
+        }
 
-		StringBuilder sql = new StringBuilder(1024);
-		sql.append("SELECT signature from MessageTransactions "
-				+ "JOIN Transactions USING (signature) "
-				+ "WHERE ");
+        // Build SQL query and parameters
+        StringBuilder sql = new StringBuilder("SELECT signature FROM MessageTransactions JOIN Transactions USING (signature) WHERE ");
+        List<Object> bindParams = new ArrayList<>();
 
-		List<String> whereClauses = new ArrayList<>();
-		List<Object> bindParams = new ArrayList<>();
+        // Add conditions
+        if (senderPublicKey != null) {
+            sql.append("sender = ? ");
+            bindParams.add(senderPublicKey);
+        }
 
-		if (senderPublicKey != null) {
-			whereClauses.add("sender = ?");
-			bindParams.add(senderPublicKey);
-		}
+        if (recipient != null) {
+            if (!bindParams.isEmpty()) sql.append("AND ");
+            sql.append("recipient = ? ");
+            bindParams.add(recipient);
+        }
 
-		if (recipient != null) {
-			whereClauses.add("recipient = ?");
-			bindParams.add(recipient);
-		}
+        // Add sorting and pagination
+        sql.append("ORDER BY Transactions.created_when ");
+        sql.append((reverse != null && reverse) ? "DESC " : "ASC ");
+        HSQLDBRepository.limitOffsetSql(sql, limit, offset);
 
-		sql.append(String.join(" AND ", whereClauses));
+        // Fetch results
+        List<MessageTransactionData> messageTransactionsData = new ArrayList<>();
+        try (ResultSet resultSet = this.repository.checkedExecute(sql.toString(), bindParams.toArray())) {
+            if (resultSet == null) return messageTransactionsData;
 
-		sql.append("ORDER BY Transactions.created_when");
-		sql.append((reverse == null || !reverse) ? " ASC" : " DESC");
+            while (resultSet.next()) {
+                byte[] signature = resultSet.getBytes(1);
+                TransactionData transactionData = this.repository.getTransactionRepository().fromSignature(signature);
 
-		HSQLDBRepository.limitOffsetSql(sql, limit, offset);
+                // Validate transaction type
+                if (transactionData == null || transactionData.getType() != TransactionType.MESSAGE) {
+                    throw new DataException("Inconsistent data: Expected MESSAGE transaction but found another type");
+                }
 
-		List<MessageTransactionData> messageTransactionsData = new ArrayList<>();
+                messageTransactionsData.add((MessageTransactionData) transactionData);
+            }
+        } catch (SQLException e) {
+            throw new DataException("Failed to fetch messages from repository", e);
+        }
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql.toString(), bindParams.toArray())) {
-			if (resultSet == null)
-				return messageTransactionsData;
+        return messageTransactionsData;
+    }
 
-			do {
-				byte[] signature = resultSet.getBytes(1);
-
-				TransactionData transactionData = this.repository.getTransactionRepository().fromSignature(signature);
-				if (transactionData == null || transactionData.getType() != TransactionType.MESSAGE)
-					throw new DataException("Inconsistent data from repository when fetching message");
-
-				messageTransactionsData.add((MessageTransactionData) transactionData);
-			} while (resultSet.next());
-
-			return messageTransactionsData;
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch matching messages from repository", e);
-		}
-	}
-
-	@Override
-	public boolean exists(byte[] senderPublicKey, String recipient, byte[] messageData) throws DataException {
-		try {
-			return this.repository.exists("MessageTransactions", "sender = ? AND recipient = ? AND data = ?", senderPublicKey, recipient, messageData);
-		} catch (SQLException e) {
-			throw new DataException("Unable to check for existing message in repository", e);
-		}
-	}
-
+    @Override
+    public boolean exists(byte[] senderPublicKey, String recipient, byte[] messageData) throws DataException {
+        try {
+            return this.repository.exists(
+                "MessageTransactions",
+                "sender = ? AND recipient = ? AND data = ?",
+                senderPublicKey, recipient, messageData
+            );
+        } catch (SQLException e) {
+            throw new DataException("Failed to check message existence in repository", e);
+        }
+    }
 }

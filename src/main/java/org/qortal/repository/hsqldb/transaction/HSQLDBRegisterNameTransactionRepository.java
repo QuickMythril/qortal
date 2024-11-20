@@ -12,42 +12,48 @@ import java.sql.SQLException;
 
 public class HSQLDBRegisterNameTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBRegisterNameTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBRegisterNameTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT name, reduced_name, data FROM RegisterNameTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT name, reduced_name, data FROM RegisterNameTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            // If no record is found, return null
+            if (!resultSet.next()) {
+                return null;
+            }
 
-			String name = resultSet.getString(1);
-			String reducedName = resultSet.getString(2);
-			String data = resultSet.getString(3);
+            // Retrieve values from the result set
+            String name = resultSet.getString("name");
+            String reducedName = resultSet.getString("reduced_name");
+            String data = resultSet.getString("data");
 
-			return new RegisterNameTransactionData(baseTransactionData, name, data, reducedName);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch register name transaction from repository", e);
-		}
-	}
+            // Return the RegisterNameTransactionData instance with the retrieved values
+            return new RegisterNameTransactionData(baseTransactionData, name, data, reducedName);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch register name transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		RegisterNameTransactionData registerNameTransactionData = (RegisterNameTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        RegisterNameTransactionData registerNameTransactionData = (RegisterNameTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("RegisterNameTransactions");
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("RegisterNameTransactions")) {
+            // Bind values to the SQL query
+            saveHelper.bind("signature", registerNameTransactionData.getSignature())
+                      .bind("registrant", registerNameTransactionData.getRegistrantPublicKey())
+                      .bind("name", registerNameTransactionData.getName())
+                      .bind("data", registerNameTransactionData.getData())
+                      .bind("reduced_name", registerNameTransactionData.getReducedName());
 
-		saveHelper.bind("signature", registerNameTransactionData.getSignature()).bind("registrant", registerNameTransactionData.getRegistrantPublicKey())
-				.bind("name", registerNameTransactionData.getName()).bind("data", registerNameTransactionData.getData())
-				.bind("reduced_name", registerNameTransactionData.getReducedName());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save register name transaction into repository", e);
-		}
-	}
-
+            // Execute the insert operation
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save register name transaction into repository", e);
+        }
+    }
 }

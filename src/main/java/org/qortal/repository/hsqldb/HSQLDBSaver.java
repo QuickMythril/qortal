@@ -4,154 +4,110 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
- * Database helper for building, and executing, INSERT INTO ... ON DUPLICATE KEY UPDATE ... statements.
- * <p>
- * Columns, and corresponding values, are bound via close-coupled pairs in a chain thus:
- * <p>
- * {@code SaveHelper helper = new SaveHelper("TableName"); }<br>
- * {@code helper.bind("column_name", someColumnValue).bind("column2", columnValue2); }<br>
- * {@code helper.execute(repository); }<br>
- *
+ * Database helper for building and executing INSERT INTO ... ON DUPLICATE KEY UPDATE ... statements.
  */
 public class HSQLDBSaver {
 
-	private final Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    private static final Calendar UTC_CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
-	private String table;
+    private final String table;
+    private final List<String> columns = new ArrayList<>();
+    private final List<Object> values = new ArrayList<>();
 
-	private List<String> columns = new ArrayList<>();
-	private List<Object> objects = new ArrayList<>();
+    /**
+     * Construct a SaveHelper for the given table name.
+     *
+     * @param table Table name for the SQL operations.
+     */
+    public HSQLDBSaver(String table) {
+        this.table = table;
+    }
 
-	/**
-	 * Construct a SaveHelper, using SQL Connection and table name.
-	 * 
-	 * @param table
-	 */
-	public HSQLDBSaver(String table) {
-		this.table = table;
-	}
+    /**
+     * Adds a column and its corresponding value to the query.
+     *
+     * @param column Column name.
+     * @param value  Value to bind to the column.
+     * @return The same HSQLDBSaver object for chaining.
+     */
+    public HSQLDBSaver bind(String column, Object value) {
+        columns.add(column);
+        values.add(value);
+        return this;
+    }
 
-	/**
-	 * Add a column, and bound value, to be saved when execute() is called.
-	 * 
-	 * @param column
-	 * @param value
-	 * @return the same SaveHelper object
-	 */
-	public HSQLDBSaver bind(String column, Object value) {
-		columns.add(column);
-		objects.add(value);
-		return this;
-	}
+    /**
+     * Builds and executes the SQL query.
+     *
+     * @param repository Repository to execute the query.
+     * @return The result of {@link PreparedStatement#execute()}.
+     * @throws SQLException If an SQL error occurs.
+     */
+    public boolean execute(HSQLDBRepository repository) throws SQLException {
+        String sql = buildQuery();
 
-	/**
-	 * Build PreparedStatement using bound column-value pairs then execute it.
-	 * 
-	 * @param repository
-	 *
-	 * @return the result from {@link PreparedStatement#execute()}
-	 * @throws SQLException
-	 */
-	public boolean execute(HSQLDBRepository repository) throws SQLException {
-		String sql = this.formatInsertWithPlaceholders();
+        synchronized (HSQLDBRepository.CHECKPOINT_LOCK) {
+            try (PreparedStatement preparedStatement = repository.prepareStatement(sql)) {
+                bindValues(preparedStatement);
+                return preparedStatement.execute();
+            } catch (SQLException e) {
+                throw repository.examineException(e);
+            }
+        }
+    }
 
-		synchronized (HSQLDBRepository.CHECKPOINT_LOCK) {
-			try {
-				PreparedStatement preparedStatement = repository.prepareStatement(sql);
-				this.bindValues(preparedStatement);
+    /**
+     * Constructs the SQL query string with placeholders.
+     *
+     * @return A complete SQL query string.
+     */
+    private String buildQuery() {
+        String columnList = String.join(", ", columns);
+        String valuePlaceholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
+        String updatePlaceholders = String.join(", ", columns.stream().map(col -> col + "=?").toArray(String[]::new));
 
-				return preparedStatement.execute();
-			} catch (SQLException e) {
-				throw repository.examineException(e);
-			}
-		}
-	}
+        return String.format(
+            "INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
+            table, columnList, valuePlaceholders, updatePlaceholders
+        );
+    }
 
-	/**
-	 * Format table and column names into an INSERT INTO ... SQL statement.
-	 * <p>
-	 * Full form is:
-	 * <p>
-	 * INSERT INTO <I>table</I> (<I>column</I>, ...) VALUES (?, ...) ON DUPLICATE KEY UPDATE <I>column</I>=?, ...
-	 * <p>
-	 * Note that HSQLDB needs to put into mySQL compatibility mode first via "SET DATABASE SQL SYNTAX MYS TRUE" or "sql.syntax_mys=true" in connection URL.
-	 * 
-	 * @return String
-	 */
-	private String formatInsertWithPlaceholders() {
-		final int columnsSize = this.columns.size();
+    /**
+     * Binds the values to the prepared statement.
+     *
+     * @param preparedStatement The prepared statement to bind values to.
+     * @throws SQLException If an SQL error occurs.
+     */
+    private void bindValues(PreparedStatement preparedStatement) throws SQLException {
+        int size = values.size();
 
-		StringBuilder output = new StringBuilder(1024);
-		output.append("INSERT INTO ");
-		output.append(this.table);
-		output.append(" (");
+        for (int i = 0; i < size; i++) {
+            bindValue(preparedStatement, i + 1, values.get(i)); // Bind for INSERT
+            bindValue(preparedStatement, size + i + 1, values.get(i)); // Bind for UPDATE
+        }
+    }
 
-		for (int ci = 0; ci < columnsSize; ++ci) {
-			if (ci != 0)
-				output.append(", ");
-
-			output.append(this.columns.get(ci));
-		}
-
-		output.append(") VALUES (");
-
-		for (int ci = 0; ci < columnsSize; ++ci) {
-			if (ci != 0)
-				output.append(", ");
-
-			output.append("?");
-		}
-
-		output.append(") ON DUPLICATE KEY UPDATE ");
-
-		for (int ci = 0; ci < columnsSize; ++ci) {
-			if (ci != 0)
-				output.append(", ");
-
-			output.append(this.columns.get(ci));
-			output.append("=?");
-		}
-
-		return output.toString();
-	}
-
-	/**
-	 * Binds objects to PreparedStatement based on INSERT INTO ... ON DUPLICATE KEY UPDATE ...
-	 * <p>
-	 * Note that each object is bound to <b>two</b> place-holders based on this SQL syntax:
-	 * <p>
-	 * INSERT INTO <I>table</I> (<I>column</I>, ...) VALUES (<b>?</b>, ...) ON DUPLICATE KEY UPDATE <I>column</I>=<b>?</b>, ...
-	 * <p>
-	 * Requires that mySQL SQL syntax support is enabled during connection.
-	 * 
-	 * @param preparedStatement
-	 * @throws SQLException
-	 */
-	private void bindValues(PreparedStatement preparedStatement) throws SQLException {
-		for (int i = 0; i < this.objects.size(); ++i) {
-			Object object = this.objects.get(i);
-
-			if (object instanceof BigDecimal) {
-				// Special treatment for BigDecimals so that they retain their "scale",
-				// which would otherwise be assumed as 0.
-				preparedStatement.setBigDecimal(i + 1, (BigDecimal) object);
-				preparedStatement.setBigDecimal(i + this.objects.size() + 1, (BigDecimal) object);
-			} else if (object instanceof Timestamp) {
-				// Special treatment for Timestamps so that they are stored as UTC
-				preparedStatement.setTimestamp(i + 1, (Timestamp) object, utcCalendar);
-				preparedStatement.setTimestamp(i + this.objects.size() + 1, (Timestamp) object, utcCalendar);
-			} else {
-				preparedStatement.setObject(i + 1, object);
-				preparedStatement.setObject(i + this.objects.size() + 1, object);
-			}
-		}
-
-	}
-
+    /**
+     * Binds a single value to the prepared statement, handling special types.
+     *
+     * @param preparedStatement The prepared statement.
+     * @param index             The index to bind at.
+     * @param value             The value to bind.
+     * @throws SQLException If an SQL error occurs.
+     */
+    private void bindValue(PreparedStatement preparedStatement, int index, Object value) throws SQLException {
+        if (value instanceof BigDecimal) {
+            // Retain scale for BigDecimal values.
+            preparedStatement.setBigDecimal(index, (BigDecimal) value);
+        } else if (value instanceof Timestamp) {
+            // Store timestamps in UTC.
+            preparedStatement.setTimestamp(index, (Timestamp) value, UTC_CALENDAR);
+        } else {
+            // Bind as generic object.
+            preparedStatement.setObject(index, value);
+        }
+    }
 }

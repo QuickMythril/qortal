@@ -12,44 +12,61 @@ import java.sql.SQLException;
 
 public class HSQLDBTransferAssetTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBTransferAssetTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBTransferAssetTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		// LEFT OUTER JOIN because asset might not exist (e.g. if ISSUE_ASSET & TRANSFER_ASSET are both unconfirmed)
-		String sql = "SELECT recipient, asset_id, amount, asset_name FROM TransferAssetTransactions LEFT OUTER JOIN Assets USING (asset_id) WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        // LEFT OUTER JOIN because asset might not exist (e.g. if ISSUE_ASSET & TRANSFER_ASSET are both unconfirmed)
+        String sql = "SELECT recipient, asset_id, amount, asset_name " +
+                     "FROM TransferAssetTransactions LEFT OUTER JOIN Assets USING (asset_id) " +
+                     "WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			String recipient = resultSet.getString(1);
-			long assetId = resultSet.getLong(2);
-			long amount = resultSet.getLong(3);
-			String assetName = resultSet.getString(4);
+            String recipient = resultSet.getString(1);
+            long assetId = resultSet.getLong(2);
+            long amount = resultSet.getLong(3);
+            String assetName = resultSet.getString(4);
 
-			return new TransferAssetTransactionData(baseTransactionData, recipient, amount, assetId, assetName);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch transfer asset transaction from repository", e);
-		}
-	}
+            return new TransferAssetTransactionData(baseTransactionData, recipient, amount, assetId, assetName);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch transfer asset transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		TransferAssetTransactionData transferAssetTransactionData = (TransferAssetTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        TransferAssetTransactionData transferAssetTransactionData = (TransferAssetTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("TransferAssetTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("TransferAssetTransactions");
 
-		saveHelper.bind("signature", transferAssetTransactionData.getSignature()).bind("sender", transferAssetTransactionData.getSenderPublicKey())
-				.bind("recipient", transferAssetTransactionData.getRecipient()).bind("asset_id", transferAssetTransactionData.getAssetId())
-				.bind("amount", transferAssetTransactionData.getAmount());
+        saveHelper.bind("signature", transferAssetTransactionData.getSignature())
+                 .bind("sender", transferAssetTransactionData.getSenderPublicKey())
+                 .bind("recipient", transferAssetTransactionData.getRecipient())
+                 .bind("asset_id", transferAssetTransactionData.getAssetId())
+                 .bind("amount", transferAssetTransactionData.getAmount());
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save transfer asset transaction into repository", e);
-		}
-	}
+        executeSave(saveHelper);
+    }
 
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
+
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }

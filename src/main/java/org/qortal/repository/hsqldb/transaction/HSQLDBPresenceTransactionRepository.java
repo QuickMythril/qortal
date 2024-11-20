@@ -13,45 +13,48 @@ import java.sql.SQLException;
 
 public class HSQLDBPresenceTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBPresenceTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBPresenceTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT nonce, presence_type, timestamp_signature FROM PresenceTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT nonce, presence_type, timestamp_signature FROM PresenceTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            // If no record is found, return null
+            if (!resultSet.next()) {
+                return null;
+            }
 
-			int nonce = resultSet.getInt(1);
-			int presenceTypeValue = resultSet.getInt(2);
-			PresenceType presenceType = PresenceType.valueOf(presenceTypeValue);
+            // Retrieve values from the result set
+            int nonce = resultSet.getInt("nonce");
+            int presenceTypeValue = resultSet.getInt("presence_type");
+            PresenceType presenceType = PresenceType.valueOf(presenceTypeValue);
+            byte[] timestampSignature = resultSet.getBytes("timestamp_signature");
 
-			byte[] timestampSignature = resultSet.getBytes(3);
+            // Return the PresenceTransactionData instance with the retrieved values
+            return new PresenceTransactionData(baseTransactionData, nonce, presenceType, timestampSignature);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch presence transaction from repository", e);
+        }
+    }
 
-			return new PresenceTransactionData(baseTransactionData, nonce, presenceType, timestampSignature);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch presence transaction from repository", e);
-		}
-	}
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        PresenceTransactionData presenceTransactionData = (PresenceTransactionData) transactionData;
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		PresenceTransactionData presenceTransactionData = (PresenceTransactionData) transactionData;
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("PresenceTransactions")) {
+            // Bind values to the SQL query
+            saveHelper.bind("signature", presenceTransactionData.getSignature())
+                      .bind("nonce", presenceTransactionData.getNonce())
+                      .bind("presence_type", presenceTransactionData.getPresenceType().value)
+                      .bind("timestamp_signature", presenceTransactionData.getTimestampSignature());
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("PresenceTransactions");
-
-		saveHelper.bind("signature", presenceTransactionData.getSignature())
-				.bind("nonce", presenceTransactionData.getNonce())
-				.bind("presence_type", presenceTransactionData.getPresenceType().value)
-				.bind("timestamp_signature", presenceTransactionData.getTimestampSignature());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save chat transaction into repository", e);
-		}
-	}
-
+            // Execute the insert operation
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save presence transaction into repository", e);
+        }
+    }
 }

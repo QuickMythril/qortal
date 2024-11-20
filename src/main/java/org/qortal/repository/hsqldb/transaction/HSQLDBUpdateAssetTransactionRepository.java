@@ -12,48 +12,61 @@ import java.sql.SQLException;
 
 public class HSQLDBUpdateAssetTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBUpdateAssetTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBUpdateAssetTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT asset_id, new_owner, new_description, new_data, orphan_reference FROM UpdateAssetTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT asset_id, new_owner, new_description, new_data, orphan_reference " +
+                     "FROM UpdateAssetTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			long assetId = resultSet.getLong(1);
-			String newOwner = resultSet.getString(2);
-			String newDescription = resultSet.getString(3);
-			String newData = resultSet.getString(4);
-			byte[] orphanReference = resultSet.getBytes(5);
+            long assetId = resultSet.getLong(1);
+            String newOwner = resultSet.getString(2);
+            String newDescription = resultSet.getString(3);
+            String newData = resultSet.getString(4);
+            byte[] orphanReference = resultSet.getBytes(5);
 
-			return new UpdateAssetTransactionData(baseTransactionData, assetId, newOwner, newDescription, newData, orphanReference);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch update asset transaction from repository", e);
-		}
-	}
+            return new UpdateAssetTransactionData(baseTransactionData, assetId, newOwner, newDescription, newData, orphanReference);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch update asset transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		UpdateAssetTransactionData updateAssetTransactionData = (UpdateAssetTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        UpdateAssetTransactionData updateAssetTransactionData = (UpdateAssetTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateAssetTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateAssetTransactions")
+                .bind("signature", updateAssetTransactionData.getSignature())
+                .bind("owner", updateAssetTransactionData.getOwnerPublicKey())
+                .bind("asset_id", updateAssetTransactionData.getAssetId())
+                .bind("new_owner", updateAssetTransactionData.getNewOwner())
+                .bind("new_description", updateAssetTransactionData.getNewDescription())
+                .bind("new_data", updateAssetTransactionData.getNewData())
+                .bind("orphan_reference", updateAssetTransactionData.getOrphanReference());
 
-		saveHelper.bind("signature", updateAssetTransactionData.getSignature())
-				.bind("owner", updateAssetTransactionData.getOwnerPublicKey())
-				.bind("asset_id", updateAssetTransactionData.getAssetId())
-				.bind("new_owner", updateAssetTransactionData.getNewOwner())
-				.bind("new_description", updateAssetTransactionData.getNewDescription())
-				.bind("new_data", updateAssetTransactionData.getNewData())
-				.bind("orphan_reference", updateAssetTransactionData.getOrphanReference());
+        executeSave(saveHelper);
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save update asset transaction into repository", e);
-		}
-	}
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }

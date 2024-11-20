@@ -12,42 +12,56 @@ import java.sql.SQLException;
 
 public class HSQLDBCancelGroupBanTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBCancelGroupBanTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBCancelGroupBanTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT group_id, address, ban_reference FROM CancelGroupBanTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT group_id, address, ban_reference FROM CancelGroupBanTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			int groupId = resultSet.getInt(1);
-			String member = resultSet.getString(2);
-			byte[] banReference = resultSet.getBytes(3);
+            int groupId = resultSet.getInt(1);
+            String member = resultSet.getString(2);
+            byte[] banReference = resultSet.getBytes(3);
 
-			return new CancelGroupBanTransactionData(baseTransactionData, groupId, member, banReference);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch group unban transaction from repository", e);
-		}
-	}
+            return new CancelGroupBanTransactionData(baseTransactionData, groupId, member, banReference);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch group unban transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		CancelGroupBanTransactionData groupUnbanTransactionData = (CancelGroupBanTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        CancelGroupBanTransactionData groupUnbanTransactionData = (CancelGroupBanTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("CancelGroupBanTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("CancelGroupBanTransactions")
+                .bind("signature", groupUnbanTransactionData.getSignature())
+                .bind("admin", groupUnbanTransactionData.getAdminPublicKey())
+                .bind("group_id", groupUnbanTransactionData.getGroupId())
+                .bind("address", groupUnbanTransactionData.getMember())
+                .bind("ban_reference", groupUnbanTransactionData.getBanReference());
 
-		saveHelper.bind("signature", groupUnbanTransactionData.getSignature()).bind("admin", groupUnbanTransactionData.getAdminPublicKey())
-				.bind("group_id", groupUnbanTransactionData.getGroupId()).bind("address", groupUnbanTransactionData.getMember())
-				.bind("ban_reference", groupUnbanTransactionData.getBanReference());
+        executeSave(saveHelper);
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save group unban transaction into repository", e);
-		}
-	}
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }

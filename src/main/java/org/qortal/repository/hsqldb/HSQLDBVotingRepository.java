@@ -6,216 +6,216 @@ import org.qortal.data.voting.VoteOnPollData;
 import org.qortal.repository.DataException;
 import org.qortal.repository.VotingRepository;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HSQLDBVotingRepository implements VotingRepository {
 
-	protected HSQLDBRepository repository;
+    protected HSQLDBRepository repository;
 
-	public HSQLDBVotingRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBVotingRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	// Polls
+    // Polls
 
-	@Override
-	public List<PollData> getAllPolls(Integer limit, Integer offset, Boolean reverse) throws DataException {
-		StringBuilder sql = new StringBuilder(512);
+    @Override
+    public List<PollData> getAllPolls(Integer limit, Integer offset, Boolean reverse) throws DataException {
+        if (limit == null || limit <= 0) limit = 100; // Default limit
+        if (offset == null || offset < 0) offset = 0;
 
-		sql.append("SELECT poll_name, description, creator, owner, published_when FROM Polls ORDER BY poll_name");
+        StringBuilder sql = new StringBuilder(512);
+        sql.append("SELECT p.poll_name, p.description, p.creator, p.owner, p.published_when, po.option_name ")
+           .append("FROM Polls p ")
+           .append("LEFT JOIN PollOptions po ON p.poll_name = po.poll_name ")
+           .append("ORDER BY p.poll_name");
 
-		if (reverse != null && reverse)
-			sql.append(" DESC");
+        if (reverse != null && reverse)
+            sql.append(" DESC");
 
-		HSQLDBRepository.limitOffsetSql(sql, limit, offset);
+        sql.append(" LIMIT ? OFFSET ?");
 
-		List<PollData> polls = new ArrayList<>();
+        Map<String, PollData> pollsMap = new LinkedHashMap<>();
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql.toString())) {
-			if (resultSet == null)
-				return polls;
+        try (PreparedStatement preparedStatement = this.repository.prepareStatement(sql.toString())) {
+            preparedStatement.setInt(1, limit);
+            preparedStatement.setInt(2, offset);
 
-			do {
-				String pollName = resultSet.getString(1);
-				String description = resultSet.getString(2);
-				byte[] creatorPublicKey = resultSet.getBytes(3);
-				String owner = resultSet.getString(4);
-				long published = resultSet.getLong(5);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String pollName = resultSet.getString(1);
+                    PollData pollData = pollsMap.computeIfAbsent(pollName, k -> {
+                        try {
+                            return new PollData(
+                                resultSet.getBytes(3),
+                                resultSet.getString(4),
+                                pollName,
+                                resultSet.getString(2),
+                                new ArrayList<>(),
+                                resultSet.getLong(5)
+                            );
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e); // Simplified exception handling
+                        }
+                    });
 
-				String optionsSql = "SELECT option_name FROM PollOptions WHERE poll_name = ? ORDER BY option_index ASC";
-				try (ResultSet optionsResultSet = this.repository.checkedExecute(optionsSql, pollName)) {
-					if (optionsResultSet == null)
-						return null;
+                    String optionName = resultSet.getString(6);
+                    if (optionName != null)
+                        pollData.getPollOptions().add(new PollOptionData(optionName));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch polls from repository", e);
+        }
 
-					List<PollOptionData> pollOptions = new ArrayList<>();
+        return new ArrayList<>(pollsMap.values());
+    }
 
-					// NOTE: do-while because checkedExecute() above has already called rs.next() for us
-					do {
-						String optionName = optionsResultSet.getString(1);
+    @Override
+    public PollData fromPollName(String pollName) throws DataException {
+        String sql = "SELECT p.description, p.creator, p.owner, p.published_when, po.option_name "
+                   + "FROM Polls p LEFT JOIN PollOptions po ON p.poll_name = po.poll_name "
+                   + "WHERE p.poll_name = ? ORDER BY po.option_index ASC";
 
-						pollOptions.add(new PollOptionData(optionName));
-					} while (optionsResultSet.next());
+        try (PreparedStatement preparedStatement = this.repository.prepareStatement(sql)) {
+            preparedStatement.setString(1, pollName);
 
-					polls.add(new PollData(creatorPublicKey, owner, pollName, description, pollOptions, published));
-				}
-				
-			} while (resultSet.next());
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                PollData pollData = null;
+                List<PollOptionData> options = new ArrayList<>();
 
-			return polls;
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch polls from repository", e);
-		}
-	}
+                while (resultSet.next()) {
+                    if (pollData == null) {
+                        pollData = new PollData(
+                            resultSet.getBytes(2),
+                            resultSet.getString(3),
+                            pollName,
+                            resultSet.getString(1),
+                            options,
+                            resultSet.getLong(4)
+                        );
+                    }
+                    String optionName = resultSet.getString(5);
+                    if (optionName != null)
+                        options.add(new PollOptionData(optionName));
+                }
 
-	@Override
-	public PollData fromPollName(String pollName) throws DataException {
-		String sql = "SELECT description, creator, owner, published_when FROM Polls WHERE poll_name = ?";
+                return pollData;
+            }
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch poll by name", e);
+        }
+    }
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, pollName)) {
-			if (resultSet == null)
-				return null;
+    @Override
+    public boolean pollExists(String pollName) throws DataException {
+        try {
+            return this.repository.exists("Polls", "poll_name = ?", pollName);
+        } catch (SQLException e) {
+            throw new DataException("Unable to check for poll in repository", e);
+        }
+    }
 
-			String description = resultSet.getString(1);
-			byte[] creatorPublicKey = resultSet.getBytes(2);
-			String owner = resultSet.getString(3);
-			long published = resultSet.getLong(4);
+    @Override
+    public void save(PollData pollData) throws DataException {
+        String pollSql = "INSERT INTO Polls (poll_name, description, creator, owner, published_when) VALUES (?, ?, ?, ?, ?)";
+        String optionsSql = "INSERT INTO PollOptions (poll_name, option_index, option_name) VALUES (?, ?, ?)";
 
-			String optionsSql = "SELECT option_name FROM PollOptions WHERE poll_name = ? ORDER BY option_index ASC";
-			try (ResultSet optionsResultSet = this.repository.checkedExecute(optionsSql, pollName)) {
-				if (optionsResultSet == null)
-					return null;
+        try (PreparedStatement pollStatement = this.repository.prepareStatement(pollSql)) {
+            pollStatement.setString(1, pollData.getPollName());
+            pollStatement.setString(2, pollData.getDescription());
+            pollStatement.setBytes(3, pollData.getCreatorPublicKey());
+            pollStatement.setString(4, pollData.getOwner());
+            pollStatement.setLong(5, pollData.getPublished());
+            pollStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataException("Unable to save poll into repository", e);
+        }
 
-				List<PollOptionData> pollOptions = new ArrayList<>();
+        try (PreparedStatement optionsStatement = this.repository.prepareStatement(optionsSql)) {
+            List<PollOptionData> pollOptions = pollData.getPollOptions();
+            for (int index = 0; index < pollOptions.size(); ++index) {
+                optionsStatement.setString(1, pollData.getPollName());
+                optionsStatement.setInt(2, index);
+                optionsStatement.setString(3, pollOptions.get(index).getOptionName());
+                optionsStatement.addBatch();
+            }
+            optionsStatement.executeBatch();
+        } catch (SQLException e) {
+            throw new DataException("Unable to save poll options into repository", e);
+        }
+    }
 
-				// NOTE: do-while because checkedExecute() above has already called rs.next() for us
-				do {
-					String optionName = optionsResultSet.getString(1);
+    @Override
+    public void delete(String pollName) throws DataException {
+        try {
+            this.repository.delete("Polls", "poll_name = ?", pollName);
+        } catch (SQLException e) {
+            throw new DataException("Unable to delete poll from repository", e);
+        }
+    }
 
-					pollOptions.add(new PollOptionData(optionName));
-				} while (optionsResultSet.next());
+    // Votes
 
-				return new PollData(creatorPublicKey, owner, pollName, description, pollOptions, published);
-			}
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch poll from repository", e);
-		}
-	}
+    @Override
+    public List<VoteOnPollData> getVotes(String pollName) throws DataException {
+        String sql = "SELECT voter, option_index FROM PollVotes WHERE poll_name = ?";
 
-	@Override
-	public boolean pollExists(String pollName) throws DataException {
-		try {
-			return this.repository.exists("Polls", "poll_name = ?", pollName);
-		} catch (SQLException e) {
-			throw new DataException("Unable to check for poll in repository", e);
-		}
-	}
+        List<VoteOnPollData> votes = new ArrayList<>();
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, pollName)) {
+            while (resultSet.next()) {
+                votes.add(new VoteOnPollData(
+                    pollName,
+                    resultSet.getBytes(1),
+                    resultSet.getInt(2)
+                ));
+            }
+            return votes;
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch poll votes from repository", e);
+        }
+    }
 
-	@Override
-	public void save(PollData pollData) throws DataException {
-		HSQLDBSaver saveHelper = new HSQLDBSaver("Polls");
+    @Override
+    public VoteOnPollData getVote(String pollName, byte[] voterPublicKey) throws DataException {
+        String sql = "SELECT option_index FROM PollVotes WHERE poll_name = ? AND voter = ?";
 
-		saveHelper.bind("poll_name", pollData.getPollName()).bind("description", pollData.getDescription()).bind("creator", pollData.getCreatorPublicKey())
-				.bind("owner", pollData.getOwner()).bind("published_when", pollData.getPublished());
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, pollName, voterPublicKey)) {
+            if (resultSet.next()) {
+                return new VoteOnPollData(
+                    pollName,
+                    voterPublicKey,
+                    resultSet.getInt(1)
+                );
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch poll vote from repository", e);
+        }
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save poll into repository", e);
-		}
+    @Override
+    public void save(VoteOnPollData voteOnPollData) throws DataException {
+        String sql = "INSERT INTO PollVotes (poll_name, voter, option_index) VALUES (?, ?, ?)";
 
-		// Now attempt to save poll options
-		List<PollOptionData> pollOptions = pollData.getPollOptions();
-		for (int optionIndex = 0; optionIndex < pollOptions.size(); ++optionIndex) {
-			PollOptionData pollOptionData = pollOptions.get(optionIndex);
+        try (PreparedStatement statement = this.repository.prepareStatement(sql)) {
+            statement.setString(1, voteOnPollData.getPollName());
+            statement.setBytes(2, voteOnPollData.getVoterPublicKey());
+            statement.setInt(3, voteOnPollData.getOptionIndex());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataException("Unable to save poll vote into repository", e);
+        }
+    }
 
-			HSQLDBSaver optionSaveHelper = new HSQLDBSaver("PollOptions");
-
-			optionSaveHelper.bind("poll_name", pollData.getPollName()).bind("option_index", optionIndex).bind("option_name", pollOptionData.getOptionName());
-
-			try {
-				optionSaveHelper.execute(this.repository);
-			} catch (SQLException e) {
-				throw new DataException("Unable to save poll option into repository", e);
-			}
-		}
-	}
-
-	@Override
-	public void delete(String pollName) throws DataException {
-		// NOTE: The corresponding rows in PollOptions are deleted automatically by the database
-		// thanks to "ON DELETE CASCADE" in the PollOptions' FOREIGN KEY definition.
-		try {
-			this.repository.delete("Polls", "poll_name = ?", pollName);
-		} catch (SQLException e) {
-			throw new DataException("Unable to delete poll from repository", e);
-		}
-	}
-
-	// Votes
-
-	@Override
-	public List<VoteOnPollData> getVotes(String pollName) throws DataException {
-		String sql = "SELECT voter, option_index FROM PollVotes WHERE poll_name = ?";
-		List<VoteOnPollData> votes = new ArrayList<>();
-
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, pollName)) {
-			if (resultSet == null)
-				return votes;
-
-			// NOTE: do-while because checkedExecute() above has already called rs.next() for us
-			do {
-				byte[] voterPublicKey = resultSet.getBytes(1);
-				int optionIndex = resultSet.getInt(2);
-
-				votes.add(new VoteOnPollData(pollName, voterPublicKey, optionIndex));
-			} while (resultSet.next());
-
-			return votes;
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch poll votes from repository", e);
-		}
-	}
-
-	@Override
-	public VoteOnPollData getVote(String pollName, byte[] voterPublicKey) throws DataException {
-		String sql = "SELECT option_index FROM PollVotes WHERE poll_name = ? AND voter = ?";
-
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, pollName, voterPublicKey)) {
-			if (resultSet == null)
-				return null;
-
-			int optionIndex = resultSet.getInt(1);
-
-			return new VoteOnPollData(pollName, voterPublicKey, optionIndex);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch poll vote from repository", e);
-		}
-	}
-
-	@Override
-	public void save(VoteOnPollData voteOnPollData) throws DataException {
-		HSQLDBSaver saveHelper = new HSQLDBSaver("PollVotes");
-
-		saveHelper.bind("poll_name", voteOnPollData.getPollName()).bind("voter", voteOnPollData.getVoterPublicKey())
-				.bind("option_index", voteOnPollData.getOptionIndex());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save poll vote into repository", e);
-		}
-	}
-
-	@Override
-	public void delete(String pollName, byte[] voterPublicKey) throws DataException {
-		try {
-			this.repository.delete("PollVotes", "poll_name = ? AND voter = ?", pollName, voterPublicKey);
-		} catch (SQLException e) {
-			throw new DataException("Unable to delete poll vote from repository", e);
-		}
-	}
-
+    @Override
+    public void delete(String pollName, byte[] voterPublicKey) throws DataException {
+        try {
+            this.repository.delete("PollVotes", "poll_name = ? AND voter = ?", pollName, voterPublicKey);
+        } catch (SQLException e) {
+            throw new DataException("Unable to delete poll vote from repository", e);
+        }
+    }
 }

@@ -12,46 +12,63 @@ import java.sql.SQLException;
 
 public class HSQLDBVoteOnPollTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBVoteOnPollTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBVoteOnPollTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT poll_name, option_index, previous_option_index FROM VoteOnPollTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT poll_name, option_index, previous_option_index FROM VoteOnPollTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			String pollName = resultSet.getString(1);
-			int optionIndex = resultSet.getInt(2);
+            String pollName = resultSet.getString(1);
+            int optionIndex = resultSet.getInt(2);
 
-			// Special null-checking for previous option index
-			Integer previousOptionIndex = resultSet.getInt(3);
-			if (previousOptionIndex == 0 && resultSet.wasNull())
-				previousOptionIndex = null;
+            Integer previousOptionIndex = getNullableInteger(resultSet, 3);
 
-			return new VoteOnPollTransactionData(baseTransactionData, pollName, optionIndex, previousOptionIndex);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch vote on poll transaction from repository", e);
-		}
-	}
+            return new VoteOnPollTransactionData(baseTransactionData, pollName, optionIndex, previousOptionIndex);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch vote on poll transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		VoteOnPollTransactionData voteOnPollTransactionData = (VoteOnPollTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        VoteOnPollTransactionData voteOnPollTransactionData = (VoteOnPollTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("VoteOnPollTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("VoteOnPollTransactions")
+                .bind("signature", voteOnPollTransactionData.getSignature())
+                .bind("poll_name", voteOnPollTransactionData.getPollName())
+                .bind("voter", voteOnPollTransactionData.getVoterPublicKey())
+                .bind("option_index", voteOnPollTransactionData.getOptionIndex())
+                .bind("previous_option_index", voteOnPollTransactionData.getPreviousOptionIndex());
 
-		saveHelper.bind("signature", voteOnPollTransactionData.getSignature()).bind("poll_name", voteOnPollTransactionData.getPollName())
-				.bind("voter", voteOnPollTransactionData.getVoterPublicKey()).bind("option_index", voteOnPollTransactionData.getOptionIndex())
-				.bind("previous_option_index", voteOnPollTransactionData.getPreviousOptionIndex());
+        executeSave(saveHelper);
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save vote on poll transaction into repository", e);
-		}
-	}
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
+    // Helper method to retrieve nullable Integer values
+    private Integer getNullableInteger(ResultSet resultSet, int columnIndex) throws SQLException {
+        int value = resultSet.getInt(columnIndex);
+        return (value == 0 && resultSet.wasNull()) ? null : value;
+    }
+
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }

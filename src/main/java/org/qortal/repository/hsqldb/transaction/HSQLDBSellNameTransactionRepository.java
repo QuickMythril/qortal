@@ -12,40 +12,39 @@ import java.sql.SQLException;
 
 public class HSQLDBSellNameTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBSellNameTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBSellNameTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT name, amount FROM SellNameTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT name, amount FROM SellNameTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet != null && resultSet.next()) {
+                String name = resultSet.getString("name");  // Use column name for clarity
+                long amount = resultSet.getLong("amount");
+                return new SellNameTransactionData(baseTransactionData, name, amount);
+            }
+            return null;  // Explicit null if no result found
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch sell name transaction from repository", e);
+        }
+    }
 
-			String name = resultSet.getString(1);
-			long amount = resultSet.getLong(2);
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        SellNameTransactionData sellNameTransactionData = (SellNameTransactionData) transactionData;
 
-			return new SellNameTransactionData(baseTransactionData, name, amount);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch sell name transaction from repository", e);
-		}
-	}
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("SellNameTransactions")) {
+            saveHelper.bind("signature", sellNameTransactionData.getSignature())
+                    .bind("owner", sellNameTransactionData.getOwnerPublicKey())
+                    .bind("name", sellNameTransactionData.getName())
+                    .bind("amount", sellNameTransactionData.getAmount());
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		SellNameTransactionData sellNameTransactionData = (SellNameTransactionData) transactionData;
-
-		HSQLDBSaver saveHelper = new HSQLDBSaver("SellNameTransactions");
-
-		saveHelper.bind("signature", sellNameTransactionData.getSignature()).bind("owner", sellNameTransactionData.getOwnerPublicKey())
-				.bind("name", sellNameTransactionData.getName()).bind("amount", sellNameTransactionData.getAmount());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save sell name transaction into repository", e);
-		}
-	}
-
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save sell name transaction into repository", e);
+        }
+    }
 }

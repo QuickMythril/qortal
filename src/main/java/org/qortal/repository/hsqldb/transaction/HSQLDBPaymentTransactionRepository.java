@@ -12,40 +12,46 @@ import java.sql.SQLException;
 
 public class HSQLDBPaymentTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBPaymentTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBPaymentTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT recipient, amount FROM PaymentTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT recipient, amount FROM PaymentTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            // If no record found, return null
+            if (!resultSet.next()) {
+                return null;
+            }
 
-			String recipient = resultSet.getString(1);
-			long amount = resultSet.getLong(2);
+            // Retrieve values directly from the result set
+            String recipient = resultSet.getString("recipient");
+            long amount = resultSet.getLong("amount");
 
-			return new PaymentTransactionData(baseTransactionData, recipient, amount);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch payment transaction from repository", e);
-		}
-	}
+            // Return new PaymentTransactionData instance with the retrieved values
+            return new PaymentTransactionData(baseTransactionData, recipient, amount);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch payment transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		PaymentTransactionData paymentTransactionData = (PaymentTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        PaymentTransactionData paymentTransactionData = (PaymentTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("PaymentTransactions");
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("PaymentTransactions")) {
+            // Bind all necessary values before executing the query
+            saveHelper.bind("signature", paymentTransactionData.getSignature())
+                      .bind("sender", paymentTransactionData.getSenderPublicKey())
+                      .bind("recipient", paymentTransactionData.getRecipient())
+                      .bind("amount", paymentTransactionData.getAmount());
 
-		saveHelper.bind("signature", paymentTransactionData.getSignature()).bind("sender", paymentTransactionData.getSenderPublicKey())
-				.bind("recipient", paymentTransactionData.getRecipient()).bind("amount", paymentTransactionData.getAmount());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save payment transaction into repository", e);
-		}
-	}
-
+            // Execute the insert operation
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save payment transaction into repository", e);
+        }
+    }
 }

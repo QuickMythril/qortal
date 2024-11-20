@@ -12,45 +12,61 @@ import java.sql.SQLException;
 
 public class HSQLDBUpdateNameTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBUpdateNameTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBUpdateNameTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT name, new_name, new_data, reduced_new_name, name_reference FROM UpdateNameTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT name, new_name, new_data, reduced_new_name, name_reference " +
+                     "FROM UpdateNameTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			String name = resultSet.getString(1);
-			String newName = resultSet.getString(2);
-			String newData = resultSet.getString(3);
-			String reducedNewName = resultSet.getString(4);
-			byte[] nameReference = resultSet.getBytes(5);
+            String name = resultSet.getString(1);
+            String newName = resultSet.getString(2);
+            String newData = resultSet.getString(3);
+            String reducedNewName = resultSet.getString(4);
+            byte[] nameReference = resultSet.getBytes(5);
 
-			return new UpdateNameTransactionData(baseTransactionData, name, newName, newData, reducedNewName, nameReference);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch update name transaction from repository", e);
-		}
-	}
+            return new UpdateNameTransactionData(baseTransactionData, name, newName, newData, reducedNewName, nameReference);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch update name transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		UpdateNameTransactionData updateNameTransactionData = (UpdateNameTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        UpdateNameTransactionData updateNameTransactionData = (UpdateNameTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateNameTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateNameTransactions")
+                .bind("signature", updateNameTransactionData.getSignature())
+                .bind("owner", updateNameTransactionData.getOwnerPublicKey())
+                .bind("name", updateNameTransactionData.getName())
+                .bind("new_name", updateNameTransactionData.getNewName())
+                .bind("new_data", updateNameTransactionData.getNewData())
+                .bind("reduced_new_name", updateNameTransactionData.getReducedNewName())
+                .bind("name_reference", updateNameTransactionData.getNameReference());
 
-		saveHelper.bind("signature", updateNameTransactionData.getSignature()).bind("owner", updateNameTransactionData.getOwnerPublicKey())
-				.bind("name", updateNameTransactionData.getName()).bind("new_name", updateNameTransactionData.getNewName())
-				.bind("new_data", updateNameTransactionData.getNewData()).bind("reduced_new_name", updateNameTransactionData.getReducedNewName())
-				.bind("name_reference", updateNameTransactionData.getNameReference());
+        executeSave(saveHelper);
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save update name transaction into repository", e);
-		}
-	}
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }

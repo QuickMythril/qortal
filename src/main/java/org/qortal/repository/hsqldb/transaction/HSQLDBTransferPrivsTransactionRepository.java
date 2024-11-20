@@ -12,58 +12,68 @@ import java.sql.SQLException;
 
 public class HSQLDBTransferPrivsTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBTransferPrivsTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBTransferPrivsTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT recipient, previous_sender_flags, previous_recipient_flags, previous_sender_blocks_minted_adjustment, previous_sender_blocks_minted FROM TransferPrivsTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT recipient, previous_sender_flags, previous_recipient_flags, previous_sender_blocks_minted_adjustment, previous_sender_blocks_minted " +
+                     "FROM TransferPrivsTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			String recipient = resultSet.getString(1);
+            String recipient = resultSet.getString(1);
+            Integer previousSenderFlags = getNullableInt(resultSet, 2);
+            Integer previousRecipientFlags = getNullableInt(resultSet, 3);
+            Integer previousSenderBlocksMintedAdjustment = getNullableInt(resultSet, 4);
+            Integer previousSenderBlocksMinted = getNullableInt(resultSet, 5);
 
-			Integer previousSenderFlags = resultSet.getInt(2);
-			if (previousSenderFlags == 0 && resultSet.wasNull())
-				previousSenderFlags = null;
+            return new TransferPrivsTransactionData(baseTransactionData, recipient, previousSenderFlags, previousRecipientFlags, 
+                                                     previousSenderBlocksMintedAdjustment, previousSenderBlocksMinted);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch transfer privs transaction from repository", e);
+        }
+    }
 
-			Integer previousRecipientFlags = resultSet.getInt(3);
-			if (previousRecipientFlags == 0 && resultSet.wasNull())
-				previousRecipientFlags = null;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        TransferPrivsTransactionData transferPrivsTransactionData = (TransferPrivsTransactionData) transactionData;
 
-			Integer previousSenderBlocksMintedAdjustment = resultSet.getInt(4);
-			if (previousSenderBlocksMintedAdjustment == 0 && resultSet.wasNull())
-				previousSenderBlocksMintedAdjustment = null;
+        HSQLDBSaver saveHelper = new HSQLDBSaver("TransferPrivsTransactions")
+                .bind("signature", transferPrivsTransactionData.getSignature())
+                .bind("sender", transferPrivsTransactionData.getSenderPublicKey())
+                .bind("recipient", transferPrivsTransactionData.getRecipient())
+                .bind("previous_sender_flags", transferPrivsTransactionData.getPreviousSenderFlags())
+                .bind("previous_recipient_flags", transferPrivsTransactionData.getPreviousRecipientFlags())
+                .bind("previous_sender_blocks_minted_adjustment", transferPrivsTransactionData.getPreviousSenderBlocksMintedAdjustment())
+                .bind("previous_sender_blocks_minted", transferPrivsTransactionData.getPreviousSenderBlocksMinted());
 
-			Integer previousSenderBlocksMinted = resultSet.getInt(5);
-			if (previousSenderBlocksMinted == 0 && resultSet.wasNull())
-				previousSenderBlocksMinted = null;
+        executeSave(saveHelper);
+    }
 
-			return new TransferPrivsTransactionData(baseTransactionData, recipient, previousSenderFlags, previousRecipientFlags, previousSenderBlocksMintedAdjustment, previousSenderBlocksMinted);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch transfer privs transaction from repository", e);
-		}
-	}
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		TransferPrivsTransactionData transferPrivsTransactionData = (TransferPrivsTransactionData) transactionData;
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("TransferPrivsTransactions");
-		saveHelper.bind("signature", transferPrivsTransactionData.getSignature()).bind("sender", transferPrivsTransactionData.getSenderPublicKey())
-				.bind("recipient", transferPrivsTransactionData.getRecipient())
-				.bind("previous_sender_flags", transferPrivsTransactionData.getPreviousSenderFlags())
-				.bind("previous_recipient_flags", transferPrivsTransactionData.getPreviousRecipientFlags())
-				.bind("previous_sender_blocks_minted_adjustment", transferPrivsTransactionData.getPreviousSenderBlocksMintedAdjustment())
-				.bind("previous_sender_blocks_minted", transferPrivsTransactionData.getPreviousSenderBlocksMinted());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save transfer privs transaction into repository", e);
-		}
-	}
-
+    // Helper method for handling nullable integers from ResultSet
+    private Integer getNullableInt(ResultSet resultSet, int columnIndex) throws SQLException {
+        int value = resultSet.getInt(columnIndex);
+        return (value == 0 && resultSet.wasNull()) ? null : value;
+    }
 }

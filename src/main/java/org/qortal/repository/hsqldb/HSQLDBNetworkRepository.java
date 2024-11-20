@@ -12,87 +12,90 @@ import java.util.List;
 
 public class HSQLDBNetworkRepository implements NetworkRepository {
 
-	protected HSQLDBRepository repository;
+    private static final String TABLE_NAME = "Peers";
+    protected final HSQLDBRepository repository;
 
-	public HSQLDBNetworkRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBNetworkRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	@Override
-	public List<PeerData> getAllPeers() throws DataException {
-		String sql = "SELECT address, last_connected, last_attempted, last_misbehaved, added_when, added_by FROM Peers";
+    @Override
+    public List<PeerData> getAllPeers() throws DataException {
+        String sql = "SELECT address, last_connected, last_attempted, last_misbehaved, added_when, added_by FROM " + TABLE_NAME;
+        List<PeerData> peers = new ArrayList<>();
 
-		List<PeerData> peers = new ArrayList<>();
+        try (ResultSet resultSet = this.repository.checkedExecute(sql)) {
+            if (resultSet == null) {
+                return peers;
+            }
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql)) {
-			if (resultSet == null)
-				return peers;
+            do {
+                PeerData peerData = parsePeerData(resultSet);
+                peers.add(peerData);
+            } while (resultSet.next());
 
-			// NOTE: do-while because checkedExecute() above has already called rs.next() for us
-			do {
-				String address = resultSet.getString(1);
-				PeerAddress peerAddress = PeerAddress.fromString(address);
+        } catch (IllegalArgumentException e) {
+            throw new DataException("Invalid peer data encountered in repository", e);
+        } catch (SQLException e) {
+            throw new DataException("Error fetching peers from repository", e);
+        }
 
-				Long lastConnected = resultSet.getLong(2);
-				if (lastConnected == 0 && resultSet.wasNull())
-					lastConnected = null;
+        return peers;
+    }
 
-				Long lastAttempted = resultSet.getLong(3);
-				if (lastAttempted == 0 && resultSet.wasNull())
-					lastAttempted = null;
+    @Override
+    public void save(PeerData peerData) throws DataException {
+        try {
+            new HSQLDBSaver(TABLE_NAME)
+                .bind("address", peerData.getAddress().toString())
+                .bind("last_connected", peerData.getLastConnected())
+                .bind("last_attempted", peerData.getLastAttempted())
+                .bind("last_misbehaved", peerData.getLastMisbehaved())
+                .bind("added_when", peerData.getAddedWhen())
+                .bind("added_by", peerData.getAddedBy())
+                .execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving peer into repository", e);
+        }
+    }
 
-				Long lastMisbehaved = resultSet.getLong(4);
-				if (lastMisbehaved == 0 && resultSet.wasNull())
-					lastMisbehaved = null;
+    @Override
+    public int delete(PeerAddress peerAddress) throws DataException {
+        return executeDelete("address = ?", peerAddress.toString());
+    }
 
-				Long addedWhen = resultSet.getLong(5);
-				if (addedWhen == 0 && resultSet.wasNull())
-					addedWhen = null;
+    @Override
+    public int deleteAllPeers() throws DataException {
+        return executeDelete(null);
+    }
 
-				String addedBy = resultSet.getString(6);
+    // Private helper methods
 
-				peers.add(new PeerData(peerAddress, lastAttempted, lastConnected, lastMisbehaved, addedWhen, addedBy));
-			} while (resultSet.next());
+    private PeerData parsePeerData(ResultSet resultSet) throws SQLException {
+        String address = resultSet.getString(1);
+        PeerAddress peerAddress = PeerAddress.fromString(address);
 
-			return peers;
-		} catch (IllegalArgumentException e) {
-			throw new DataException("Refusing to fetch invalid peer from repository", e);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch peers from repository", e);
-		}
-	}
+        Long lastConnected = getNullableLong(resultSet, 2);
+        Long lastAttempted = getNullableLong(resultSet, 3);
+        Long lastMisbehaved = getNullableLong(resultSet, 4);
+        Long addedWhen = getNullableLong(resultSet, 5);
+        String addedBy = resultSet.getString(6);
 
-	@Override
-	public void save(PeerData peerData) throws DataException {
-		HSQLDBSaver saveHelper = new HSQLDBSaver("Peers");
+        return new PeerData(peerAddress, lastAttempted, lastConnected, lastMisbehaved, addedWhen, addedBy);
+    }
 
-		saveHelper.bind("address", peerData.getAddress().toString()).bind("last_connected", peerData.getLastConnected())
-				.bind("last_attempted", peerData.getLastAttempted()).bind("last_misbehaved", peerData.getLastMisbehaved())
-				.bind("added_when", peerData.getAddedWhen()).bind("added_by", peerData.getAddedBy());
+    private Long getNullableLong(ResultSet resultSet, int columnIndex) throws SQLException {
+        long value = resultSet.getLong(columnIndex);
+        return resultSet.wasNull() ? null : value;
+    }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save peer into repository", e);
-		}
-	}
-
-	@Override
-	public int delete(PeerAddress peerAddress) throws DataException {
-		try {
-			return this.repository.delete("Peers", "address = ?", peerAddress.toString());
-		} catch (SQLException e) {
-			throw new DataException("Unable to delete peer from repository", e);
-		}
-	}
-
-	@Override
-	public int deleteAllPeers() throws DataException {
-		try {
-			return this.repository.delete("Peers");
-		} catch (SQLException e) {
-			throw new DataException("Unable to delete peers from repository", e);
-		}
-	}
-
+    private int executeDelete(String whereClause, String... params) throws DataException {
+        try {
+            return whereClause == null
+                ? this.repository.delete(TABLE_NAME)
+                : this.repository.delete(TABLE_NAME, whereClause, params);
+        } catch (SQLException e) {
+            throw new DataException("Error deleting peer(s) from repository", e);
+        }
+    }
 }

@@ -61,199 +61,206 @@ public class HSQLDBRepository implements Repository {
 
 	// Constructors
 
-	// NB: no visibility modifier so only callable from within same package
-	/* package */ HSQLDBRepository(Connection connection) throws DataException {
-		this.connection = connection;
+/* package */ HSQLDBRepository(Connection connection) throws DataException {
+    this.connection = connection;
 
-		this.slowQueryThreshold = Settings.getInstance().getSlowQueryThreshold();
-		if (this.slowQueryThreshold != null)
-			this.sqlStatements = new ArrayList<>();
+    this.slowQueryThreshold = Settings.getInstance().getSlowQueryThreshold();
+    if (this.slowQueryThreshold != null) {
+        this.sqlStatements = new ArrayList<>();
+    }
 
-		// Find out our session ID
-		try (Statement stmt = this.connection.createStatement()) {
-			if (!stmt.execute("SELECT SESSION_ID()"))
-				throw new DataException("Unable to fetch session ID from repository");
+    this.sessionId = fetchSessionId();
 
-			try (ResultSet resultSet = stmt.getResultSet()) {
-				if (resultSet == null || !resultSet.next())
-					throw new DataException("Unable to fetch session ID from repository");
+    // Synchronize to block new connections if checkpointing in progress
+    synchronized (CHECKPOINT_LOCK) {
+        assertEmptyTransaction("connection creation");
+    }
+}
 
-				this.sessionId = resultSet.getLong(1);
-			}
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch session ID from repository", e);
-		}
+private long fetchSessionId() throws DataException {
+    try (Statement stmt = this.connection.createStatement()) {
+        if (!stmt.execute("SELECT SESSION_ID()")) {
+            throw new DataException("Unable to fetch session ID from repository");
+        }
 
-		// synchronize to block new connections if checkpointing in progress 
-		synchronized (CHECKPOINT_LOCK) {
-			assertEmptyTransaction("connection creation");
-		}
-	}
+        try (ResultSet resultSet = stmt.getResultSet()) {
+            if (resultSet == null || !resultSet.next()) {
+                throw new DataException("Unable to fetch session ID from repository");
+            }
+            return resultSet.getLong(1);
+        }
+    } catch (SQLException e) {
+        throw new DataException("Unable to fetch session ID from repository", e);
+    }
+}
 
-	// Getters / setters
+// Getters / Setters
 
-	@Override
-	public ATRepository getATRepository() {
-		return this.atRepository;
-	}
+@Override
+public ATRepository getATRepository() {
+    return this.atRepository;
+}
 
-	@Override
-	public AccountRepository getAccountRepository() {
-		return this.accountRepository;
-	}
+@Override
+public AccountRepository getAccountRepository() {
+    return this.accountRepository;
+}
 
-	@Override
-	public ArbitraryRepository getArbitraryRepository() {
-		return this.arbitraryRepository;
-	}
+@Override
+public ArbitraryRepository getArbitraryRepository() {
+    return this.arbitraryRepository;
+}
 
-	@Override
-	public AssetRepository getAssetRepository() {
-		return this.assetRepository;
-	}
+@Override
+public AssetRepository getAssetRepository() {
+    return this.assetRepository;
+}
 
-	@Override
-	public BlockRepository getBlockRepository() {
-		return this.blockRepository;
-	}
+@Override
+public BlockRepository getBlockRepository() {
+    return this.blockRepository;
+}
 
-	@Override
-	public BlockArchiveRepository getBlockArchiveRepository() {
-		return this.blockArchiveRepository;
-	}
+@Override
+public BlockArchiveRepository getBlockArchiveRepository() {
+    return this.blockArchiveRepository;
+}
 
-	@Override
-	public ChatRepository getChatRepository() {
-		return this.chatRepository;
-	}
+@Override
+public ChatRepository getChatRepository() {
+    return this.chatRepository;
+}
 
-	@Override
-	public CrossChainRepository getCrossChainRepository() {
-		return this.crossChainRepository;
-	}
+@Override
+public CrossChainRepository getCrossChainRepository() {
+    return this.crossChainRepository;
+}
 
-	@Override
-	public GroupRepository getGroupRepository() {
-		return this.groupRepository;
-	}
+@Override
+public GroupRepository getGroupRepository() {
+    return this.groupRepository;
+}
 
-	@Override
-	public MessageRepository getMessageRepository() {
-		return this.messageRepository;
-	}
+@Override
+public MessageRepository getMessageRepository() {
+    return this.messageRepository;
+}
 
-	@Override
-	public NameRepository getNameRepository() {
-		return this.nameRepository;
-	}
+@Override
+public NameRepository getNameRepository() {
+    return this.nameRepository;
+}
 
-	@Override
-	public NetworkRepository getNetworkRepository() {
-		return this.networkRepository;
-	}
+@Override
+public NetworkRepository getNetworkRepository() {
+    return this.networkRepository;
+}
 
-	@Override
-	public TransactionRepository getTransactionRepository() {
-		return this.transactionRepository;
-	}
+@Override
+public TransactionRepository getTransactionRepository() {
+    return this.transactionRepository;
+}
 
-	@Override
-	public VotingRepository getVotingRepository() {
-		return this.votingRepository;
-	}
+@Override
+public VotingRepository getVotingRepository() {
+    return this.votingRepository;
+}
 
-	@Override
-	public boolean getDebug() {
-		return this.debugState;
-	}
+@Override
+public boolean getDebug() {
+    return this.debugState;
+}
 
-	@Override
-	public void setDebug(boolean debugState) {
-		this.debugState = debugState;
-	}
+@Override
+public void setDebug(boolean debugState) {
+    this.debugState = debugState;
+}
 
-	// Transaction COMMIT / ROLLBACK / savepoints
+// Transaction Management
 
-	@Override
-	public void saveChanges() throws DataException {
-		long beforeQuery = this.slowQueryThreshold == null ? 0 : System.currentTimeMillis();
+@Override
+public void saveChanges() throws DataException {
+    executeTransaction(() -> this.connection.commit(), "HSQLDB COMMIT took %d ms", "commit");
+}
 
-		try {
-			this.connection.commit();
+@Override
+public void discardChanges() throws DataException {
+    executeTransaction(this.connection::rollback, null, "rollback");
+}
 
-			if (this.slowQueryThreshold != null) {
-				long queryTime = System.currentTimeMillis() - beforeQuery;
+@Override
+public void setSavepoint() throws DataException {
+    try {
+        if (this.sqlStatements != null) {
+            this.sqlStatements.add("SAVEPOINT [?]");
+        }
 
-				if (queryTime > this.slowQueryThreshold) {
-					LOGGER.info(() -> String.format("[Session %d] HSQLDB COMMIT took %d ms", this.sessionId, queryTime), new SQLException("slow commit"));
+        Savepoint savepoint = this.connection.setSavepoint();
+        this.savepoints.push(savepoint);
 
-					logStatements();
-				}
-			}
-		} catch (SQLException e) {
-			throw new DataException("commit error", e);
-		} finally {
-			this.savepoints.clear();
+        if (this.sqlStatements != null) {
+            this.sqlStatements.set(this.sqlStatements.size() - 1, "SAVEPOINT [" + savepoint.getSavepointId() + "]");
+        }
+    } catch (SQLException e) {
+        throw new DataException("savepoint error", e);
+    }
+}
 
-			// Before clearing statements so we can log what led to assertion error
-			assertEmptyTransaction("transaction commit");
+@Override
+public void rollbackToSavepoint() throws DataException {
+    if (this.savepoints.isEmpty()) {
+        throw new DataException("No savepoint to rollback");
+    }
 
-			if (this.sqlStatements != null)
-				this.sqlStatements.clear();
-		}
-	}
+    Savepoint savepoint = this.savepoints.pop();
 
-	@Override
-	public void discardChanges() throws DataException {
-		try {
-			this.connection.rollback();
-		} catch (SQLException e) {
-			throw new DataException("rollback error", e);
-		} finally {
-			this.savepoints.clear();
+    try {
+        if (this.sqlStatements != null) {
+            this.sqlStatements.add("ROLLBACK TO SAVEPOINT [" + savepoint.getSavepointId() + "]");
+        }
+        this.connection.rollback(savepoint);
+    } catch (SQLException e) {
+        throw new DataException("Savepoint rollback error", e);
+    }
+}
 
-			// Before clearing statements so we can log what led to assertion error
-			assertEmptyTransaction("transaction rollback");
+// Private Utility Methods
 
-			if (this.sqlStatements != null)
-				this.sqlStatements.clear();
-		}
-	}
+private void executeTransaction(TransactionAction action, String logMessage, String operation) throws DataException {
+    long beforeQuery = this.slowQueryThreshold == null ? 0 : System.currentTimeMillis();
 
-	@Override
-	public void setSavepoint() throws DataException {
-		try {
-			if (this.sqlStatements != null)
-				// We don't know savepoint's ID yet
-				this.sqlStatements.add("SAVEPOINT [?]");
+    try {
+        action.execute();
 
-			Savepoint savepoint = this.connection.setSavepoint();
-			this.savepoints.push(savepoint);
+        if (this.slowQueryThreshold != null) {
+            long queryTime = System.currentTimeMillis() - beforeQuery;
 
-			// Update query log with savepoint ID
-			if (this.sqlStatements != null)
-				this.sqlStatements.set(this.sqlStatements.size() - 1, "SAVEPOINT [" + savepoint.getSavepointId() + "]");
-		} catch (SQLException e) {
-			throw new DataException("savepoint error", e);
-		}
-	}
+            if (queryTime > this.slowQueryThreshold && logMessage != null) {
+                LOGGER.info(() -> String.format("[Session %d] " + logMessage, this.sessionId, queryTime), new SQLException("slow " + operation));
+                logStatements();
+            }
+        }
+    } catch (SQLException e) {
+        throw new DataException(operation + " error", e);
+    } finally {
+        cleanupAfterTransaction(operation);
+    }
+}
 
-	@Override
-	public void rollbackToSavepoint() throws DataException {
-		if (this.savepoints.isEmpty())
-			throw new DataException("no savepoint to rollback");
+private void cleanupAfterTransaction(String operation) {
+    this.savepoints.clear();
+    assertEmptyTransaction("transaction " + operation);
 
-		Savepoint savepoint = this.savepoints.pop();
+    if (this.sqlStatements != null) {
+        this.sqlStatements.clear();
+    }
+}
 
-		try {
-			if (this.sqlStatements != null)
-				this.sqlStatements.add("ROLLBACK TO SAVEPOINT [" + savepoint.getSavepointId() + "]");
-
-			this.connection.rollback(savepoint);
-		} catch (SQLException e) {
-			throw new DataException("savepoint rollback error", e);
-		}
-	}
+// Functional Interface for Transactions
+@FunctionalInterface
+private interface TransactionAction {
+    void execute() throws SQLException;
+}
 
 	// Close / backup / rebuild / restore
 

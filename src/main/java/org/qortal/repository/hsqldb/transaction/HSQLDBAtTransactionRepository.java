@@ -12,51 +12,65 @@ import java.sql.SQLException;
 
 public class HSQLDBAtTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBAtTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBAtTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT AT_address, recipient, amount, asset_id, message FROM ATTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT AT_address, recipient, amount, asset_id, message FROM ATTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			String atAddress = resultSet.getString(1);
-			String recipient = resultSet.getString(2);
+            String atAddress = resultSet.getString(1);
+            String recipient = resultSet.getString(2);
+            Long amount = getNullableLong(resultSet, 3);
+            Long assetId = getNullableLong(resultSet, 4);
+            byte[] message = resultSet.getBytes(5);
 
-			Long amount = resultSet.getLong(3);
-			if (amount == 0 && resultSet.wasNull())
-				amount = null;
+            return new ATTransactionData(baseTransactionData, atAddress, recipient, amount, assetId, message);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch AT transaction from repository", e);
+        }
+    }
 
-			Long assetId = resultSet.getLong(4);
-			if (assetId == 0 && resultSet.wasNull())
-				assetId = null;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        ATTransactionData atTransactionData = (ATTransactionData) transactionData;
 
-			byte[] message = resultSet.getBytes(5);
+        HSQLDBSaver saveHelper = new HSQLDBSaver("ATTransactions")
+                .bind("signature", atTransactionData.getSignature())
+                .bind("AT_address", atTransactionData.getATAddress())
+                .bind("recipient", atTransactionData.getRecipient())
+                .bind("amount", atTransactionData.getAmount())
+                .bind("asset_id", atTransactionData.getAssetId())
+                .bind("message", atTransactionData.getMessage());
 
-			return new ATTransactionData(baseTransactionData, atAddress, recipient, amount, assetId, message);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch AT transaction from repository", e);
-		}
-	}
+        executeSave(saveHelper);
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		ATTransactionData atTransactionData = (ATTransactionData) transactionData;
+    // Helper method to execute queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("ATTransactions");
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 
-		saveHelper.bind("signature", atTransactionData.getSignature()).bind("AT_address", atTransactionData.getATAddress())
-				.bind("recipient", atTransactionData.getRecipient()).bind("amount", atTransactionData.getAmount())
-				.bind("asset_id", atTransactionData.getAssetId()).bind("message", atTransactionData.getMessage());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save AT transaction into repository", e);
-		}
-	}
-
+    // Helper method to handle nullable Long values from the ResultSet
+    private Long getNullableLong(ResultSet resultSet, int columnIndex) throws SQLException {
+        Long value = resultSet.getLong(columnIndex);
+        return (value == 0 && resultSet.wasNull()) ? null : value;
+    }
 }

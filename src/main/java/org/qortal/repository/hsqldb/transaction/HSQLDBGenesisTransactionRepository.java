@@ -12,40 +12,42 @@ import java.sql.SQLException;
 
 public class HSQLDBGenesisTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBGenesisTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBGenesisTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT recipient, amount, asset_id FROM GenesisTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT recipient, amount, asset_id FROM GenesisTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null || !resultSet.next()) {
+                return null;  // Return null if no result is found
+            }
 
-			String recipient = resultSet.getString(1);
-			long amount = resultSet.getLong(2);
-			long assetId = resultSet.getLong(3);
+            String recipient = resultSet.getString("recipient");
+            long amount = resultSet.getLong("amount");
+            long assetId = resultSet.getLong("asset_id");
 
-			return new GenesisTransactionData(baseTransactionData, recipient, amount, assetId);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch genesis transaction from repository", e);
-		}
-	}
+            return new GenesisTransactionData(baseTransactionData, recipient, amount, assetId);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch genesis transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		GenesisTransactionData genesisTransactionData = (GenesisTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        GenesisTransactionData genesisTransactionData = (GenesisTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("GenesisTransactions");
-		saveHelper.bind("signature", genesisTransactionData.getSignature()).bind("recipient", genesisTransactionData.getRecipient())
-				.bind("amount", genesisTransactionData.getAmount()).bind("asset_id", genesisTransactionData.getAssetId());
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("GenesisTransactions")) {
+            saveHelper.bind("signature", genesisTransactionData.getSignature())
+                      .bind("recipient", genesisTransactionData.getRecipient())
+                      .bind("amount", genesisTransactionData.getAmount())
+                      .bind("asset_id", genesisTransactionData.getAssetId());
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save genesis transaction into repository", e);
-		}
-	}
-
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save genesis transaction into repository", e);
+        }
+    }
 }

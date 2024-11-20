@@ -12,54 +12,59 @@ import java.sql.SQLException;
 
 public class HSQLDBMessageTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBMessageTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBMessageTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT version, nonce, recipient, is_text, is_encrypted, amount, asset_id, data FROM MessageTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT version, nonce, recipient, is_text, is_encrypted, amount, asset_id, data FROM MessageTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null || !resultSet.next()) {
+                return null;  // Early return if no result found
+            }
 
-			int version = resultSet.getInt(1);
-			int nonce = resultSet.getInt(2);
-			String recipient = resultSet.getString(3);
-			boolean isText = resultSet.getBoolean(4);
-			boolean isEncrypted = resultSet.getBoolean(5);
-			long amount = resultSet.getLong(6);
+            int version = resultSet.getInt("version");
+            int nonce = resultSet.getInt("nonce");
+            String recipient = resultSet.getString("recipient");
+            boolean isText = resultSet.getBoolean("is_text");
+            boolean isEncrypted = resultSet.getBoolean("is_encrypted");
+            long amount = resultSet.getLong("amount");
 
-			// Special null-checking for asset ID
-			Long assetId = resultSet.getLong(7);
-			if (assetId == 0 && resultSet.wasNull())
-				assetId = null;
+            // Special null-check for asset ID
+            Long assetId = resultSet.getLong("asset_id");
+            if (assetId == 0 && resultSet.wasNull()) {
+                assetId = null;
+            }
 
-			byte[] data = resultSet.getBytes(8);
+            byte[] data = resultSet.getBytes("data");
 
-			return new MessageTransactionData(baseTransactionData, version, nonce, recipient, amount, assetId, data, isText, isEncrypted);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch message transaction from repository", e);
-		}
-	}
+            return new MessageTransactionData(baseTransactionData, version, nonce, recipient, amount, assetId, data, isText, isEncrypted);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch message transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		MessageTransactionData messageTransactionData = (MessageTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        MessageTransactionData messageTransactionData = (MessageTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("MessageTransactions");
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("MessageTransactions")) {
+            saveHelper.bind("signature", messageTransactionData.getSignature())
+                      .bind("version", messageTransactionData.getVersion())
+                      .bind("sender", messageTransactionData.getSenderPublicKey())
+                      .bind("recipient", messageTransactionData.getRecipient())
+                      .bind("is_text", messageTransactionData.isText())
+                      .bind("is_encrypted", messageTransactionData.isEncrypted())
+                      .bind("amount", messageTransactionData.getAmount())
+                      .bind("asset_id", messageTransactionData.getAssetId())
+                      .bind("nonce", messageTransactionData.getNonce())
+                      .bind("data", messageTransactionData.getData());
 
-		saveHelper.bind("signature", messageTransactionData.getSignature()).bind("version", messageTransactionData.getVersion())
-				.bind("sender", messageTransactionData.getSenderPublicKey()).bind("recipient", messageTransactionData.getRecipient())
-				.bind("is_text", messageTransactionData.isText()).bind("is_encrypted", messageTransactionData.isEncrypted())
-				.bind("amount", messageTransactionData.getAmount()).bind("asset_id", messageTransactionData.getAssetId())
-				.bind("nonce", messageTransactionData.getNonce()).bind("data", messageTransactionData.getData());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save message transaction into repository", e);
-		}
-	}
-
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save message transaction into repository", e);
+        }
+    }
 }

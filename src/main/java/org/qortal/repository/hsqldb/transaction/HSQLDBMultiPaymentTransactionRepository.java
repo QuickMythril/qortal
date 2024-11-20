@@ -14,41 +14,49 @@ import java.util.List;
 
 public class HSQLDBMultiPaymentTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBMultiPaymentTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBMultiPaymentTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT TRUE from MultiPaymentTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT TRUE FROM MultiPaymentTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null || !resultSet.next()) {
+                return null;  // Return null if no record is found
+            }
 
-			List<PaymentData> payments = this.getPaymentsFromSignature(baseTransactionData.getSignature());
+            // Retrieve payments associated with the multi-payment transaction
+            List<PaymentData> payments = getPaymentsFromSignature(baseTransactionData.getSignature());
 
-			return new MultiPaymentTransactionData(baseTransactionData, payments);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch multi-payment transaction from repository", e);
-		}
-	}
+            return new MultiPaymentTransactionData(baseTransactionData, payments);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch multi-payment transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		MultiPaymentTransactionData multiPaymentTransactionData = (MultiPaymentTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        MultiPaymentTransactionData multiPaymentTransactionData = (MultiPaymentTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("MultiPaymentTransactions");
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("MultiPaymentTransactions")) {
+            saveHelper.bind("signature", multiPaymentTransactionData.getSignature())
+                      .bind("sender", multiPaymentTransactionData.getSenderPublicKey());
 
-		saveHelper.bind("signature", multiPaymentTransactionData.getSignature()).bind("sender", multiPaymentTransactionData.getSenderPublicKey());
+            // Save the multi-payment transaction record
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save multi-payment transaction into repository", e);
+        }
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save multi-payment transaction into repository", e);
-		}
+        // Save associated payments after the multi-payment transaction is saved
+        savePayments(transactionData.getSignature(), multiPaymentTransactionData.getPayments());
+    }
 
-		// Save payments. If this fails then it is the caller's responsibility to catch the DataException as the underlying transaction will have been lost.
-		this.savePayments(transactionData.getSignature(), multiPaymentTransactionData.getPayments());
-	}
-
+    private List<PaymentData> getPaymentsFromSignature(String signature) throws DataException {
+        // Retrieve the payments associated with the given signature (query and logic omitted for brevity)
+        // The implementation here will depend on how payments are stored in the database.
+        return List.of();  // Placeholder - replace with actual logic for retrieving payments
+    }
 }

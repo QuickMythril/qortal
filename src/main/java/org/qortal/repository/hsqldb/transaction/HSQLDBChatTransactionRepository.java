@@ -12,47 +12,49 @@ import java.sql.SQLException;
 
 public class HSQLDBChatTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBChatTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBChatTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT sender, nonce, recipient, is_text, is_encrypted, data, chat_reference FROM ChatTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT sender, nonce, recipient, is_text, is_encrypted, data, chat_reference FROM ChatTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet != null && resultSet.next()) {  // Check for valid row
+                String sender = resultSet.getString("sender");
+                int nonce = resultSet.getInt("nonce");
+                String recipient = resultSet.getString("recipient");
+                boolean isText = resultSet.getBoolean("is_text");
+                boolean isEncrypted = resultSet.getBoolean("is_encrypted");
+                byte[] data = resultSet.getBytes("data");
+                byte[] chatReference = resultSet.getBytes("chat_reference");
 
-			String sender = resultSet.getString(1);
-			int nonce = resultSet.getInt(2);
-			String recipient = resultSet.getString(3);
-			boolean isText = resultSet.getBoolean(4);
-			boolean isEncrypted = resultSet.getBoolean(5);
-			byte[] data = resultSet.getBytes(6);
-			byte[] chatReference = resultSet.getBytes(7);
+                return new ChatTransactionData(baseTransactionData, sender, nonce, recipient, chatReference, data, isText, isEncrypted);
+            }
+            return null;  // Explicitly return null if no matching result
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch chat transaction from repository", e);
+        }
+    }
 
-			return new ChatTransactionData(baseTransactionData, sender, nonce, recipient, chatReference, data, isText, isEncrypted);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch chat transaction from repository", e);
-		}
-	}
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        ChatTransactionData chatTransactionData = (ChatTransactionData) transactionData;
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		ChatTransactionData chatTransactionData = (ChatTransactionData) transactionData;
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("ChatTransactions")) {
+            saveHelper.bind("signature", chatTransactionData.getSignature())
+                    .bind("nonce", chatTransactionData.getNonce())
+                    .bind("sender", chatTransactionData.getSender())
+                    .bind("recipient", chatTransactionData.getRecipient())
+                    .bind("is_text", chatTransactionData.getIsText())
+                    .bind("is_encrypted", chatTransactionData.getIsEncrypted())
+                    .bind("data", chatTransactionData.getData())
+                    .bind("chat_reference", chatTransactionData.getChatReference());
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("ChatTransactions");
-
-		saveHelper.bind("signature", chatTransactionData.getSignature()).bind("nonce", chatTransactionData.getNonce())
-				.bind("sender", chatTransactionData.getSender()).bind("recipient", chatTransactionData.getRecipient())
-				.bind("is_text", chatTransactionData.getIsText()).bind("is_encrypted", chatTransactionData.getIsEncrypted())
-				.bind("data", chatTransactionData.getData()).bind("chat_reference", chatTransactionData.getChatReference());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save chat transaction into repository", e);
-		}
-	}
-
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save chat transaction into repository", e);
+        }
+    }
 }

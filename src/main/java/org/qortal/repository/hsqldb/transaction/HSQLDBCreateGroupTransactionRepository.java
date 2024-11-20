@@ -13,58 +13,59 @@ import java.sql.SQLException;
 
 public class HSQLDBCreateGroupTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBCreateGroupTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBCreateGroupTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT group_name, description, is_open, approval_threshold, min_block_delay, max_block_delay, group_id, reduced_group_name "
-				+ "FROM CreateGroupTransactions WHERE signature = ?";
+    @Override
+    public TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT group_name, description, is_open, approval_threshold, min_block_delay, max_block_delay, group_id, reduced_group_name "
+                   + "FROM CreateGroupTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
+            if (resultSet != null && resultSet.next()) {  // Ensure a row exists
+                String groupName = resultSet.getString("group_name");
+                String description = resultSet.getString("description");
+                boolean isOpen = resultSet.getBoolean("is_open");
+                ApprovalThreshold approvalThreshold = ApprovalThreshold.valueOf(resultSet.getInt("approval_threshold"));
+                int minBlockDelay = resultSet.getInt("min_block_delay");
+                int maxBlockDelay = resultSet.getInt("max_block_delay");
 
-			String groupName = resultSet.getString(1);
-			String description = resultSet.getString(2);
-			boolean isOpen = resultSet.getBoolean(3);
+                Integer groupId = resultSet.getInt("group_id");
+                if (groupId == 0 && resultSet.wasNull()) {
+                    groupId = null;  // Handle possible null value
+                }
 
-			ApprovalThreshold approvalThreshold = ApprovalThreshold.valueOf(resultSet.getInt(4));
+                String reducedGroupName = resultSet.getString("reduced_group_name");
 
-			int minBlockDelay = resultSet.getInt(5);
-			int maxBlockDelay = resultSet.getInt(6);
+                return new CreateGroupTransactionData(baseTransactionData, groupName, description, isOpen, approvalThreshold,
+                        minBlockDelay, maxBlockDelay, groupId, reducedGroupName);
+            }
+            return null;  // Explicitly return null if no result found
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch create group transaction from repository", e);
+        }
+    }
 
-			Integer groupId = resultSet.getInt(7);
-			if (groupId == 0 && resultSet.wasNull())
-				groupId = null;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        CreateGroupTransactionData createGroupTransactionData = (CreateGroupTransactionData) transactionData;
 
-			String reducedGroupName = resultSet.getString(8);
+        try (HSQLDBSaver saveHelper = new HSQLDBSaver("CreateGroupTransactions")) {
+            saveHelper.bind("signature", createGroupTransactionData.getSignature())
+                    .bind("creator", createGroupTransactionData.getCreatorPublicKey())
+                    .bind("group_name", createGroupTransactionData.getGroupName())
+                    .bind("reduced_group_name", createGroupTransactionData.getReducedGroupName())
+                    .bind("description", createGroupTransactionData.getDescription())
+                    .bind("is_open", createGroupTransactionData.isOpen())
+                    .bind("approval_threshold", createGroupTransactionData.getApprovalThreshold().value)
+                    .bind("min_block_delay", createGroupTransactionData.getMinimumBlockDelay())
+                    .bind("max_block_delay", createGroupTransactionData.getMaximumBlockDelay())
+                    .bind("group_id", createGroupTransactionData.getGroupId());
 
-			return new CreateGroupTransactionData(baseTransactionData, groupName, description, isOpen, approvalThreshold,
-					minBlockDelay, maxBlockDelay, groupId, reducedGroupName);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch create group transaction from repository", e);
-		}
-	}
-
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		CreateGroupTransactionData createGroupTransactionData = (CreateGroupTransactionData) transactionData;
-
-		HSQLDBSaver saveHelper = new HSQLDBSaver("CreateGroupTransactions");
-
-		saveHelper.bind("signature", createGroupTransactionData.getSignature()).bind("creator", createGroupTransactionData.getCreatorPublicKey())
-				.bind("group_name", createGroupTransactionData.getGroupName()).bind("reduced_group_name", createGroupTransactionData.getReducedGroupName())
-				.bind("description", createGroupTransactionData.getDescription()).bind("is_open", createGroupTransactionData.isOpen())
-				.bind("approval_threshold", createGroupTransactionData.getApprovalThreshold().value)
-				.bind("min_block_delay", createGroupTransactionData.getMinimumBlockDelay())
-				.bind("max_block_delay", createGroupTransactionData.getMaximumBlockDelay()).bind("group_id", createGroupTransactionData.getGroupId());
-
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save create group transaction into repository", e);
-		}
-	}
-
+            saveHelper.execute(this.repository);
+        } catch (SQLException e) {
+            throw new DataException("Unable to save create group transaction into repository", e);
+        }
+    }
 }

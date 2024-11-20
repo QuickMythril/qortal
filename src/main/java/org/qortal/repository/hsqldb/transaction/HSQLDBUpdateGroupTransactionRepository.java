@@ -13,52 +13,70 @@ import java.sql.SQLException;
 
 public class HSQLDBUpdateGroupTransactionRepository extends HSQLDBTransactionRepository {
 
-	public HSQLDBUpdateGroupTransactionRepository(HSQLDBRepository repository) {
-		this.repository = repository;
-	}
+    public HSQLDBUpdateGroupTransactionRepository(HSQLDBRepository repository) {
+        this.repository = repository;
+    }
 
-	TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
-		String sql = "SELECT group_id, new_owner, new_description, new_is_open, new_approval_threshold, new_min_block_delay, new_max_block_delay, group_reference FROM UpdateGroupTransactions WHERE signature = ?";
+    @Override
+    TransactionData fromBase(BaseTransactionData baseTransactionData) throws DataException {
+        String sql = "SELECT group_id, new_owner, new_description, new_is_open, new_approval_threshold, " +
+                     "new_min_block_delay, new_max_block_delay, group_reference " +
+                     "FROM UpdateGroupTransactions WHERE signature = ?";
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, baseTransactionData.getSignature())) {
-			if (resultSet == null)
-				return null;
+        try (ResultSet resultSet = executeQuery(sql, baseTransactionData.getSignature())) {
+            if (resultSet == null) return null;
 
-			int groupId = resultSet.getInt(1);
-			String newOwner = resultSet.getString(2);
-			String newDescription = resultSet.getString(3);
-			boolean newIsOpen = resultSet.getBoolean(4);
-			ApprovalThreshold newApprovalThreshold = ApprovalThreshold.valueOf(resultSet.getInt(5));
-			int newMinBlockDelay = resultSet.getInt(6);
-			int newMaxBlockDelay = resultSet.getInt(7);
-			byte[] groupReference = resultSet.getBytes(8);
+            int groupId = resultSet.getInt(1);
+            String newOwner = resultSet.getString(2);
+            String newDescription = resultSet.getString(3);
+            boolean newIsOpen = resultSet.getBoolean(4);
+            ApprovalThreshold newApprovalThreshold = ApprovalThreshold.valueOf(resultSet.getInt(5));
+            int newMinBlockDelay = resultSet.getInt(6);
+            int newMaxBlockDelay = resultSet.getInt(7);
+            byte[] groupReference = resultSet.getBytes(8);
 
-			return new UpdateGroupTransactionData(baseTransactionData, groupId, newOwner, newDescription, newIsOpen,
-					newApprovalThreshold, newMinBlockDelay, newMaxBlockDelay, groupReference);
-		} catch (SQLException e) {
-			throw new DataException("Unable to fetch update group transaction from repository", e);
-		}
-	}
+            return new UpdateGroupTransactionData(baseTransactionData, groupId, newOwner, newDescription,
+                    newIsOpen, newApprovalThreshold, newMinBlockDelay, newMaxBlockDelay, groupReference);
+        } catch (SQLException e) {
+            throw new DataException("Unable to fetch update group transaction from repository", e);
+        }
+    }
 
-	@Override
-	public void save(TransactionData transactionData) throws DataException {
-		UpdateGroupTransactionData updateGroupTransactionData = (UpdateGroupTransactionData) transactionData;
+    @Override
+    public void save(TransactionData transactionData) throws DataException {
+        UpdateGroupTransactionData updateGroupTransactionData = (UpdateGroupTransactionData) transactionData;
 
-		HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateGroupTransactions");
+        HSQLDBSaver saveHelper = new HSQLDBSaver("UpdateGroupTransactions");
 
-		saveHelper.bind("signature", updateGroupTransactionData.getSignature()).bind("owner", updateGroupTransactionData.getOwnerPublicKey())
-				.bind("group_id", updateGroupTransactionData.getGroupId()).bind("new_owner", updateGroupTransactionData.getNewOwner())
-				.bind("new_description", updateGroupTransactionData.getNewDescription()).bind("new_is_open", updateGroupTransactionData.getNewIsOpen())
-				.bind("new_approval_threshold", updateGroupTransactionData.getNewApprovalThreshold().value)
-				.bind("new_min_block_delay", updateGroupTransactionData.getNewMinimumBlockDelay())
-				.bind("new_max_block_delay", updateGroupTransactionData.getNewMaximumBlockDelay())
-				.bind("group_reference", updateGroupTransactionData.getGroupReference());
+        saveHelper.bind("signature", updateGroupTransactionData.getSignature())
+                .bind("owner", updateGroupTransactionData.getOwnerPublicKey())
+                .bind("group_id", updateGroupTransactionData.getGroupId())
+                .bind("new_owner", updateGroupTransactionData.getNewOwner())
+                .bind("new_description", updateGroupTransactionData.getNewDescription())
+                .bind("new_is_open", updateGroupTransactionData.getNewIsOpen())
+                .bind("new_approval_threshold", updateGroupTransactionData.getNewApprovalThreshold().value)
+                .bind("new_min_block_delay", updateGroupTransactionData.getNewMinimumBlockDelay())
+                .bind("new_max_block_delay", updateGroupTransactionData.getNewMaximumBlockDelay())
+                .bind("group_reference", updateGroupTransactionData.getGroupReference());
 
-		try {
-			saveHelper.execute(this.repository);
-		} catch (SQLException e) {
-			throw new DataException("Unable to save update group transaction into repository", e);
-		}
-	}
+        executeSave(saveHelper);
+    }
 
+    // Helper method to execute SQL queries
+    private ResultSet executeQuery(String sql, Object... params) throws DataException {
+        try {
+            return repository.checkedExecute(sql, params);
+        } catch (SQLException e) {
+            throw new DataException("Error executing query", e);
+        }
+    }
+
+    // Helper method to execute save operations
+    private void executeSave(HSQLDBSaver saveHelper) throws DataException {
+        try {
+            saveHelper.execute(repository);
+        } catch (SQLException e) {
+            throw new DataException("Error saving transaction into repository", e);
+        }
+    }
 }
