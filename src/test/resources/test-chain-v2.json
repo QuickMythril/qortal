@@ -86,7 +86,7 @@
 		"transactionV5Timestamp": 0,
 		"transactionV6Timestamp": 0,
 		"disableReferenceTimestamp": 9999999999999,
-		"increaseOnlineAccountsDifficultyTimestamp": 9999999999999,
+		"increaseOnlineAccountsDifficultyTimestamp": 9999999999990,
 		"onlineAccountMinterLevelValidationHeight": 0,
 		"selfSponsorshipAlgoV1Height": 999999999,
 		"selfSponsorshipAlgoV2Height": 999999999,
@@ -100,8 +100,10 @@
 		"cancelSellNameValidationTimestamp": 9999999999999,
 		"disableRewardshareHeight": 9999999999990,
 		"enableRewardshareHeight": 9999999999999,
-		"onlyMintWithNameHeight": 9999999999999,
-		"groupMemberCheckHeight": 9999999999999
+		"onlyMintWithNameHeight": 9999999999990,
+		"groupMemberCheckHeight": 9999999999999,
+		"decreaseOnlineAccountsDifficultyTimestamp": 9999999999999,
+		"removeOnlyMintWithNameHeight": 9999999999999
 	},
 	"genesisInfo": {
 		"version": 4,
