@@ -221,32 +221,33 @@ public class Block {
 
 		public long distribute(long accountAmount, Map<String, Long> balanceChanges) {
    
-        // Check if the minter and recipient are the same
-    if (this.isRecipientAlsoMinter) {
-        // Log and directly update the minter's account
-        LOGGER.trace(() -> String.format("Minter/recipient account %s share: %s",
-                this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
+            // Check if the minter and recipient are the same
+            if (this.isRecipientAlsoMinter) {
+                // Log and directly update the minter's account
+                LOGGER.trace(() -> String.format("Minter/recipient account %s share: %s",
+                        this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
         
-        balanceChanges.merge(this.mintingAccount.getAddress(), accountAmount, Long::sum);
-    } else {
-        // Calculate the recipient's share using precise scaling to avoid rounding errors
-        long recipientAmount = Math.round((double) accountAmount * this.sharePercent / 10000.0);
-        long minterAmount = accountAmount - recipientAmount;
+                balanceChanges.merge(this.mintingAccount.getAddress(), accountAmount, Long::sum);
+            } else {
+                // Calculate the recipient's share using precise scaling to avoid rounding errors
+                long recipientAmount = Math.round((double) accountAmount * this.sharePercent / 10000.0);
+                long minterAmount = accountAmount - recipientAmount;
 
-        // Log and update the minter's account balance
-        LOGGER.trace(() -> String.format("Minter account %s share: %s",
-                this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
-        balanceChanges.merge(this.mintingAccount.getAddress(), minterAmount, Long::sum);
+                // Log and update the minter's account balance
+                LOGGER.trace(() -> String.format("Minter account %s share: %s",
+                        this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
+                balanceChanges.merge(this.mintingAccount.getAddress(), minterAmount, Long::sum);
 
-        // Log and update the recipient's account balance
-        LOGGER.trace(() -> String.format("Recipient account %s share: %s",
-                this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
-        balanceChanges.merge(this.recipientAccount.getAddress(), recipientAmount, Long::sum);
+                // Log and update the recipient's account balance
+                LOGGER.trace(() -> String.format("Recipient account %s share: %s",
+                        this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
+                balanceChanges.merge(this.recipientAccount.getAddress(), recipientAmount, Long::sum);
+            }
+
+            // The entire amount has been distributed
+            return accountAmount;
+        }
     }
-
-    // The entire amount has been distributed
-    return accountAmount;
-}
 
 
 	/** Always use getExpandedAccounts() to access this, as it's lazy-instantiated. */
