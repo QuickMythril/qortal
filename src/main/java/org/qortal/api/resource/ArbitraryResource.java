@@ -1177,7 +1177,7 @@ public class ArbitraryResource {
 		Security.checkApiCallAllowed(request);
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, true);
+			ArbitraryDataCacheManager.getInstance().buildCache(repository, true);
 
 			return "true";
 		} catch (DataException e) {

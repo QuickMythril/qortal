@@ -104,7 +104,11 @@ public class ArbitraryDataCacheManager extends Thread {
             LOGGER.debug("Completed processing transaction {}", Base58.encode(transactionData.getSignature()));
         } catch (DataException e) {
             LOGGER.error("Error processing transaction {}: {}", Base58.encode(transactionData.getSignature()), e.getMessage(), e);
-            repository.discardChanges();
+            try {
+                repository.discardChanges();
+            } catch (DataException discardException) {
+                LOGGER.error("Error discarding changes for transaction {}: {}", Base58.encode(transactionData.getSignature()), discardException.getMessage(), discardException);
+            }
         }
     }
 

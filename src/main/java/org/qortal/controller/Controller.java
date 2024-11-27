@@ -409,7 +409,7 @@ public class Controller extends Thread {
 
 			try (final Repository repository = RepositoryManager.getRepository()) {
 				// RepositoryManager.rebuildTransactionSequences(repository);
-				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
+				ArbitraryDataCacheManager.getInstance().buildCache(repository, false);
 
 				if( Settings.getInstance().isDbCacheEnabled() ) {
 					LOGGER.info("Db Cache Starting ...");
@@ -464,7 +464,7 @@ public class Controller extends Thread {
 				Gui.getInstance().fatalError("Database upgrade needed", "Please restart the core to complete the upgrade process.");
 				return;
 			}
-			if (ArbitraryDataCacheManager.getInstance().needsArbitraryResourcesCacheRebuild(repository)) {
+			if (ArbitraryDataCacheManager.getInstance().needsCacheRebuild(repository)) {
 				// Don't allow the node to start if arbitrary resources cache hasn't been built yet
 				// This is needed to handle a case when bootstrapping
 				LOGGER.error("Database upgrade needed. Please restart the core to complete the upgrade process.");
