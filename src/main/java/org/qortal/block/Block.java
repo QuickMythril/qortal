@@ -220,29 +220,34 @@ public class Block {
 		}
 
 		public long distribute(long accountAmount, Map<String, Long> balanceChanges) {
-			if (this.isRecipientAlsoMinter) {
-				// minter & recipient the same - simpler case
-				LOGGER.trace(() -> String.format("Minter/recipient account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
-				if (accountAmount != 0)
-					balanceChanges.merge(this.mintingAccount.getAddress(), accountAmount, Long::sum);
-			} else {
-				// minter & recipient different - extra work needed
-				long recipientAmount = (accountAmount * this.sharePercent) / 100L / 100L; // because scaled by 2dp and 'percent' means "per 100"
-				long minterAmount = accountAmount - recipientAmount;
+   
+        // Check if the minter and recipient are the same
+    if (this.isRecipientAlsoMinter) {
+        // Log and directly update the minter's account
+        LOGGER.trace(() -> String.format("Minter/recipient account %s share: %s",
+                this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
+        
+        balanceChanges.merge(this.mintingAccount.getAddress(), accountAmount, Long::sum);
+    } else {
+        // Calculate the recipient's share using precise scaling to avoid rounding errors
+        long recipientAmount = Math.round((double) accountAmount * this.sharePercent / 10000.0);
+        long minterAmount = accountAmount - recipientAmount;
 
-				LOGGER.trace(() -> String.format("Minter account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
-				if (minterAmount != 0)
-					balanceChanges.merge(this.mintingAccount.getAddress(), minterAmount, Long::sum);
+        // Log and update the minter's account balance
+        LOGGER.trace(() -> String.format("Minter account %s share: %s",
+                this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
+        balanceChanges.merge(this.mintingAccount.getAddress(), minterAmount, Long::sum);
 
-				LOGGER.trace(() -> String.format("Recipient account %s share: %s", this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
-				if (recipientAmount != 0)
-					balanceChanges.merge(this.recipientAccount.getAddress(), recipientAmount, Long::sum);
-			}
+        // Log and update the recipient's account balance
+        LOGGER.trace(() -> String.format("Recipient account %s share: %s",
+                this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
+        balanceChanges.merge(this.recipientAccount.getAddress(), recipientAmount, Long::sum);
+    }
 
-			// We always distribute all of the amount
-			return accountAmount;
-		}
-	}
+    // The entire amount has been distributed
+    return accountAmount;
+}
+
 
 	/** Always use getExpandedAccounts() to access this, as it's lazy-instantiated. */
 	private List<ExpandedAccount> cachedExpandedAccounts = null;
@@ -523,56 +528,78 @@ public class Block {
 	 * @throws DataException
 	 */
 	public Block remint(PrivateKeyAccount minter) throws DataException {
-		Block newBlock = new Block(this.repository, this.blockData);
-		newBlock.minter = minter;
+    if (minter == null) {
+        LOGGER.error("Minter cannot be null");
+        return null;
+    }
 
-		BlockData parentBlockData = this.getParent();
+    // Create a new block instance based on the current block data
+    Block newBlock = new Block(this.repository, this.blockData);
+    newBlock.minter = minter;
 
-		// Copy AT state data
-		newBlock.ourAtStates = this.ourAtStates;
-		newBlock.atStates = newBlock.ourAtStates;
-		newBlock.ourAtFees = this.ourAtFees;
+    // Fetch the parent block data
+    BlockData parentBlockData = this.getParent();
+    if (parentBlockData == null) {
+        LOGGER.error("Parent block data is null");
+        return null;
+    }
 
-		// Calculate new block timestamp
-		int version = this.blockData.getVersion();
-		byte[] reference = this.blockData.getReference();
+    // Copy AT state data
+    newBlock.ourAtStates = this.ourAtStates;
+    newBlock.atStates = this.ourAtStates; // Same reference as ourAtStates
+    newBlock.ourAtFees = this.ourAtFees;
 
-		byte[] minterSignature = minter.sign(BlockTransformer.getBytesForMinterSignature(parentBlockData,
-				minter.getPublicKey(), this.blockData.getEncodedOnlineAccounts()));
+    // Block version and reference
+    int version = this.blockData.getVersion();
+    byte[] reference = this.blockData.getReference();
 
-		// Qortal: minter is always a reward-share, so find actual minter and get their effective minting level
-		int minterLevel = Account.getRewardShareEffectiveMintingLevel(repository, minter.getPublicKey());
-		if (minterLevel == 0){
-			LOGGER.error("Minter effective level returned zero?");
-			return null;
-		}
+    // Generate minter's signature for the new block
+    byte[] minterSignature = minter.sign(BlockTransformer.getBytesForMinterSignature(
+            parentBlockData, minter.getPublicKey(), this.blockData.getEncodedOnlineAccounts()));
 
-		long timestamp = calcTimestamp(parentBlockData, minter.getPublicKey(), minterLevel);
+    // Find the effective minting level of the minter
+    int minterLevel = Account.getRewardShareEffectiveMintingLevel(repository, minter.getPublicKey());
+    if (minterLevel <= 0) {
+        LOGGER.error("Invalid minter effective minting level: {}", minterLevel);
+        return null;
+    }
 
-		newBlock.transactions = this.transactions;
-		int transactionCount = this.blockData.getTransactionCount();
-		long totalFees = this.blockData.getTotalFees();
-		byte[] transactionsSignature = null; // We'll calculate this later
-		Integer height = this.blockData.getHeight();
+    // Calculate the new block timestamp
+    long timestamp = calcTimestamp(parentBlockData, minter.getPublicKey(), minterLevel);
+    if (timestamp <= 0) {
+        LOGGER.error("Invalid timestamp calculated for new block");
+        return null;
+    }
 
-		int atCount = newBlock.ourAtStates.size();
-		long atFees = newBlock.ourAtFees;
+    // Copy transactions and associated data
+    newBlock.transactions = this.transactions;
+    int transactionCount = this.blockData.getTransactionCount();
+    long totalFees = this.blockData.getTotalFees();
 
-		byte[] encodedOnlineAccounts = this.blockData.getEncodedOnlineAccounts();
-		int onlineAccountsCount = this.blockData.getOnlineAccountsCount();
-		Long onlineAccountsTimestamp = this.blockData.getOnlineAccountsTimestamp();
-		byte[] onlineAccountsSignatures = this.blockData.getOnlineAccountsSignatures();
+    // Copy AT-related data
+    int atCount = this.ourAtStates.size();
+    long atFees = this.ourAtFees;
 
-		newBlock.blockData = new BlockData(version, reference, transactionCount, totalFees, transactionsSignature, height, timestamp,
-				minter.getPublicKey(), minterSignature, atCount, atFees, encodedOnlineAccounts, onlineAccountsCount, onlineAccountsTimestamp, onlineAccountsSignatures);
+    // Online accounts data
+    byte[] encodedOnlineAccounts = this.blockData.getEncodedOnlineAccounts();
+    int onlineAccountsCount = this.blockData.getOnlineAccountsCount();
+    Long onlineAccountsTimestamp = this.blockData.getOnlineAccountsTimestamp();
+    byte[] onlineAccountsSignatures = this.blockData.getOnlineAccountsSignatures();
 
-		// Resign to update transactions signature
-		newBlock.sign();
+    // Create new block data with updated timestamp and signature
+    newBlock.blockData = new BlockData(
+            version, reference, transactionCount, totalFees, null, // Transactions signature calculated later
+            this.blockData.getHeight(), timestamp, minter.getPublicKey(), minterSignature,
+            atCount, atFees, encodedOnlineAccounts, onlineAccountsCount, onlineAccountsTimestamp, onlineAccountsSignatures);
 
-		return newBlock;
-	}
+    // Resign the block to calculate transactions signature
+    newBlock.sign();
 
-	// Getters/setters
+    // Return the newly reminted block
+    return newBlock;
+}
+
+   // Getters/setters
 
 	public BlockData getBlockData() {
 		return this.blockData;
