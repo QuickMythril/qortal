@@ -45,16 +45,21 @@ public class PingTask implements Task {
             }
 
             // Calculate round-trip time and update peer
-            long currentTime = NTP.getTime();
+            Long currentTime = NTP.getTime();
             if (currentTime == null) {
                 LOGGER.warn("NTP time unavailable during PING task for peer {}", peer);
                 peer.disconnect("NTP time unavailable");
                 return;
             }
 
-            peer.setLastPing(currentTime - now);
-            LOGGER.debug("[{}] PING successful with {} (round-trip time: {} ms)",
-                    peer.getPeerConnectionId(), peer, currentTime - now);
+            if (now != null) {
+                peer.setLastPing(currentTime - now);
+                LOGGER.debug("[{}] PING successful with {} (round-trip time: {} ms)",
+                        peer.getPeerConnectionId(), peer, currentTime - now);
+            } else {
+                LOGGER.warn("Initial ping time 'now' is null for peer {}", peer);
+                peer.disconnect("Invalid initial ping time");
+            }
 
         } catch (Exception e) {
             LOGGER.error("Error during PING task for peer {}: {}", peer, e.getMessage(), e);
