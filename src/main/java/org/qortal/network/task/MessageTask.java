@@ -24,12 +24,9 @@ public class MessageTask implements Task {
     }
 
     @Override
-    public void perform() throws InterruptedException {
+    public void perform() {
         try {
             Network.getInstance().onMessage(peer, nextMessage);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
         } catch (Exception e) {
             System.err.println("Error processing message task: " + e.getMessage());
         }
