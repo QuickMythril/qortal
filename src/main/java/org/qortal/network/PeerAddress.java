@@ -9,126 +9,139 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import java.net.*;
 
 /**
- * Convenience class for encapsulating/parsing/rendering/converting peer addresses
+ * Encapsulates parsing, rendering, and resolving peer addresses,
  * including late-stage resolving before actual use by a socket.
  */
-// All properties to be converted to JSON via JAXB
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PeerAddress {
 
-	// Properties
-	private String host;
-	private int port;
+    // Properties
+    private String host; // Hostname or IP address (bracketed if IPv6)
+    private int port;
 
-	private PeerAddress(String host, int port) {
-		this.host = host;
-		this.port = port;
-	}
+    // Private constructor to enforce factory usage
+    private PeerAddress(String host, int port) {
+        if (host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("Host cannot be null or empty");
+        }
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("Port must be between 1 and 65535");
+        }
 
-	// Constructors
+        this.host = host;
+        this.port = port;
+    }
 
-	// For JAXB
-	protected PeerAddress() {
-	}
+    // Default constructor for JAXB
+    protected PeerAddress() {
+    }
 
-	/** Constructs new PeerAddress using remote address from passed connected socket. */
-	public static PeerAddress fromSocket(Socket socket) {
-		InetSocketAddress socketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
-		InetAddress address = socketAddress.getAddress();
+    // Factory Methods
 
-		String host = InetAddresses.toAddrString(address);
+    /**
+     * Constructs a PeerAddress from a connected socket.
+     *
+     * @param socket the connected socket
+     * @return the PeerAddress
+     */
+    public static PeerAddress fromSocket(Socket socket) {
+        InetSocketAddress socketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
+        InetAddress address = socketAddress.getAddress();
 
-		// Make sure we encapsulate IPv6 addresses in brackets
-		if (address instanceof Inet6Address)
-			host = "[" + host + "]";
+        String host = InetAddresses.toAddrString(address);
 
-		return new PeerAddress(host, socketAddress.getPort());
-	}
+        // Ensure IPv6 addresses are properly bracketed
+        if (address instanceof Inet6Address) {
+            host = "[" + host + "]";
+        }
 
-	/**
-	 * Constructs new PeerAddress using hostname or literal IP address and optional port.<br>
-	 * Literal IPv6 addresses must be enclosed within square brackets.
-	 * <p>
-	 * Examples:
-	 * <ul>
-	 * <li>peer.example.com
-	 * <li>peer.example.com:9084
-	 * <li>192.0.2.1
-	 * <li>192.0.2.1:9084
-	 * <li>[2001:db8::1]
-	 * <li>[2001:db8::1]:9084
-	 * </ul>
-	 * <p>
-	 * Not allowed:
-	 * <ul>
-	 * <li>2001:db8::1
-	 * <li>2001:db8::1:9084
-	 * </ul>
-	 */
-	public static PeerAddress fromString(String addressString) throws IllegalArgumentException {
-		boolean isBracketed = addressString.startsWith("[");
+        return new PeerAddress(host, socketAddress.getPort());
+    }
 
-		// Attempt to parse string into host and port
-		HostAndPort hostAndPort = HostAndPort.fromString(addressString).withDefaultPort(Settings.getInstance().getDefaultListenPort()).requireBracketsForIPv6();
+    /**
+     * Constructs a PeerAddress from a string containing hostname/IP and optional port.
+     * IPv6 addresses must be enclosed in brackets.
+     *
+     * @param addressString the address string
+     * @return the PeerAddress
+     * @throws IllegalArgumentException if the input is invalid
+     */
+    public static PeerAddress fromString(String addressString) {
+        boolean isBracketed = addressString.startsWith("[");
 
-		String host = hostAndPort.getHost();
-		if (host.isEmpty())
-			throw new IllegalArgumentException("Empty host part");
+        // Parse the host and port
+        HostAndPort hostAndPort = HostAndPort.fromString(addressString)
+                .withDefaultPort(Settings.getInstance().getDefaultListenPort())
+                .requireBracketsForIPv6();
 
-		// Validate IP literals by attempting to convert to InetAddress, without DNS lookups
-		if (host.contains(":") || host.matches("[0-9.]+"))
-			InetAddresses.forString(host);
+        String host = hostAndPort.getHost();
 
-		// If we've reached this far then we have a valid address
+        // Validate host as IP literal or hostname
+        if (host.contains(":") || host.matches("[0-9.]+")) {
+            try {
+                InetAddresses.forString(host); // Validate IP literal
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid IP literal: " + host, e);
+            }
+        }
 
-		// Make sure we encapsulate IPv6 addresses in brackets
-		if (isBracketed)
-			host = "[" + host + "]";
+        // Enforce IPv6 brackets for consistency
+        if (isBracketed) {
+            host = "[" + host + "]";
+        }
 
-		return new PeerAddress(host, hostAndPort.getPort());
-	}
+        return new PeerAddress(host, hostAndPort.getPort());
+    }
 
-	// Getters
+    // Getters
 
-	/** Returns hostname or literal IP address, bracketed if IPv6 */
-	public String getHost() {
-		return this.host;
-	}
+    /** @return the hostname or IP address (bracketed if IPv6) */
+    public String getHost() {
+        return this.host;
+    }
 
-	public int getPort() {
-		return this.port;
-	}
+    /** @return the port number */
+    public int getPort() {
+        return this.port;
+    }
 
-	// Conversions
+    // Conversions
 
-	/** Returns InetSocketAddress for use with Socket.connect(), or throws UnknownHostException if address could not be resolved by DNS lookup. */
-	public InetSocketAddress toSocketAddress() throws UnknownHostException {
-		// Attempt to construct new InetSocketAddress with DNS lookups.
-		// There's no control here over whether IPv6 or IPv4 will be used.
-		InetSocketAddress socketAddress = new InetSocketAddress(this.host, this.port);
+    /**
+     * Converts this PeerAddress to an InetSocketAddress, performing DNS resolution if necessary.
+     *
+     * @return the InetSocketAddress
+     * @throws UnknownHostException if the host cannot be resolved
+     */
+    public InetSocketAddress toSocketAddress() throws UnknownHostException {
+        InetSocketAddress socketAddress = new InetSocketAddress(this.host, this.port);
 
-		// If we couldn't resolve then return null
-		if (socketAddress.isUnresolved())
-			throw new UnknownHostException();
+        if (socketAddress.isUnresolved()) {
+            throw new UnknownHostException("Unable to resolve host: " + this.host);
+        }
 
-		return socketAddress;
-	}
+        return socketAddress;
+    }
 
-	@Override
-	public String toString() {
-		return this.host + ":" + this.port;
-	}
+    @Override
+    public String toString() {
+        return this.host + ":" + this.port;
+    }
 
-	// Utilities
+    // Utilities
 
-	/** Returns true if other PeerAddress has same port and same case-insensitive host part, without DNS lookups */
-	public boolean equals(PeerAddress other) {
-		// Ports must match
-		if (this.port != other.port)
-			return false;
+    /**
+     * Checks if another PeerAddress is equal to this one.
+     *
+     * @param other the other PeerAddress
+     * @return true if they are equal, false otherwise
+     */
+    public boolean equals(PeerAddress other) {
+        if (other == null) {
+            return false;
+        }
 
-		// Compare host parts but without DNS lookups
-		return this.host.equalsIgnoreCase(other.host);
-	}
-
+        // Ports must match, and hostnames/IPs must be case-insensitively equal
+        return this.port == other.port && this.host.equalsIgnoreCase(other.host);
+    }
 }
