@@ -261,4 +261,29 @@ public enum Handshake {
             }
         });
     }
+
+    /**
+     * Validates the peer's public key to ensure it's not a self-connection
+     * and potentially perform other security checks.
+     *
+     * @param peer             The peer attempting the handshake.
+     * @param challengeMessage The challenge message containing the peer's public key.
+     * @return true if the public key is valid; false otherwise.
+     */
+    private static boolean validatePeerPublicKey(Peer peer, ChallengeMessage challengeMessage) {
+        byte[] peerPublicKey = challengeMessage.getPublicKey();
+        byte[] ourPublicKey = Network.getInstance().getOurPublicKey();
+
+        // Check if the peer is trying to connect to itself
+        if (Arrays.equals(peerPublicKey, ourPublicKey)) {
+            LOGGER.debug(() -> String.format("Peer %s is attempting to connect to itself.", peer));
+            return false;
+        }
+
+        // Additional validation logic can be added here, such as:
+        // - Checking if the public key is from a trusted source
+        // - Ensuring the public key meets specific criteria
+
+        return true;
+    }
 }

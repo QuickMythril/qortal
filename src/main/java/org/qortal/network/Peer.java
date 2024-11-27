@@ -918,6 +918,24 @@ public class Peer {
         return this.getPeersVersion() >= minVersion;
     }
 
+    public boolean isAllowedVersion() {
+        String peerVersionString = this.getPeersVersionString();
+        if (peerVersionString == null) {
+            return false; // Cannot determine peer version
+        }
+
+        Settings settings = Settings.getInstance();
+        String minPeerVersion = settings.getMinPeerVersion();
+        boolean allowOlderVersions = settings.getAllowConnectionsWithOlderPeerVersions();
+
+        // If not allowing connections with older versions and peer is below min version, disallow
+        if (!allowOlderVersions && !this.isAtLeastVersion(minPeerVersion)) {
+            return false;
+        }
+
+        // Peer version is allowed
+        return true;
+    }
 
     // Common block data
 
