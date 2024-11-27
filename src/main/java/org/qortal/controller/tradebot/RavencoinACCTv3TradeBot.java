@@ -317,7 +317,7 @@ public class RavencoinACCTv3TradeBot implements AcctTradeBot {
 
 	@Override
 	public boolean canDelete(Repository repository, TradeBotData tradeBotData) throws DataException {
-		State tradeBotState = State.valueOf(tradeBotData.getStateValue());
+		State tradeBotState = State.fromValue(tradeBotData.getStateValue());
 		if (tradeBotState == null)
 			return true;
 
@@ -341,7 +341,7 @@ public class RavencoinACCTv3TradeBot implements AcctTradeBot {
 
 	@Override
 	public void progress(Repository repository, TradeBotData tradeBotData) throws DataException, ForeignBlockchainException {
-		State tradeBotState = State.valueOf(tradeBotData.getStateValue());
+		State tradeBotState = State.fromValue(tradeBotData.getStateValue());
 		if (tradeBotState == null) {
 			LOGGER.info(() -> String.format("Trade-bot entry for AT %s has invalid state?", tradeBotData.getAtAddress()));
 			return;
