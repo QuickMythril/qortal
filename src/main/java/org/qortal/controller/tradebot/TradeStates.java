@@ -1,9 +1,9 @@
 package org.qortal.controller.tradebot;
 
 import java.util.Map;
-
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toMap;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TradeStates {
     public enum State implements TradeBot.StateNameAndValueSupplier {
@@ -18,20 +18,43 @@ public class TradeStates {
         ALICE_REFUNDING_A(105, true, true),
         ALICE_REFUNDED(110, false, false);
 
-        private static final Map<Integer, State> map = stream(State.values()).collect(toMap(state -> state.value, state -> state));
+        private static final Map<Integer, State> map = Stream.of(State.values())
+                .collect(Collectors.toUnmodifiableMap(state -> state.value, state -> state));
 
         public final int value;
         public final boolean requiresAtData;
         public final boolean requiresTradeData;
 
+        // Constructor
         State(int value, boolean requiresAtData, boolean requiresTradeData) {
             this.value = value;
             this.requiresAtData = requiresAtData;
             this.requiresTradeData = requiresTradeData;
         }
 
-        public static State valueOf(int value) {
-            return map.get(value);
+        /**
+         * Retrieve State by value.
+         * Throws an exception if the value is invalid.
+         *
+         * @param value the integer value representing the state
+         * @return the corresponding State
+         * @throws IllegalArgumentException if the value is invalid
+         */
+        
+        public static State fromValue(int value) {
+            return Optional.ofNullable(map.get(value))
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid state value: " + value));
+        }
+
+        /**
+         * Safely retrieves the State by value without throwing an exception.
+         *
+         * @param value the integer value representing the state
+         * @return an Optional containing the corresponding State, or empty if invalid
+         */
+        
+        public static Optional<State> safeFromValue(int value) {
+            return Optional.ofNullable(map.get(value));
         }
 
         @Override
