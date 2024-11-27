@@ -14,31 +14,51 @@ public class PingTask implements Task {
 
     private final Peer peer;
     private final Long now;
-    private final String name;
+    private String name; // Lazy initialization
 
     public PingTask(Peer peer, Long now) {
         this.peer = peer;
         this.now = now;
-        this.name = "PingTask::" + peer;
     }
 
     @Override
     public String getName() {
+        if (name == null) {
+            name = "PingTask::" + peer;
+        }
         return name;
     }
 
     @Override
     public void perform() throws InterruptedException {
-        PingMessage pingMessage = new PingMessage();
-        Message message = peer.getResponse(pingMessage);
+        try {
+            // Create a PingMessage
+            PingMessage pingMessage = new PingMessage();
+            Message responseMessage = peer.getResponse(pingMessage);
 
-        if (message == null || message.getType() != MessageType.PING) {
-            LOGGER.debug("[{}] Didn't receive reply from {} for PING ID {}",
-                    peer.getPeerConnectionId(), peer, pingMessage.getId());
-            peer.disconnect("no ping received");
-            return;
+            // Validate the response
+            if (responseMessage == null || responseMessage.getType() != MessageType.PING) {
+                LOGGER.debug("[{}] No PING response received from {} for PING ID {}",
+                        peer.getPeerConnectionId(), peer, pingMessage.getId());
+                peer.disconnect("No PING response received");
+                return;
+            }
+
+            // Calculate round-trip time and update peer
+            long currentTime = NTP.getTime();
+            if (currentTime == null) {
+                LOGGER.warn("NTP time unavailable during PING task for peer {}", peer);
+                peer.disconnect("NTP time unavailable");
+                return;
+            }
+
+            peer.setLastPing(currentTime - now);
+            LOGGER.debug("[{}] PING successful with {} (round-trip time: {} ms)",
+                    peer.getPeerConnectionId(), peer, currentTime - now);
+
+        } catch (Exception e) {
+            LOGGER.error("Error during PING task for peer {}: {}", peer, e.getMessage(), e);
+            peer.disconnect("Error during PING task");
         }
-
-        peer.setLastPing(NTP.getTime() - now);
     }
 }
