@@ -18,85 +18,93 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-/* NOTE: It is CRITICAL that we use OpenJDK and not Java SE because our uber jar repacks BouncyCastle which, in turn, unsigns BC causing it to be rejected as a security provider by Java SE. */
-
 public class RestartNode {
 
-	public static final String JAR_FILENAME = "qortal.jar";
-	public static final String AGENTLIB_JVM_HOLDER_ARG = "-DQORTAL_agentlib=";
+    private static final Logger LOGGER = LogManager.getLogger(RestartNode.class);
 
-	private static final Logger LOGGER = LogManager.getLogger(RestartNode.class);
+    public static final String JAR_FILENAME = "qortal.jar";
+    public static final String AGENTLIB_JVM_HOLDER_ARG = "-DQORTAL_agentlib=";
 
-	public static boolean attemptToRestart() {
-		LOGGER.info(String.format("Restarting node..."));
+    public static boolean attemptToRestart() {
+        LOGGER.info("Restarting node...");
 
-		// Give repository a chance to backup in case things go badly wrong (if enabled)
-		if (Settings.getInstance().getRepositoryBackupInterval() > 0) {
-			try {
-				// Timeout if the database isn't ready for backing up after 60 seconds
-				long timeout = 60 * 1000L;
-				RepositoryManager.backup(true, "backup", timeout);
+        // Attempt repository backup if enabled
+        if (Settings.getInstance().getRepositoryBackupInterval() > 0) {
+            try {
+                long timeoutMillis = 60 * 1000L; // 60 seconds
+                RepositoryManager.backup(true, "backup", timeoutMillis);
+                LOGGER.info("Repository backup completed successfully.");
+            } catch (TimeoutException e) {
+                LOGGER.warn("Repository backup timed out: {}", e.getMessage());
+                // Proceed with the restart even if backup fails
+            } catch (Exception e) {
+                LOGGER.error("Unexpected error during repository backup: {}", e.getMessage(), e);
+                // Proceed with the restart despite errors
+            }
+        }
 
-			} catch (TimeoutException e) {
-				LOGGER.info("Attempt to backup repository failed due to timeout: {}", e.getMessage());
-				// Continue with the node restart anyway...
-			}
-		}
+        try {
+            // Locate the Java binary
+            String javaHome = System.getProperty("java.home");
+            LOGGER.debug("Java home directory: {}", javaHome);
 
-		// Call ApplyRestart to end this process
-		String javaHome = System.getProperty("java.home");
-		LOGGER.debug(String.format("Java home: %s", javaHome));
+            Path javaBinary = Paths.get(javaHome, "bin", "java");
+            LOGGER.debug("Java binary path: {}", javaBinary);
 
-		Path javaBinary = Paths.get(javaHome, "bin", "java");
-		LOGGER.debug(String.format("Java binary: %s", javaBinary));
+            // Prepare command to restart the node
+            List<String> javaCmd = new ArrayList<>();
+            javaCmd.add(javaBinary.toString());
 
-		try {
-			List<String> javaCmd = new ArrayList<>();
-			// Java runtime binary itself
-			javaCmd.add(javaBinary.toString());
+            // JVM arguments
+            List<String> jvmArgs = new ArrayList<>(ManagementFactory.getRuntimeMXBean().getInputArguments());
 
-			// JVM arguments
-			javaCmd.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
+            // Handle -agentlib arguments to avoid port conflicts
+            jvmArgs = jvmArgs.stream()
+                    .map(arg -> arg.startsWith("-agentlib") ? arg.replace("-agentlib", AGENTLIB_JVM_HOLDER_ARG) : arg)
+                    .collect(Collectors.toList());
 
-			// Disable, but retain, any -agentlib JVM arg as sub-process might fail if it tries to reuse same port
-			javaCmd = javaCmd.stream()
-					.map(arg -> arg.replace("-agentlib", AGENTLIB_JVM_HOLDER_ARG))
-					.collect(Collectors.toList());
+            // Remove unsupported JNI options
+            List<String> unsupportedOptions = Arrays.asList("abort", "exit", "vfprintf");
+            jvmArgs.removeAll(unsupportedOptions);
 
-			// Remove JNI options as they won't be supported by command-line 'java'
-			// These are typically added by the AdvancedInstaller Java launcher EXE
-			javaCmd.removeAll(Arrays.asList("abort", "exit", "vfprintf"));
+            javaCmd.addAll(jvmArgs);
 
-			// Call ApplyRestart using JAR
-			javaCmd.addAll(Arrays.asList("-cp", JAR_FILENAME, ApplyRestart.class.getCanonicalName()));
+            // Add the classpath and main class
+            javaCmd.addAll(Arrays.asList("-cp", JAR_FILENAME, ApplyRestart.class.getCanonicalName()));
 
-			// Add command-line args saved from start-up
-			String[] savedArgs = Controller.getInstance().getSavedArgs();
-			if (savedArgs != null)
-				javaCmd.addAll(Arrays.asList(savedArgs));
+            // Include saved startup arguments
+            String[] savedArgs = Controller.getInstance().getSavedArgs();
+            if (savedArgs != null) {
+                javaCmd.addAll(Arrays.asList(savedArgs));
+            }
 
-			LOGGER.debug(String.format("Restarting node with: %s", String.join(" ", javaCmd)));
+            LOGGER.info("Restarting node with command: {}", String.join(" ", javaCmd));
 
-			SysTray.getInstance().showMessage(Translator.INSTANCE.translate("SysTray", "RESTARTING_NODE"),
-					Translator.INSTANCE.translate("SysTray", "APPLYING_RESTARTING_NODE"),
-					MessageType.INFO);
+            // Notify the user
+            SysTray.getInstance().showMessage(
+                    Translator.INSTANCE.translate("SysTray", "RESTARTING_NODE"),
+                    Translator.INSTANCE.translate("SysTray", "APPLYING_RESTARTING_NODE"),
+                    MessageType.INFO
+            );
 
-			ProcessBuilder processBuilder = new ProcessBuilder(javaCmd);
+            // Start the new process
+            ProcessBuilder processBuilder = new ProcessBuilder(javaCmd);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
 
-			// New process will inherit our stdout and stderr
-			processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-			processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            Process process = processBuilder.start();
 
-			Process process = processBuilder.start();
+            // Close the process's input stream to avoid resource leaks
+            try {
+                process.getOutputStream().close();
+            } catch (Exception e) {
+                LOGGER.warn("Failed to close process output stream: {}", e.getMessage());
+            }
 
-			// Nothing to pipe to new process, so close output stream (process's stdin)
-			process.getOutputStream().close();
-
-			return true; // restarting node OK
-		} catch (Exception e) {
-			LOGGER.error(String.format("Failed to restart node: %s", e.getMessage()));
-
-			return true; // repo was okay, even if applying restart failed
-		}
-	}
+            return true; // Node restart initiated successfully
+        } catch (Exception e) {
+            LOGGER.error("Failed to restart node: {}", e.getMessage(), e);
+            return true; // Return true to indicate repo was okay even if restart failed
+        }
+    }
 }
