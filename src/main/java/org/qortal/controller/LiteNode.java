@@ -12,178 +12,152 @@ import org.qortal.network.message.*;
 
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.qortal.network.message.MessageType.*;
 
 public class LiteNode {
 
     private static final Logger LOGGER = LogManager.getLogger(LiteNode.class);
+    private static final int MAX_TRANSACTIONS_PER_MESSAGE = 100;
 
     private static LiteNode instance;
 
+    private final Map<Integer, Long> pendingRequests = new ConcurrentHashMap<>();
 
-    public Map<Integer, Long> pendingRequests = Collections.synchronizedMap(new HashMap<>());
-
-    public int MAX_TRANSACTIONS_PER_MESSAGE = 100;
-
-
-    public LiteNode() {
-
+    private LiteNode() {
     }
 
     public static synchronized LiteNode getInstance() {
         if (instance == null) {
             instance = new LiteNode();
         }
-
         return instance;
     }
 
-
-    /**
-     * Fetch account data from peers for given QORT address
-     * @param address - the QORT address to query
-     * @return accountData - the account data for this address, or null if not retrieved
-     */
     public AccountData fetchAccountData(String address) {
-        GetAccountMessage getAccountMessage = new GetAccountMessage(address);
-        AccountMessage accountMessage = (AccountMessage) this.sendMessage(getAccountMessage, ACCOUNT);
-        if (accountMessage == null) {
+        LOGGER.debug("Fetching account data for address: {}", address);
+        try {
+            GetAccountMessage getAccountMessage = new GetAccountMessage(address);
+            AccountMessage accountMessage = (AccountMessage) this.sendMessage(getAccountMessage, ACCOUNT);
+            return accountMessage != null ? accountMessage.getAccountData() : null;
+        } catch (Exception e) {
+            LOGGER.error("Failed to fetch account data for address: {}", address, e);
             return null;
         }
-        return accountMessage.getAccountData();
     }
 
-    /**
-     * Fetch account balance data from peers for given QORT address and asset ID
-     * @param address - the QORT address to query
-     * @return balance - the balance for this address and assetId, or null if not retrieved
-     */
     public AccountBalanceData fetchAccountBalance(String address, long assetId) {
-        GetAccountBalanceMessage getAccountMessage = new GetAccountBalanceMessage(address, assetId);
-        AccountBalanceMessage accountMessage = (AccountBalanceMessage) this.sendMessage(getAccountMessage, ACCOUNT_BALANCE);
-        if (accountMessage == null) {
+        LOGGER.debug("Fetching account balance for address: {}, assetId: {}", address, assetId);
+        try {
+            GetAccountBalanceMessage getAccountMessage = new GetAccountBalanceMessage(address, assetId);
+            AccountBalanceMessage accountMessage = (AccountBalanceMessage) this.sendMessage(getAccountMessage, ACCOUNT_BALANCE);
+            return accountMessage != null ? accountMessage.getAccountBalanceData() : null;
+        } catch (Exception e) {
+            LOGGER.error("Failed to fetch account balance for address: {}, assetId: {}", address, assetId, e);
             return null;
         }
-        return accountMessage.getAccountBalanceData();
     }
 
-    /**
-     * Fetch list of transactions for given QORT address
-     * @param address - the QORT address to query
-     * @param limit - the maximum number of results to return
-     * @param offset - the starting index
-     * @return a list of TransactionData objects, or null if not retrieved
-     */
     public List<TransactionData> fetchAccountTransactions(String address, int limit, int offset) {
+        LOGGER.debug("Fetching transactions for address: {}, limit: {}, offset: {}", address, limit, offset);
         List<TransactionData> allTransactions = new ArrayList<>();
-        if (limit == 0) {
-            limit = Integer.MAX_VALUE;
-        }
-        int batchSize = Math.min(limit, MAX_TRANSACTIONS_PER_MESSAGE);
+        limit = (limit == 0) ? Integer.MAX_VALUE : limit;
 
-        while (allTransactions.size() < limit) {
-            GetAccountTransactionsMessage getAccountTransactionsMessage = new GetAccountTransactionsMessage(address, batchSize, offset);
-            TransactionsMessage transactionsMessage = (TransactionsMessage) this.sendMessage(getAccountTransactionsMessage, TRANSACTIONS);
-            if (transactionsMessage == null) {
-                // An error occurred, so give up instead of returning partial results
-                return null;
+        try {
+            int batchSize = Math.min(limit, MAX_TRANSACTIONS_PER_MESSAGE);
+            while (allTransactions.size() < limit) {
+                GetAccountTransactionsMessage getAccountTransactionsMessage = 
+                        new GetAccountTransactionsMessage(address, batchSize, offset);
+                TransactionsMessage transactionsMessage = 
+                        (TransactionsMessage) this.sendMessage(getAccountTransactionsMessage, TRANSACTIONS);
+
+                if (transactionsMessage == null || transactionsMessage.getTransactions() == null) {
+                    LOGGER.warn("No transactions received for address: {}", address);
+                    return null;
+                }
+
+                allTransactions.addAll(transactionsMessage.getTransactions());
+
+                if (transactionsMessage.getTransactions().size() < batchSize) {
+                    break; // No more transactions to fetch
+                }
+
+                offset += batchSize;
             }
-            allTransactions.addAll(transactionsMessage.getTransactions());
-            if (transactionsMessage.getTransactions().size() < batchSize) {
-                // No more transactions to fetch
-                break;
-            }
-            offset += batchSize;
+        } catch (Exception e) {
+            LOGGER.error("Failed to fetch transactions for address: {}", address, e);
+            return null;
         }
         return allTransactions;
     }
 
-    /**
-     * Fetch list of names for given QORT address
-     * @param address - the QORT address to query
-     * @return a list of NameData objects, or null if not retrieved
-     */
     public List<NameData> fetchAccountNames(String address) {
-        GetAccountNamesMessage getAccountNamesMessage = new GetAccountNamesMessage(address);
-        NamesMessage namesMessage = (NamesMessage) this.sendMessage(getAccountNamesMessage, NAMES);
-        if (namesMessage == null) {
+        LOGGER.debug("Fetching account names for address: {}", address);
+        try {
+            GetAccountNamesMessage getAccountNamesMessage = new GetAccountNamesMessage(address);
+            NamesMessage namesMessage = (NamesMessage) this.sendMessage(getAccountNamesMessage, NAMES);
+            return namesMessage != null ? namesMessage.getNameDataList() : null;
+        } catch (Exception e) {
+            LOGGER.error("Failed to fetch account names for address: {}", address, e);
             return null;
         }
-        return namesMessage.getNameDataList();
     }
 
-    /**
-     * Fetch info about a registered name
-     * @param name - the name to query
-     * @return a NameData object, or null if not retrieved
-     */
     public NameData fetchNameData(String name) {
-        GetNameMessage getNameMessage = new GetNameMessage(name);
-        NamesMessage namesMessage = (NamesMessage) this.sendMessage(getNameMessage, NAMES);
-        if (namesMessage == null) {
-            return null;
-        }
-        List<NameData> nameDataList = namesMessage.getNameDataList();
-        if (nameDataList == null || nameDataList.size() != 1) {
-            return null;
-        }
-        // We are only expecting a single item in the list
-        return nameDataList.get(0);
-    }
+        LOGGER.debug("Fetching name data for name: {}", name);
+        try {
+            GetNameMessage getNameMessage = new GetNameMessage(name);
+            NamesMessage namesMessage = (NamesMessage) this.sendMessage(getNameMessage, NAMES);
 
+            if (namesMessage == null || namesMessage.getNameDataList() == null || namesMessage.getNameDataList().size() != 1) {
+                LOGGER.warn("Unexpected name data response for name: {}", name);
+                return null;
+            }
+            return namesMessage.getNameDataList().get(0);
+        } catch (Exception e) {
+            LOGGER.error("Failed to fetch name data for name: {}", name, e);
+            return null;
+        }
+    }
 
     private Message sendMessage(Message message, MessageType expectedResponseMessageType) {
-        // This asks a random peer for the data
-        // TODO: ask multiple peers, and disregard everything if there are any significant differences in the responses
-
-        // Needs a mutable copy of the unmodifiableList
-        List<Peer> peers = new ArrayList<>(Network.getInstance().getImmutableHandshakedPeers());
-
-        // Disregard peers that have "misbehaved" recently
-        peers.removeIf(Controller.hasMisbehaved);
-
-        // Disregard peers that only have genesis block
-        // TODO: peers.removeIf(Controller.hasOnlyGenesisBlock);
-
-        // Disregard peers that are on an old version
-        peers.removeIf(Controller.hasOldVersion);
-
-        // Disregard peers that are on a known inferior chain tip
-        // TODO: peers.removeIf(Controller.hasInferiorChainTip);
-
-        if (peers.isEmpty()) {
-            LOGGER.info("No peers available to send {} message to", message.getType());
-            return null;
-        }
-
-        // Pick random peer
-        int index = new SecureRandom().nextInt(peers.size());
-        Peer peer = peers.get(index);
-
-        LOGGER.info("Sending {} message to peer {}...", message.getType(), peer);
-
-        Message responseMessage;
+        LOGGER.debug("Preparing to send {} message", message.getType());
 
         try {
-            responseMessage = peer.getResponse(message);
+            List<Peer> peers = new ArrayList<>(Network.getInstance().getImmutableHandshakedPeers());
+            peers.removeIf(Controller.hasMisbehaved);
+            peers.removeIf(Controller.hasOldVersion);
+
+            if (peers.isEmpty()) {
+                LOGGER.warn("No suitable peers available to send {} message", message.getType());
+                return null;
+            }
+
+            Peer peer = peers.get(new SecureRandom().nextInt(peers.size()));
+            LOGGER.debug("Sending {} message to peer {}", message.getType(), peer);
+
+            Message responseMessage = peer.getResponse(message);
+            if (responseMessage == null) {
+                LOGGER.warn("No response received for {} message from peer {}", message.getType(), peer);
+                return null;
+            }
+
+            if (responseMessage.getType() != expectedResponseMessageType) {
+                LOGGER.warn("Unexpected response type {} for {} message from peer {}", responseMessage.getType(), message.getType(), peer);
+                return null;
+            }
+
+            LOGGER.debug("Successfully received {} message from peer {}", responseMessage.getType(), peer);
+            return responseMessage;
 
         } catch (InterruptedException e) {
+            LOGGER.error("Message sending interrupted for {} message", message.getType(), e);
+            Thread.currentThread().interrupt(); // Restore interrupt status
+            return null;
+        } catch (Exception e) {
+            LOGGER.error("Error sending {} message", message.getType(), e);
             return null;
         }
-
-        if (responseMessage == null) {
-            LOGGER.info("Peer {} didn't respond to {} message", peer, message.getType());
-            return null;
-        }
-        else if (responseMessage.getType() != expectedResponseMessageType) {
-            LOGGER.info("Peer responded with unexpected message type {} (should be {})", peer, responseMessage.getType(), expectedResponseMessageType);
-            return null;
-        }
-
-        LOGGER.info("Peer {} responded with {} message", peer, responseMessage.getType());
-
-        return responseMessage;
     }
-
 }
