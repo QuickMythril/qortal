@@ -222,7 +222,7 @@ public class Block {
 		public long distribute(long accountAmount, Map<String, Long> balanceChanges) {
 			if (this.isRecipientAlsoMinter) {
 				// minter & recipient the same - simpler case
-				LOGGER.trace(() -> String.format("Minter/recipient account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
+				LOGGER.info(() -> String.format("Minter/recipient account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(accountAmount)));
 				if (accountAmount != 0)
 					balanceChanges.merge(this.mintingAccount.getAddress(), accountAmount, Long::sum);
 			} else {
@@ -230,11 +230,11 @@ public class Block {
 				long recipientAmount = (accountAmount * this.sharePercent) / 100L / 100L; // because scaled by 2dp and 'percent' means "per 100"
 				long minterAmount = accountAmount - recipientAmount;
 
-				LOGGER.trace(() -> String.format("Minter account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
+				LOGGER.info(() -> String.format("Minter account %s share: %s", this.mintingAccount.getAddress(), Amounts.prettyAmount(minterAmount)));
 				if (minterAmount != 0)
 					balanceChanges.merge(this.mintingAccount.getAddress(), minterAmount, Long::sum);
 
-				LOGGER.trace(() -> String.format("Recipient account %s share: %s", this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
+				LOGGER.info(() -> String.format("Recipient account %s share: %s", this.recipientAccount.getAddress(), Amounts.prettyAmount(recipientAmount)));
 				if (recipientAmount != 0)
 					balanceChanges.merge(this.recipientAccount.getAddress(), recipientAmount, Long::sum);
 			}
@@ -1659,7 +1659,7 @@ public class Block {
 		for (AccountData accountData : allUniqueExpandedAccounts) {
 			// Adjust count locally (in Java)
 			accountData.setBlocksMinted(accountData.getBlocksMinted() + 1);
-			LOGGER.trace(() -> String.format("Block minter %s up to %d minted block%s", accountData.getAddress(), accountData.getBlocksMinted(), (accountData.getBlocksMinted() != 1 ? "s" : "")));
+			LOGGER.info(() -> String.format("Block minter %s up to %d minted block%s", accountData.getAddress(), accountData.getBlocksMinted(), (accountData.getBlocksMinted() != 1 ? "s" : "")));
 
 			final int effectiveBlocksMinted = accountData.getBlocksMinted() + accountData.getBlocksMintedAdjustment() + accountData.getBlocksMintedPenalty();
 
@@ -1670,7 +1670,7 @@ public class Block {
 						accountData.setLevel(newLevel);
 						bumpedAccounts.put(accountData.getAddress(), newLevel);
 						repository.getAccountRepository().setLevel(accountData);
-						LOGGER.trace(() -> String.format("Block minter %s bumped to level %d", accountData.getAddress(), accountData.getLevel()));
+						LOGGER.info(() -> String.format("Block minter %s bumped to level %d", accountData.getAddress(), accountData.getLevel()));
 					}
 
 					break;
@@ -1683,14 +1683,14 @@ public class Block {
 				Integer newLevel = bumpedAccounts.get(expandedAccount.mintingAccountData.getAddress());
 				if (newLevel != null && expandedAccount.mintingAccountData.getLevel() != newLevel) {
 					expandedAccount.mintingAccountData.setLevel(newLevel);
-					LOGGER.trace("Also bumped {} to level {}", expandedAccount.mintingAccountData.getAddress(), newLevel);
+					LOGGER.info("Also bumped {} to level {}", expandedAccount.mintingAccountData.getAddress(), newLevel);
 				}
 
 				if (!expandedAccount.isRecipientAlsoMinter) {
 					newLevel = bumpedAccounts.get(expandedAccount.recipientAccountData.getAddress());
 					if (newLevel != null && expandedAccount.recipientAccountData.getLevel() != newLevel) {
 						expandedAccount.recipientAccountData.setLevel(newLevel);
-						LOGGER.trace("Also bumped {} to level {}", expandedAccount.recipientAccountData.getAddress(), newLevel);
+						LOGGER.info("Also bumped {} to level {}", expandedAccount.recipientAccountData.getAddress(), newLevel);
 					}
 				}
 			}
@@ -1718,14 +1718,14 @@ public class Block {
 				throw new DataException("Unable to calculate total fees for block range");
 			}
 			reward += totalFees;
-			LOGGER.debug("Total fees for range {} - {} when processing: {}", firstBlock, lastBlock, totalFees);
+			LOGGER.info("Total fees for range {} - {} when processing: {}", firstBlock, lastBlock, totalFees);
 		}
 
 		// Add transaction fees for this block (it was excluded from the range above as it's not in the repository yet)
 		reward += this.blockData.getTotalFees();
-		LOGGER.debug("Total fees when processing block {}: {}", this.blockData.getHeight(), this.blockData.getTotalFees());
+		LOGGER.info("Total fees when processing block {}: {}", this.blockData.getHeight(), this.blockData.getTotalFees());
 
-		LOGGER.debug("Block reward when processing block {}: {}", this.blockData.getHeight(), reward);
+		LOGGER.info("Block reward when processing block {}: {}", this.blockData.getHeight(), reward);
 
 		// Nothing to reward?
 		if (reward <= 0)
@@ -1996,14 +1996,14 @@ public class Block {
 				throw new DataException("Unable to calculate total fees for block range");
 			}
 			reward += totalFees;
-			LOGGER.debug("Total fees for range {} - {} when orphaning: {}", firstBlock, lastBlock, totalFees);
+			LOGGER.info("Total fees for range {} - {} when orphaning: {}", firstBlock, lastBlock, totalFees);
 		}
 
 		// Add transaction fees for this block (it was excluded from the range above as it's not in the repository yet)
 		reward += this.blockData.getTotalFees();
-		LOGGER.debug("Total fees when orphaning block {}: {}", this.blockData.getHeight(), this.blockData.getTotalFees());
+		LOGGER.info("Total fees when orphaning block {}: {}", this.blockData.getHeight(), this.blockData.getTotalFees());
 
-		LOGGER.debug("Block reward when orphaning block {}: {}", this.blockData.getHeight(), reward);
+		LOGGER.info("Block reward when orphaning block {}: {}", this.blockData.getHeight(), reward);
 
 		// Nothing to reward?
 		if (reward <= 0)
@@ -2055,7 +2055,7 @@ public class Block {
 		for (AccountData accountData : allUniqueExpandedAccounts) {
 			// Adjust count locally (in Java)
 			accountData.setBlocksMinted(accountData.getBlocksMinted() - 1);
-			LOGGER.trace(() -> String.format("Block minter %s down to %d minted block%s", accountData.getAddress(), accountData.getBlocksMinted(), (accountData.getBlocksMinted() != 1 ? "s" : "")));
+			LOGGER.info(() -> String.format("Block minter %s down to %d minted block%s", accountData.getAddress(), accountData.getBlocksMinted(), (accountData.getBlocksMinted() != 1 ? "s" : "")));
 
 			final int effectiveBlocksMinted = accountData.getBlocksMinted() + accountData.getBlocksMintedAdjustment() + accountData.getBlocksMintedPenalty();
 
@@ -2065,7 +2065,7 @@ public class Block {
 						// Account has decreased in level!
 						accountData.setLevel(newLevel);
 						repository.getAccountRepository().setLevel(accountData);
-						LOGGER.trace(() -> String.format("Block minter %s reduced to level %d", accountData.getAddress(), accountData.getLevel()));
+						LOGGER.info(() -> String.format("Block minter %s reduced to level %d", accountData.getAddress(), accountData.getLevel()));
 					}
 
 					break;
@@ -2190,7 +2190,7 @@ public class Block {
 
 	protected void distributeBlockReward(long totalAmount) throws DataException {
 		final long totalAmountForLogging = totalAmount;
-		LOGGER.trace(() -> String.format("Distributing: %s", Amounts.prettyAmount(totalAmountForLogging)));
+		LOGGER.info(() -> String.format("Distributing: %s", Amounts.prettyAmount(totalAmountForLogging)));
 
 		final boolean isProcessingNotOrphaning = totalAmount >= 0;
 
@@ -2217,7 +2217,7 @@ public class Block {
 				totalAmount += Amounts.scaledDivide(distributionAmount - sharedAmount, 1_00000000 - rewardCandidate.share);
 
 			final long remainingAmountForLogging = remainingAmount;
-			LOGGER.trace(() -> String.format("%s share: %s. Actually shared: %s. Remaining: %s",
+			LOGGER.info(() -> String.format("%s share: %s. Actually shared: %s. Remaining: %s",
 					rewardCandidate.description,
 					Amounts.prettyAmount(distributionAmount),
 					Amounts.prettyAmount(sharedAmount),
@@ -2228,7 +2228,7 @@ public class Block {
 		List<AccountBalanceData> accountBalanceDeltas = balanceChanges.entrySet().stream()
 				.map(entry -> new AccountBalanceData(entry.getKey(), Asset.QORT, entry.getValue()))
 				.collect(Collectors.toList());
-		LOGGER.trace("Account Balance Deltas: {}", accountBalanceDeltas);
+		LOGGER.info("Account Balance Deltas: {}", accountBalanceDeltas);
 		this.repository.getAccountRepository().modifyAssetBalances(accountBalanceDeltas);
 	}
 
@@ -2451,7 +2451,7 @@ public class Block {
 			totalQoraHeld += qoraHolders.get(i).getQoraBalance();
 
 		long finalTotalQoraHeld = totalQoraHeld;
-		LOGGER.trace(() -> String.format("Total legacy QORA held: %s", Amounts.prettyAmount(finalTotalQoraHeld)));
+		LOGGER.info(() -> String.format("Total legacy QORA held: %s", Amounts.prettyAmount(finalTotalQoraHeld)));
 
 		if (totalQoraHeld <= 0)
 			return 0;
@@ -2474,7 +2474,7 @@ public class Block {
 			long holderReward = qoraHoldersAmountBI.multiply(qoraHolderBalanceBI).divide(totalQoraHeldBI).longValue();
 
 			final long holderRewardForLogging = holderReward;
-			LOGGER.trace(() -> String.format("QORA holder %s has %s / %s QORA so share: %s",
+			LOGGER.info(() -> String.format("QORA holder %s has %s / %s QORA so share: %s",
 					qoraHolderAddress, Amounts.prettyAmount(qoraHolder.getQoraBalance()), finalTotalQoraHeld, Amounts.prettyAmount(holderRewardForLogging)));
 
 			// Too small to register this time?
@@ -2499,7 +2499,7 @@ public class Block {
 					block.repository.getAccountRepository().save(qortFromQoraData);
 
 					long finalAdjustedHolderReward = holderReward;
-					LOGGER.trace(() -> String.format("QORA holder %s final share %s at height %d",
+					LOGGER.info(() -> String.format("QORA holder %s final share %s at height %d",
 							qoraHolderAddress, Amounts.prettyAmount(finalAdjustedHolderReward), block.blockData.getHeight()));
 				}
 			} else {
@@ -2516,7 +2516,7 @@ public class Block {
 					block.repository.getAccountRepository().deleteQortFromQoraInfo(qoraHolderAddress);
 
 					long finalAdjustedHolderReward = holderReward;
-					LOGGER.trace(() -> String.format("QORA holder %s final share %s was at height %d",
+					LOGGER.info(() -> String.format("QORA holder %s final share %s was at height %d",
 							qoraHolderAddress, Amounts.prettyAmount(finalAdjustedHolderReward), block.blockData.getHeight()));
 				}
 			}
