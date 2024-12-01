@@ -30,11 +30,13 @@ public class BlockArchiver implements Runnable {
 			return;
 		}
 
+		int startHeight;
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			// Don't even start building until initial rush has ended
 			Thread.sleep(INITIAL_SLEEP_PERIOD);
 
-			int startHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight();
+			startHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight();
 
 			// Don't attempt to archive if we have no ATStatesHeightIndex, as it will be too slow
 			boolean hasAtStatesHeightIndex = repository.getATRepository().hasAtStatesHeightIndex();
@@ -43,10 +45,16 @@ public class BlockArchiver implements Runnable {
 				repository.discardChanges();
 				return;
 			}
+		} catch (Exception e) {
+			LOGGER.error("Block Archiving is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
+			return;
+		}
 
-			LOGGER.info("Starting block archiver from height {}...", startHeight);
+		LOGGER.info("Starting block archiver from height {}...", startHeight);
 
-			while (!Controller.isStopping()) {
+		while (!Controller.isStopping()) {
+			try (final Repository repository = RepositoryManager.getRepository()) {
+
 				try {
 					repository.discardChanges();
 
@@ -107,20 +115,17 @@ public class BlockArchiver implements Runnable {
 						LOGGER.info("Caught exception when creating block cache", e);
 					}
 				} catch (InterruptedException e) {
-					if(Controller.isStopping()) {
+					if (Controller.isStopping()) {
 						LOGGER.info("Block Archiving Shutting Down");
-					}
-					else {
+					} else {
 						LOGGER.warn("Block Archiving interrupted. Trying again. Report this error immediately to the developers.", e);
 					}
 				} catch (Exception e) {
 					LOGGER.warn("Block Archiving stopped working. Trying again. Report this error immediately to the developers.", e);
 				}
+			} catch(Exception e){
+				LOGGER.error("Block Archiving is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 			}
-		} catch (Exception e) {
-			LOGGER.error("Block Archiving is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
-
 	}
-
 }

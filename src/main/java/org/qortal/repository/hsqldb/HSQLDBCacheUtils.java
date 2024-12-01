@@ -5,10 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.qortal.api.SearchMode;
 import org.qortal.arbitrary.misc.Category;
 import org.qortal.arbitrary.misc.Service;
+import org.qortal.controller.Controller;
+import org.qortal.data.account.AccountBalanceData;
 import org.qortal.data.arbitrary.ArbitraryResourceCache;
 import org.qortal.data.arbitrary.ArbitraryResourceData;
 import org.qortal.data.arbitrary.ArbitraryResourceMetadata;
 import org.qortal.data.arbitrary.ArbitraryResourceStatus;
+import org.qortal.repository.DataException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -48,6 +51,11 @@ public class HSQLDBCacheUtils {
         }
     };
     private static final String DEFAULT_IDENTIFIER = "default";
+    private static final int ZERO = 0;
+    public static final String DB_CACHE_TIMER = "DB Cache Timer";
+    public static final String DB_CACHE_TIMER_TASK = "DB Cache Timer Task";
+    public static final String BALANCE_RECORDER_TIMER = "Balance Recorder Timer";
+    public static final String BALANCE_RECORDER_TIMER_TASK = "Balance Recorder Timer Task";
 
     /**
      *
@@ -351,13 +359,124 @@ public class HSQLDBCacheUtils {
      * Start Caching
      *
      * @param priorityRequested the thread priority to fill cache in
-     * @param frequency the frequency to fill the cache (in seconds)
-     * @param respository the data source
+     * @param frequency         the frequency to fill the cache (in seconds)
      *
      * @return the data cache
      */
-    public static void startCaching(int priorityRequested, int frequency, HSQLDBRepository respository) {
+    public static void startCaching(int priorityRequested, int frequency) {
 
+        Timer timer = buildTimer(DB_CACHE_TIMER, priorityRequested);
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+
+                Thread.currentThread().setName(DB_CACHE_TIMER_TASK);
+
+                try (final HSQLDBRepository respository = (HSQLDBRepository) Controller.REPOSITORY_FACTORY.getRepository()) {
+                    fillCache(ArbitraryResourceCache.getInstance(), respository);
+                }
+                catch( DataException e ) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        };
+
+        // delay 1 second
+        timer.scheduleAtFixedRate(task, 1000, frequency * 1000);
+    }
+
+    /**
+     * Start Recording Balances
+     *
+     * @param queue             the queue to add to, remove oldest data if necssary
+     * @param repository        the db repsoitory
+     * @param priorityRequested the requested thread priority
+     * @param frequency         the recording frequencies, in minutes
+     */
+    public static void startRecordingBalances(
+            final ConcurrentHashMap<Integer, List<AccountBalanceData>> balancesByHeight,
+            final ConcurrentHashMap<String, List<AccountBalanceData>> balancesByAddress,
+            int priorityRequested,
+            int frequency,
+            int capacity) {
+
+        Timer timer = buildTimer(BALANCE_RECORDER_TIMER, priorityRequested);
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+
+                Thread.currentThread().setName(BALANCE_RECORDER_TIMER_TASK);
+
+                try (final HSQLDBRepository repository = (HSQLDBRepository) Controller.REPOSITORY_FACTORY.getRepository()) {
+                    while (balancesByHeight.size() > capacity + 1) {
+                        Optional<Integer> firstHeight = balancesByHeight.keySet().stream().sorted().findFirst();
+
+                        if (firstHeight.isPresent()) balancesByHeight.remove(firstHeight.get());
+                    }
+
+                    // get current balances
+                    List<AccountBalanceData> accountBalances = getAccountBalances(repository);
+
+                    // get anyone of the balances
+                    Optional<AccountBalanceData> data = accountBalances.stream().findAny();
+
+                    // if there are any balances, then record them
+                    if (data.isPresent()) {
+                        // map all new balances to the current height
+                        balancesByHeight.put(data.get().getHeight(), accountBalances);
+
+                        // for each new balance, map to address
+                        for (AccountBalanceData accountBalance : accountBalances) {
+
+                            // get recorded balances for this address
+                            List<AccountBalanceData> establishedBalances
+                                    = balancesByAddress.getOrDefault(accountBalance.getAddress(), new ArrayList<>(0));
+
+                            // start a new list of recordings for this address, add the new balance and add the established
+                            // balances
+                            List<AccountBalanceData> balances = new ArrayList<>(establishedBalances.size() + 1);
+                            balances.add(accountBalance);
+                            balances.addAll(establishedBalances);
+
+                            // reset tha balances for this address
+                            balancesByAddress.put(accountBalance.getAddress(), balances);
+
+                            // TODO: reduce account balances to capacity
+                        }
+
+                        // reduce height balances to capacity
+                        while( balancesByHeight.size() > capacity ) {
+                            Optional<Integer> lowestHeight
+                                = balancesByHeight.entrySet().stream()
+                                    .min(Comparator.comparingInt(Map.Entry::getKey))
+                                    .map(Map.Entry::getKey);
+
+                            if (lowestHeight.isPresent()) balancesByHeight.entrySet().remove(lowestHeight);
+                        }
+                    }
+                } catch (DataException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        };
+
+        // wait 5 minutes
+        timer.scheduleAtFixedRate(task, 300_000, frequency * 60_000);
+    }
+
+    /**
+     * Build Timer
+     *
+     * Build a timer for scheduling a timer task.
+     *
+     * @param name the name for the thread running the timer task
+     * @param priorityRequested the priority for the thread running the timer task
+     *
+     * @return a timer for scheduling a timer task
+     */
+    private static Timer buildTimer( final String name, int priorityRequested) {
         // ensure priority is in between 1-10
         final int priority = Math.max(0, Math.min(10, priorityRequested));
 
@@ -365,7 +484,7 @@ public class HSQLDBCacheUtils {
         Timer timer = new Timer(true) { // 'true' to make the Timer daemon
             @Override
             public void schedule(TimerTask task, long delay) {
-                Thread thread = new Thread(task) {
+                Thread thread = new Thread(task, name) {
                     @Override
                     public void run() {
                         this.setPriority(priority);
@@ -376,17 +495,7 @@ public class HSQLDBCacheUtils {
                 thread.start();
             }
         };
-
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-
-                fillCache(ArbitraryResourceCache.getInstance(), respository);
-            }
-        };
-
-        // delay 1 second
-        timer.scheduleAtFixedRate(task, 1000, frequency * 1000);
+        return timer;
     }
 
     /**
@@ -540,5 +649,44 @@ public class HSQLDBCacheUtils {
         } while (resultSet.next());
 
         return resources;
+    }
+
+    public static List<AccountBalanceData> getAccountBalances(HSQLDBRepository repository) {
+
+        StringBuilder sql = new StringBuilder();
+
+        sql.append("SELECT account, balance, height ");
+        sql.append("FROM ACCOUNTBALANCES as balances ");
+        sql.append("JOIN (SELECT height FROM BLOCKS ORDER BY height DESC LIMIT 1) AS max_height ON true ");
+        sql.append("WHERE asset_id=0");
+
+        List<AccountBalanceData> data = new ArrayList<>();
+
+        LOGGER.info( "Getting account balances ...");
+
+        try {
+            Statement statement = repository.connection.createStatement();
+
+            ResultSet resultSet = statement.executeQuery(sql.toString());
+
+            if (resultSet == null || !resultSet.next())
+                return new ArrayList<>(0);
+
+            do {
+                String account = resultSet.getString(1);
+                long balance = resultSet.getLong(2);
+                int height = resultSet.getInt(3);
+
+                data.add(new AccountBalanceData(account, ZERO, balance, height));
+            } while (resultSet.next());
+        } catch (SQLException e) {
+            LOGGER.warn(e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        LOGGER.info("Retrieved account balances: count = " + data.size());
+
+        return data;
     }
 }

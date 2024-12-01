@@ -39,15 +39,24 @@ public class AtStatesPruner implements Runnable {
 			}
 		}
 
+		int pruneStartHeight;
+		int maxLatestAtStatesHeight;
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			int pruneStartHeight = repository.getATRepository().getAtPruneHeight();
-			int maxLatestAtStatesHeight = PruneManager.getMaxHeightForLatestAtStates(repository);
+			pruneStartHeight = repository.getATRepository().getAtPruneHeight();
+			maxLatestAtStatesHeight = PruneManager.getMaxHeightForLatestAtStates(repository);
 
 			repository.discardChanges();
 			repository.getATRepository().rebuildLatestAtStates(maxLatestAtStatesHeight);
 			repository.saveChanges();
+		} catch (Exception e) {
+			LOGGER.error("AT States Pruning is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
+			return;
+		}
 
-			while (!Controller.isStopping()) {
+		while (!Controller.isStopping()) {
+			try (final Repository repository = RepositoryManager.getRepository()) {
+
 				try {
 					repository.discardChanges();
 
@@ -102,28 +111,25 @@ public class AtStatesPruner implements Runnable {
 
 							final int finalPruneStartHeight = pruneStartHeight;
 							LOGGER.info(() -> String.format("Bumping AT state base prune height to %d", finalPruneStartHeight));
-						}
-						else {
+						} else {
 							// We've pruned up to the upper prunable height
 							// Back off for a while to save CPU for syncing
 							repository.discardChanges();
-							Thread.sleep(5*60*1000L);
+							Thread.sleep(5 * 60 * 1000L);
 						}
 					}
 				} catch (InterruptedException e) {
-					if(Controller.isStopping()) {
+					if (Controller.isStopping()) {
 						LOGGER.info("AT States Pruning Shutting Down");
-					}
-					else {
+					} else {
 						LOGGER.warn("AT States Pruning interrupted. Trying again. Report this error immediately to the developers.", e);
 					}
 				} catch (Exception e) {
 					LOGGER.warn("AT States Pruning stopped working. Trying again. Report this error immediately to the developers.", e);
 				}
+			} catch(Exception e){
+				LOGGER.error("AT States Pruning is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 			}
-		} catch (Exception e) {
-			LOGGER.error("AT States Pruning is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
 	}
-
 }

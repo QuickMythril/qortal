@@ -26,15 +26,23 @@ public class AtStatesTrimmer implements Runnable {
 			return;
 		}
 
+		int trimStartHeight;
+		int maxLatestAtStatesHeight;
+
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			int trimStartHeight = repository.getATRepository().getAtTrimHeight();
-			int maxLatestAtStatesHeight = PruneManager.getMaxHeightForLatestAtStates(repository);
+			trimStartHeight = repository.getATRepository().getAtTrimHeight();
+			maxLatestAtStatesHeight = PruneManager.getMaxHeightForLatestAtStates(repository);
 
 			repository.discardChanges();
 			repository.getATRepository().rebuildLatestAtStates(maxLatestAtStatesHeight);
 			repository.saveChanges();
+		} catch (Exception e) {
+			LOGGER.error("AT States Trimming is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
+			return;
+		}
 
-			while (!Controller.isStopping()) {
+		while (!Controller.isStopping()) {
+			try (final Repository repository = RepositoryManager.getRepository()) {
 				try {
 					repository.discardChanges();
 
@@ -92,9 +100,9 @@ public class AtStatesTrimmer implements Runnable {
 				} catch (Exception e) {
 					LOGGER.warn("AT States Trimming stopped working. Trying again. Report this error immediately to the developers.", e);
 				}
+			} catch (Exception e) {
+				LOGGER.error("AT States Trimming is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 			}
-		} catch (Exception e) {
-			LOGGER.error("AT States Trimming is not working! Not trying again. Restart ASAP. Report this error immediately to the developers.", e);
 		}
 	}
 

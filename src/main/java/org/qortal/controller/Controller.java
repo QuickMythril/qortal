@@ -13,6 +13,7 @@ import org.qortal.block.Block;
 import org.qortal.block.BlockChain;
 import org.qortal.block.BlockChain.BlockTimingByHeight;
 import org.qortal.controller.arbitrary.*;
+import org.qortal.controller.hsqldb.HSQLDBBalanceRecorder;
 import org.qortal.controller.hsqldb.HSQLDBDataCacheManager;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.controller.repository.PruneManager;
@@ -36,7 +37,6 @@ import org.qortal.network.Peer;
 import org.qortal.network.PeerAddress;
 import org.qortal.network.message.*;
 import org.qortal.repository.*;
-import org.qortal.repository.hsqldb.HSQLDBRepository;
 import org.qortal.repository.hsqldb.HSQLDBRepositoryFactory;
 import org.qortal.settings.Settings;
 import org.qortal.transaction.Transaction;
@@ -72,6 +72,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Controller extends Thread {
+
+	public static HSQLDBRepositoryFactory REPOSITORY_FACTORY;
 
 	static {
 		// This must go before any calls to LogManager/Logger
@@ -403,22 +405,37 @@ public class Controller extends Thread {
 
 		LOGGER.info("Starting repository");
 		try {
-			RepositoryFactory repositoryFactory = new HSQLDBRepositoryFactory(getRepositoryUrl());
-			RepositoryManager.setRepositoryFactory(repositoryFactory);
+			REPOSITORY_FACTORY = new HSQLDBRepositoryFactory(getRepositoryUrl());
+			RepositoryManager.setRepositoryFactory(REPOSITORY_FACTORY);
 			RepositoryManager.setRequestedCheckpoint(Boolean.TRUE);
 
 			try (final Repository repository = RepositoryManager.getRepository()) {
 				// RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
+			}
 
-				if( Settings.getInstance().isDbCacheEnabled() ) {
-					LOGGER.info("Db Cache Starting ...");
-					HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager((HSQLDBRepository) repositoryFactory.getRepository());
-					hsqldbDataCacheManager.start();
+			if( Settings.getInstance().isDbCacheEnabled() ) {
+				LOGGER.info("Db Cache Starting ...");
+				HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager();
+				hsqldbDataCacheManager.start();
+			}
+			else {
+				LOGGER.info("Db Cache Disabled");
+			}
+
+			if( Settings.getInstance().isBalanceRecorderEnabled() ) {
+				Optional<HSQLDBBalanceRecorder> recorder = HSQLDBBalanceRecorder.getInstance();
+
+				if( recorder.isPresent() ) {
+					LOGGER.info("Balance Recorder Starting ...");
+					recorder.get().start();
 				}
 				else {
-					LOGGER.info("Db Cache Disabled");
+					LOGGER.info("Balance Recorder won't start.");
 				}
+			}
+			else {
+				LOGGER.info("Balance Recorder Disabled");
 			}
 		} catch (DataException e) {
 			// If exception has no cause or message then repository is in use by some other process.
@@ -639,10 +656,8 @@ public class Controller extends Thread {
 				boolean canBootstrap = Settings.getInstance().getBootstrap();
 				boolean needsArchiveRebuild = false;
 				int checkHeight = 0;
-				Repository repository = null;
 
-				try {
-					repository = RepositoryManager.getRepository();
+				try (final Repository repository = RepositoryManager.getRepository()){
 					needsArchiveRebuild = (repository.getBlockArchiveRepository().fromHeight(2) == null);
 					checkHeight = repository.getBlockRepository().getBlockchainHeight();
 				} catch (DataException e) {

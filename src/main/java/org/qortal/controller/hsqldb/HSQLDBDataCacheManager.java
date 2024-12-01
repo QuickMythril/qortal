@@ -8,11 +8,7 @@ import org.qortal.settings.Settings;
 
 public class HSQLDBDataCacheManager extends Thread{
 
-    private HSQLDBRepository respository;
-
-    public HSQLDBDataCacheManager(HSQLDBRepository respository) {
-        this.respository = respository;
-    }
+    public HSQLDBDataCacheManager() {}
 
     @Override
     public void run() {
@@ -20,8 +16,7 @@ public class HSQLDBDataCacheManager extends Thread{
 
         HSQLDBCacheUtils.startCaching(
             Settings.getInstance().getDbCacheThreadPriority(),
-            Settings.getInstance().getDbCacheFrequency(),
-            this.respository
+            Settings.getInstance().getDbCacheFrequency()
         );
     }
 }

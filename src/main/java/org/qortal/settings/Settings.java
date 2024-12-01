@@ -441,6 +441,14 @@ public class Settings {
 	 */
 	private long archivingPause = 3000;
 
+	private boolean balanceRecorderEnabled = false;
+
+	private int balanceRecorderPriority = 1;
+
+	private int balanceRecorderFrequency = 2*60*1000;
+
+	private int balanceRecorderCapacity = 1000;
+
 	// Domain mapping
 	public static class ThreadLimit {
 		private String messageType;
@@ -1229,5 +1237,21 @@ public class Settings {
 
 	public long getArchivingPause() {
 		return archivingPause;
+	}
+
+	public int getBalanceRecorderPriority() {
+		return balanceRecorderPriority;
+	}
+
+	public int getBalanceRecorderFrequency() {
+		return balanceRecorderFrequency;
+	}
+
+	public int getBalanceRecorderCapacity() {
+		return balanceRecorderCapacity;
+	}
+
+	public boolean isBalanceRecorderEnabled() {
+		return balanceRecorderEnabled;
 	}
 }
