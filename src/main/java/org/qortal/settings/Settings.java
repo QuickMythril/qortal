@@ -282,9 +282,9 @@ public class Settings {
 	private String[] autoUpdateRepos = new String[] {
 		"https://github.com/Qortal/qortal/raw/%s/qortal.update",
 		"https://raw.githubusercontent.com@151.101.16.133/Qortal/qortal/%s/qortal.update",
-	    "https://qortal.link/Auto-Update/%s/qortal.update",
-	    "https://qortal.name/Auto-Update/%s/qortal.update",
-	    "https://update.qortal.org/Auto-Update/%s/qortal.update"
+		"https://qortal.link/Auto-Update/%s/qortal.update",
+		"https://qortal.name/Auto-Update/%s/qortal.update",
+		"https://update.qortal.org/Auto-Update/%s/qortal.update"
 	};
 
 	// Lists
@@ -411,7 +411,7 @@ public class Settings {
 	 * The thread priority (1 is lowest, 10 is highest) of the threads used for network peer connections. This is the
 	 * main thread connecting to a peer in the network.
 	 */
-    private int networkThreadPriority = 7;
+	private int networkThreadPriority = 7;
 
 	/**
 	 * The Handshake Thread Priority
@@ -533,6 +533,15 @@ public class Settings {
 			fileInstance(SETTINGS_FILENAME);
 
 		return instance;
+	}
+
+	public static Settings getDefaultInstance() {
+		Settings defaultSettings = new Settings();
+		defaultSettings.setAdditionalDefaults();
+		defaultSettings.userPath = "";
+		defaultSettings.apiRestricted = !BlockChain.getInstance().isTestChain();
+		defaultSettings.listenPort = defaultSettings.getDefaultListenPort();
+		return defaultSettings;
 	}
 
 	/**

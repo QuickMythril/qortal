@@ -161,8 +161,17 @@ public class AdminResource {
 			)
 		}
 	)
-	public Settings settings() {
-		Settings nodeSettings = Settings.getInstance();
+	public Settings settings(@Parameter(
+				name = "showDefault",
+				description = "Show the current default values for the returned settings",
+				schema = @Schema(type = "boolean")
+			) @QueryParam("showDefault") Boolean showDefault) {
+		Settings nodeSettings = null;
+		if (showDefault != null && showDefault) {
+			nodeSettings = Settings.getDefaultInstance();
+		} else {
+			nodeSettings = Settings.getInstance();
+		}
 
 		return nodeSettings;
 	}
@@ -177,9 +186,18 @@ public class AdminResource {
 					)
 			}
 	)
-	public String setting(@PathParam("setting") String setting) {
+	public String setting(@PathParam("setting") String setting, @Parameter(
+				name = "showDefault",
+				description = "Show the current default value for the returned setting",
+				schema = @Schema(type = "boolean")
+			) @QueryParam("showDefault") Boolean showDefault) {
 		try {
-			Object settingValue = FieldUtils.readField(Settings.getInstance(), setting, true);
+			Object settingValue = null;
+			if (showDefault != null && showDefault) {
+				settingValue = FieldUtils.readField(Settings.getDefaultInstance(), setting, true);
+			} else {
+				settingValue = FieldUtils.readField(Settings.getInstance(), setting, true);
+			}
 			if (settingValue == null) {
 				return "null";
 			}
