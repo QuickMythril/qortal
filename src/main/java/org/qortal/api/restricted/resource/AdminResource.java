@@ -217,6 +217,26 @@ public class AdminResource {
 	}
 
 	@GET
+	@Path("/settings/reload")
+	@Operation(
+		summary = "Reload settings",
+		description = "Reload and apply current values from settings.json file",
+		responses = {
+			@ApiResponse(
+				description = "\"true\"",
+				content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string"))
+			)
+		}
+	)
+	@SecurityRequirement(name = "apiKey")
+	public String reload(@HeaderParam(Security.API_KEY_HEADER) String apiKey) {
+		Security.checkApiCallAllowed(request);
+		Settings.fileInstance("settings.json");
+
+		return "true";
+	}
+
+	@GET
 	@Path("/stop")
 	@Operation(
 		summary = "Shutdown",
