@@ -50,7 +50,7 @@ public class Settings {
 	private static final String SETTINGS_FILENAME = "settings.json";
 
 	// Properties
-	private static Settings instance;
+	private static volatile Settings instance;
 
 	// Settings, and other config files
 	private String userPath;
@@ -559,7 +559,7 @@ public class Settings {
 	 * @throws RuntimeException with JAXBException as cause if some unexpected JAXB-related error occurred
 	 * @throws RuntimeException with IOException as cause if some unexpected I/O-related error occurred
 	 */
-	public static void fileInstance(String filename) {
+	public static synchronized void fileInstance(String filename) {
 		JAXBContext jc;
 		Unmarshaller unmarshaller;
 
