@@ -48,6 +48,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -233,6 +234,66 @@ public class AdminResource {
 		Security.checkApiCallAllowed(request);
 		Settings.fileInstance("settings.json");
 
+		return "true";
+	}
+
+	@POST
+	@Path("/settings/apply/{setting}")
+	@Operation(
+		summary = "Apply and persist a setting change",
+		description = "Updates a single setting, applies it to the current running instance, and updates settings.json accordingly",
+		responses = {
+			@ApiResponse(
+				description = "\"true\" if success",
+				content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string"))
+			)
+		}
+	)
+	@SecurityRequirement(name = "apiKey")
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	public String applySetting(@HeaderParam(Security.API_KEY_HEADER) String apiKey,
+		@PathParam("setting") String settingName,
+		String newValue) {
+		Security.checkApiCallAllowed(request);
+		Settings currentSettings = Settings.getInstance();
+		// Reflectively find the setting field
+		Field field;
+		try {
+			field = Settings.class.getDeclaredField(settingName);
+			field.setAccessible(true);
+		} catch (NoSuchFieldException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA, new RuntimeException("No such setting: " + settingName));
+		}
+		// Parse the new value based on the field type
+		Class<?> fieldType = field.getType();
+		Object parsedValue;
+		try {
+			if (fieldType.equals(String.class)) {
+				parsedValue = newValue;
+			} else if (fieldType.equals(int.class) || fieldType.equals(Integer.class)) {
+				parsedValue = Integer.valueOf(newValue);
+			} else if (fieldType.equals(long.class) || fieldType.equals(Long.class)) {
+				parsedValue = Long.valueOf(newValue);
+			} else if (fieldType.equals(boolean.class) || fieldType.equals(Boolean.class)) {
+				parsedValue = Boolean.valueOf(newValue);
+			} else if (fieldType.equals(String[].class)) {
+				// Assuming comma-separated values for arrays
+				parsedValue = newValue.split(",");
+			} else {
+				throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA, new RuntimeException("Unsupported field type for setting: " + fieldType.getName()));
+			}
+		} catch (Exception e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA, new RuntimeException("Invalid value for setting: " + settingName + " - " + e.getMessage()));
+		}
+		// Set the field value
+		try {
+			field.set(currentSettings, parsedValue);
+		} catch (IllegalAccessException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_CRITERIA, new RuntimeException("Failed to set setting: " + settingName));
+		}
+		// Save updated settings to file
+		currentSettings.saveToFile("settings.json");
 		return "true";
 	}
 

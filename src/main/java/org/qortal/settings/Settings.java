@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.transform.stream.StreamSource;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -644,6 +645,58 @@ public class Settings {
 
 		// Now read blockchain config
 		BlockChain.fileInstance(settings.getUserPath(), settings.getBlockchainConfig());
+	}
+
+	public synchronized void saveToFile(String filename) {
+	    // Get a fresh default instance
+	    Settings defaultSettings = Settings.getDefaultInstance();
+    	// Create a new stripped Settings instance
+    	Settings strippedSettings = new Settings();
+    	// We will use reflection to iterate over fields.
+    	Class<? extends Settings> clazz = Settings.class;
+    	Field[] fields = clazz.getDeclaredFields();
+	    for (Field field : fields) {
+        	// Only process fields that represent actual settings
+        	// (e.g., skip LOGGER, SETTINGS_FILENAME, etc.)
+        	// We'll skip static and final fields and only handle instance fields.
+        	int modifiers = field.getModifiers();
+        	if (java.lang.reflect.Modifier.isStatic(modifiers)) {
+	            continue; // skip static fields
+        	}
+        	field.setAccessible(true);
+	        try {
+            	Object currentValue = field.get(this);
+            	Object defaultValue = field.get(defaultSettings);
+            	boolean differs;
+            	// Special handling for arrays (since Objects.equals doesn't do deep array comparisons by default)
+            	if (currentValue != null && currentValue.getClass().isArray()) {
+	                differs = !Arrays.deepEquals((Object[]) currentValue, (Object[]) defaultValue);
+            	} else {
+	                differs = !Objects.equals(currentValue, defaultValue);
+            	}
+            	if (differs) {
+                	// Set the field value on strippedSettings
+                	field.set(strippedSettings, currentValue);
+	            }
+        	} catch (IllegalAccessException e) {
+            	// Should not happen due to setAccessible(true), but just in case
+            	LOGGER.error("Failed to access field: " + field.getName(), e);
+	        }
+    	}
+    	// Now we marshal strippedSettings into JSON
+    	try {
+        	JAXBContext jc = JAXBContextFactory.createContext(new Class[] { Settings.class }, null);
+        	javax.xml.bind.Marshaller marshaller = jc.createMarshaller();
+        	marshaller.setProperty("eclipselink.media-type", "application/json");
+        	marshaller.setProperty("eclipselink.json.include-root", false);
+        	marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        	try (Writer writer = new FileWriter(filename)) {
+            	marshaller.marshal(strippedSettings, writer);
+        	}
+    	} catch (Exception e) {
+        	LOGGER.error("Failed to write stripped settings to file: " + filename, e);
+        	throw new RuntimeException("Failed to write settings", e);
+    	}
 	}
 
 	public static void throwValidationError(String message) {
