@@ -10,7 +10,7 @@
 - [ ] Enforce invite expiry in invite-first flow:
   - [x] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
   - [x] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
-  - [ ] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
+  - [x] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
   - [ ] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.
   - [ ] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
 - [ ] Document join-first TTL-agnostic auto-approval:

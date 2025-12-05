@@ -55,3 +55,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Added join-transaction-timestamp-based expiry evaluation, respecting TTL=0 as never expiring and an inclusive `<= expiry` boundary.
 - Why: Ensures invite validity checks rely on deterministic transaction timestamps instead of local time before applying invite consumption.
+
+## Treat expired invite as absent in join
+- Files: src/main/java/org/qortal/group/Group.java
+- What: When the invite is expired post-trigger, `Group.join` now treats it as missing, falling back to a join request for closed groups without deleting the stale invite.
+- Why: Prevents expired invites from granting membership while preserving the stored invite for deterministic replay/orphan handling.

@@ -819,6 +819,7 @@ public class Group {
 		long joinTimestamp = joinGroupTransactionData.getTimestamp();
 		// Inclusive boundary: invite valid when join timestamp is <= expiry
 		if (joinTimestamp > expiry) {
+			// Expired invite: ignore it and leave it stored
 			return null;
 		}
 
