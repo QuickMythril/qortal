@@ -126,6 +126,17 @@ Template for entries:
 - What: Added coverage showing expired invites auto-add pre-trigger but fall back to join requests post-trigger, using a temporary feature trigger override via reflection.
 - Why: Validates trigger-gated behavior for invite expiry enforcement across activation boundaries.
 
+
+## Update docs with final semantics
+- Files: docs/INVITE_EXPIRATION.md, docs/IMPLEMENTATION.md
+- What: Documented finalized invite-expiry semantics (trigger, invite-first enforcement with join timestamp, join-first TTL-agnostic behavior, transaction-timestamp dating windows, and API chain-tip filtering divergence).
+- Why: Keeps design docs aligned with implemented behavior and test coverage.
+
+## Document activation plan
+- Files: docs/CONSENSUS_CHANGE.md
+- What: Added activation plan guidance (placeholder trigger on mainnet, low heights on testnet/fixtures, follow-up release to set real height after coverage).
+- Why: Clarifies rollout steps for the consensus change.
+
 # Added Tests (details)
 
 ## testInviteFirstValidBeforeExpiryAddsMember
@@ -134,7 +145,7 @@ Template for entries:
 - Why: Verifies the success path of invite-first expiry enforcement.
 - Output:
   - [testInviteFirstValidBeforeExpiryAddsMember] START
-  - Join timestamp 1764911654474 before expiry 1764911655974
+  - Join timestamp 1764912209573 before expiry 1764912211073
   - Membership? true
   - Invite should be consumed -> null
   - Join request should be absent -> null
@@ -146,7 +157,7 @@ Template for entries:
 - Why: Confirms expired invites are treated as absent and fall back to request handling.
 - Output:
   - [testInviteFirstExpiredCreatesRequest] START
-  - Join timestamp 1764911657753 after expiry 1764911657752
+  - Join timestamp 1764912211191 after expiry 1764912211190
   - Membership? false
   - Join request stored? true
   - Expired invite retained? true
@@ -158,7 +169,7 @@ Template for entries:
 - Why: Documents the transaction-timestamp window behavior for invite consumption.
 - Output:
   - [testInviteFirstBackdatedJoinWithinExpiry] START
-  - Join timestamp 1764911658928 relative to expiry 1764911659428
+  - Join timestamp 1764912212559 relative to expiry 1764912213059
   - Membership? true
   - PASS
 
@@ -198,7 +209,7 @@ Template for entries:
 - Why: Confirms chain-tip-based filtering behavior exposed via API.
 - Output:
   - [testApiFiltersExpiredInvites] START
-  - Minting expired invite at 1764911653566 for bob
+  - Minting expired invite at 1764912207663 for bob
   - Minting TTL=0 invite for chloe
   - Group invites returned: 1
   - Invites for Chloe: 1
@@ -211,9 +222,9 @@ Template for entries:
 - Why: Validates trigger-gated activation of invite expiry enforcement.
 - Output:
   - [testPrePostTriggerActivation] START
-  - Pre-trigger join timestamp 1764911659966 relative to expiry 1764911658966
+  - Pre-trigger join timestamp 1764912213759 relative to expiry 1764912212759
   - Pre-trigger membership? true
-  - Post-trigger join timestamp 1764911660059 relative to expiry 1764911659059
+  - Post-trigger join timestamp 1764912213894 relative to expiry 1764912212894
   - Post-trigger membership? false
   - Post-trigger request stored and invite retained
   - PASS

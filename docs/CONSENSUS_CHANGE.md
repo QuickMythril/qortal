@@ -139,6 +139,12 @@ These are the specific semantics I would explicitly codify (and test) before mer
 
 If you want, next step we can walk through the exact “post-trigger rule” you prefer (strict reject vs “request-only”), but the above is the low-risk option that matches existing closed-group behavior.
 
+## Activation plan (next release)
+
+- Keep `groupInviteExpiryHeight` in configs: mainnet placeholder (far future), testnet/fixtures low heights.
+- Ship the rule behind the placeholder height first; use on-chain auto-update.
+- Once coverage is sufficient, publish a follow-up release that sets a real activation height and communicates the fork date/height to operators.
+
 [1]: https://github.com/qortal/qortal/releases?utm_source=chatgpt.com "Releases · Qortal/qortal"
 [2]: https://wiki.qortal.org/doku.php?id=how_to_update_.jar_file "how_to_update_.jar_file [Qortal Project ]"
 [3]: https://wiki.qortal.org/doku.php?id=qortal_in_a_nutshell "qortal_in_a_nutshell [Qortal Project ]"

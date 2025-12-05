@@ -81,6 +81,10 @@ Note: Use the transaction timestamp (join/invite) for expiry checks to avoid loc
 
 For pending join requests, TTL does **not** gate the approval: any matching invite (pre- and post-trigger) will approve the stored request, even if its TTL would have expired by wall-clock time. This keeps the “request + later approval” flow working regardless of invite age and avoids adding a new rejection path. Do not enforce expiry in this path; use the invite’s transaction timestamp only for deterministic bookkeeping, not for expiry checks.
 
+### API filtering (client-facing, non-consensus)
+
+Invite-list endpoints filter expired invites using the current chain-tip block timestamp with an inclusive boundary (`expiry >= tip`), treating `expiry == null` as never expiring, and skipping filtering if there is no chain tip (to avoid local clock). Filtering is unconditional (no feature trigger) and may hide invites that could still be consumed via back/forward-dated JOINs—this divergence is intentional as a UX safety layer.
+
 Residual window (intentional): because we keep transaction-timestamp semantics, the forward/backdating window (~30m / ~24h) remains usable to consume an invite outside its wall-clock TTL. Closing that would need a block-time or hybrid basis (see docs/OTHER_ISSUES.md); out of scope for this fix.
 
 ## API: Ignoring Expired Invites in Results
