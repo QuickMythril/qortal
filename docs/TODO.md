@@ -8,7 +8,7 @@
   - [x] "Wire test fixtures": add low heights to every `src/test/resources/test-chain-*.json`.
   - [x] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
 - [ ] Enforce invite expiry in invite-first flow:
-  - [ ] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
+  - [x] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
   - [ ] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
   - [ ] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
   - [ ] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.

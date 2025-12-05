@@ -730,6 +730,12 @@ public class Group {
 
 		// Any pending invite?
 		GroupInviteData groupInviteData = this.getInvite(joiner.getAddress());
+		int nextBlockHeight = this.repository.getBlockRepository().getBlockchainHeight() + 1;
+		boolean enforceInviteExpiry = nextBlockHeight >= BlockChain.getInstance().getGroupInviteExpiryHeight();
+
+		if (enforceInviteExpiry) {
+			groupInviteData = this.applyInviteExpiry(groupInviteData, joinGroupTransactionData);
+		}
 
 		// If there is no invites and this group is "closed" (i.e. invite-only) then
 		// this is now a pending "join request"
@@ -798,6 +804,10 @@ public class Group {
 		// Clear cached references
 		joinGroupTransactionData.setInviteReference(null);
 		joinGroupTransactionData.setPreviousGroupId(null);
+	}
+
+	private GroupInviteData applyInviteExpiry(GroupInviteData groupInviteData, JoinGroupTransactionData joinGroupTransactionData) {
+		return groupInviteData;
 	}
 
 	public void leave(LeaveGroupTransactionData leaveGroupTransactionData) throws DataException {

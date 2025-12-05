@@ -45,3 +45,8 @@ Template for entries:
 - Files: (inspection only; no file changes)
 - What: Verified all chain configs with featureTriggers already include `groupInviteExpiryHeight`; no additional files needed updates.
 - Why: Ensures startup validation won’t fail on overlooked configs before proceeding to code changes.
+
+## Gate invite-first expiry by trigger
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Introduced trigger-gated invite expiry handling in `Group.join(...)`, using next block height to decide when to apply invite expiry logic.
+- Why: Ensures invite expiry enforcement is only evaluated after the `groupInviteExpiryHeight` activation point.
