@@ -6,7 +6,7 @@
   - [x] "Wire mainnet config placeholder": add `groupInviteExpiryHeight: 99999999` (or similar) to `src/main/resources/blockchain.json`.
   - [x] "Wire testnet config": add a low activation height (e.g., 0/1) to `testnet/testchain.json`.
   - [x] "Wire test fixtures": add low heights to every `src/test/resources/test-chain-*.json`.
-  - [ ] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
+  - [x] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
 - [ ] Enforce invite expiry in invite-first flow:
   - [ ] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
   - [ ] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.

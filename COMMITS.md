@@ -40,3 +40,8 @@ Template for entries:
 - Files: src/test/resources/test-chain-v2.json, src/test/resources/test-chain-v2-block-timestamps.json, src/test/resources/test-chain-v2-disable-reference.json, src/test/resources/test-chain-v2-founder-rewards.json, src/test/resources/test-chain-v2-leftover-reward.json, src/test/resources/test-chain-v2-minting.json, src/test/resources/test-chain-v2-penalty-fix.json, src/test/resources/test-chain-v2-qora-holder-extremes.json, src/test/resources/test-chain-v2-qora-holder-reduction.json, src/test/resources/test-chain-v2-qora-holder.json, src/test/resources/test-chain-v2-reward-levels.json, src/test/resources/test-chain-v2-reward-scaling.json, src/test/resources/test-chain-v2-reward-shares.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v1.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v2.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v3.json
 - What: Added `groupInviteExpiryHeight` with low activation (0) across all test-chain fixture configs.
 - Why: Keeps all test fixtures aligned with startup validation and allows tests to exercise invite-expiry logic immediately.
+
+## (No commit) Sanity-check trigger coverage
+- Files: (inspection only; no file changes)
+- What: Verified all chain configs with featureTriggers already include `groupInviteExpiryHeight`; no additional files needed updates.
+- Why: Ensures startup validation won’t fail on overlooked configs before proceeding to code changes.
