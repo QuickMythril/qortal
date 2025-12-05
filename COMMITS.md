@@ -35,3 +35,8 @@ Template for entries:
 - Files: testnet/testchain.json
 - What: Added `groupInviteExpiryHeight` with immediate activation (height 0) to the testnet featureTriggers map.
 - Why: Ensures testnet nodes recognize and activate invite-expiry logic right away for testing and validation.
+
+## Wire test fixtures
+- Files: src/test/resources/test-chain-v2.json, src/test/resources/test-chain-v2-block-timestamps.json, src/test/resources/test-chain-v2-disable-reference.json, src/test/resources/test-chain-v2-founder-rewards.json, src/test/resources/test-chain-v2-leftover-reward.json, src/test/resources/test-chain-v2-minting.json, src/test/resources/test-chain-v2-penalty-fix.json, src/test/resources/test-chain-v2-qora-holder-extremes.json, src/test/resources/test-chain-v2-qora-holder-reduction.json, src/test/resources/test-chain-v2-qora-holder.json, src/test/resources/test-chain-v2-reward-levels.json, src/test/resources/test-chain-v2-reward-scaling.json, src/test/resources/test-chain-v2-reward-shares.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v1.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v2.json, src/test/resources/test-chain-v2-self-sponsorship-algo-v3.json
+- What: Added `groupInviteExpiryHeight` with low activation (0) across all test-chain fixture configs.
+- Why: Keeps all test fixtures aligned with startup validation and allows tests to exercise invite-expiry logic immediately.
