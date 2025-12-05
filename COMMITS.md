@@ -85,3 +85,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Noted that TTL=0 invites remain valid in the join-first auto-approval path.
 - Why: Documents that the non-expiring sentinel applies consistently even when approving stored join requests.
+
+## Filter invites-by-invitee API
+- Files: src/main/java/org/qortal/api/resource/GroupsResource.java
+- What: Added chain-tip-based filtering for `/groups/invites/{address}` invites, treating `expiry == null` as non-expiring, using inclusive `expiry >= tip`, and skipping filtering when no chain tip is present; introduced a helper to reuse for other invite listings.
+- Why: Hides expired invites from the API without relying on local time and prepares for consistent invite filtering across endpoints.

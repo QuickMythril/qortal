@@ -13,12 +13,12 @@
   - [x] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
   - [x] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.
   - [x] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
-- [ ] Document join-first TTL-agnostic auto-approval:
+- [x] Document join-first TTL-agnostic auto-approval:
   - [x] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
   - [x] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
   - [x] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
 - [ ] API invite filtering:
-  - [ ] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
+  - [x] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [ ] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [ ] "Document unconditional filtering": keep filtering unconditional (no trigger) and document the intentional divergence from consensus (tx timestamp basis vs chain tip) as a pre-trigger soft mitigation that may hide invites still consumable via back/forward-dated joins.
   - [ ] "Avoid local clock in filtering": ensure repository/API layers avoid local clock use and handle null tip without NPE.

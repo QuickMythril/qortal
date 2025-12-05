@@ -14,6 +14,7 @@ import org.qortal.api.ApiExceptionFactory;
 import org.qortal.api.model.GroupMembers;
 import org.qortal.api.model.GroupMembers.MemberInfo;
 import org.qortal.crypto.Crypto;
+import org.qortal.data.block.BlockData;
 import org.qortal.data.group.*;
 import org.qortal.data.transaction.*;
 import org.qortal.repository.DataException;
@@ -737,7 +738,8 @@ public class GroupsResource {
 	@ApiErrors({ApiError.REPOSITORY_ISSUE})
 	public List<GroupInviteData> getInvitesByInvitee(@PathParam("address") String invitee) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			return repository.getGroupRepository().getInvitesByInvitee(invitee);
+			List<GroupInviteData> invites = repository.getGroupRepository().getInvitesByInvitee(invitee);
+			return this.filterExpiredInvites(repository, invites);
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
 		}
@@ -810,6 +812,18 @@ public class GroupsResource {
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
 		}
+	}
+
+	private List<GroupInviteData> filterExpiredInvites(Repository repository, List<GroupInviteData> invites) throws DataException {
+		BlockData chainTip = repository.getBlockRepository().getLastBlock();
+		if (chainTip == null)
+			return invites; // No chain tip yet; avoid local time
+
+		long chainTipTimestamp = chainTip.getTimestamp();
+		Predicate<GroupInviteData> unexpiredOrNoTtl = inviteData ->
+				inviteData.getExpiry() == null || inviteData.getExpiry() >= chainTipTimestamp;
+
+		return invites.stream().filter(unexpiredOrNoTtl).collect(Collectors.toList());
 	}
 
 	@POST
