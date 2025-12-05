@@ -762,7 +762,8 @@ public class GroupsResource {
 	@ApiErrors({ApiError.REPOSITORY_ISSUE})
 	public List<GroupInviteData> getInvitesByGroupId(@PathParam("groupid") int groupId) {
 		try (final Repository repository = RepositoryManager.getRepository()) {
-			return repository.getGroupRepository().getInvitesByGroupId(groupId);
+			List<GroupInviteData> invites = repository.getGroupRepository().getInvitesByGroupId(groupId);
+			return this.filterExpiredInvites(repository, invites);
 		} catch (DataException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.REPOSITORY_ISSUE, e);
 		}

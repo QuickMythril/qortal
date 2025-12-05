@@ -19,7 +19,7 @@
   - [x] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
 - [ ] API invite filtering:
   - [x] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
-  - [ ] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
+  - [x] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [ ] "Document unconditional filtering": keep filtering unconditional (no trigger) and document the intentional divergence from consensus (tx timestamp basis vs chain tip) as a pre-trigger soft mitigation that may hide invites still consumable via back/forward-dated joins.
   - [ ] "Avoid local clock in filtering": ensure repository/API layers avoid local clock use and handle null tip without NPE.
   - [ ] "Update API docs for filtering": update swagger annotations in `GroupsResource` invite endpoints (`/groups/invites/{address}`, `/groups/invites/group/{groupid}`) to note chain-tip-based filtering, inclusive boundary (`expiry >= tip`), `expiry == null` sentinel, skip-when-no-tip behavior, and the intentional pre-trigger UX/safety divergence.
