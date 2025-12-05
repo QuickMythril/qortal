@@ -673,6 +673,9 @@ public class BlockChain {
 		return this.featureTriggers.get(FeatureTrigger.groupMemberCheckHeight.name()).intValue();
 	}
 
+	/**
+	 * Activation height for enforcing group invite expiry in the invite-first flow.
+	 */
 	public int getGroupInviteExpiryHeight() {
 		return this.featureTriggers.get(FeatureTrigger.groupInviteExpiryHeight.name()).intValue();
 	}

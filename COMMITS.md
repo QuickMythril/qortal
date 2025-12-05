@@ -20,3 +20,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/block/BlockChain.java
 - What: Added `groupInviteExpiryHeight` to the `FeatureTrigger` enum and exposed a getter to read it from chain configs.
 - Why: This prepares the blockchain config/validation to recognize the new invite-expiration trigger and makes it accessible to invite-handling code.
+
+## Expose feature trigger getter
+- Files: src/main/java/org/qortal/block/BlockChain.java
+- What: Documented the `getGroupInviteExpiryHeight` convenience method with the intended activation scope (invite-first expiry enforcement).
+- Why: Clarifies the purpose of the getter so future invite-expiry logic and reviews have an explicit reference to its role.
