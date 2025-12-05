@@ -79,7 +79,12 @@ Note: Use the transaction timestamp (join/invite) for expiry checks to avoid loc
 
 ### Join-first auto-approval (invite arrives after join request)
 
-For pending join requests, TTL does **not** gate the approval: any matching invite (pre- and post-trigger) will approve the stored request, even if its TTL would have expired by wall-clock time. This keeps the “request + later approval” flow working regardless of invite age and avoids adding a new rejection path. Do not enforce expiry in this path; use the invite’s transaction timestamp only for deterministic bookkeeping, not for expiry checks.
+For pending join requests, TTL does **not** gate the approval (pre- and post-trigger). Any matching invite auto-approves the stored request, even if the invite’s TTL would be expired by wall-clock time. Notes:
+
+- Time basis: ignore TTL when approving a pending request; the invite’s transaction timestamp is used only for deterministic bookkeeping, not for expiry checks.
+- Flow: only auto-approve if a pending join request exists; consume that request when the invite confirms.
+- Trigger: no feature-trigger gating in this path; behavior is unchanged before/after activation.
+- TTL=0 sentinel: still means “never expires” (consistent with invite-first path).
 
 ### API filtering (client-facing, non-consensus)
 

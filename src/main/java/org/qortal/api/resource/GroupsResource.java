@@ -725,6 +725,7 @@ public class GroupsResource {
 	@Path("/invites/{address}")
 	@Operation(
 		summary = "Pending group invites (expired invites filtered by chain tip; expiry == null never expires; inclusive boundary)",
+		description = "Returns pending invites for the given address. Expired invites are filtered using the current chain-tip block timestamp (inclusive: expiry >= chain tip); invites with no expiry (expiry == null) are always returned. If the node has no chain tip yet, filtering is skipped.",
 		responses = {
 			@ApiResponse(
 				description = "group invite",
@@ -749,6 +750,7 @@ public class GroupsResource {
 	@Path("/invites/group/{groupid}")
 	@Operation(
 		summary = "Pending group invites (expired invites filtered by chain tip; expiry == null never expires; inclusive boundary)",
+		description = "Returns pending invites for the given group. Expired invites are filtered using the current chain-tip block timestamp (inclusive: expiry >= chain tip); invites with no expiry (expiry == null) are always returned. If the node has no chain tip yet, filtering is skipped.",
 		responses = {
 			@ApiResponse(
 				description = "group invite",

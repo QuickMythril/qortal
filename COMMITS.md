@@ -145,7 +145,7 @@ Template for entries:
 - Why: Verifies the success path of invite-first expiry enforcement.
 - Output:
   - [testInviteFirstValidBeforeExpiryAddsMember] START
-  - Join timestamp 1764912209573 before expiry 1764912211073
+  - Join timestamp 1764917672854 before expiry 1764917674354
   - Membership? true
   - Invite should be consumed -> null
   - Join request should be absent -> null
@@ -157,7 +157,7 @@ Template for entries:
 - Why: Confirms expired invites are treated as absent and fall back to request handling.
 - Output:
   - [testInviteFirstExpiredCreatesRequest] START
-  - Join timestamp 1764912211191 after expiry 1764912211190
+  - Join timestamp 1764917674379 after expiry 1764917674378
   - Membership? false
   - Join request stored? true
   - Expired invite retained? true
@@ -169,7 +169,7 @@ Template for entries:
 - Why: Documents the transaction-timestamp window behavior for invite consumption.
 - Output:
   - [testInviteFirstBackdatedJoinWithinExpiry] START
-  - Join timestamp 1764912212559 relative to expiry 1764912213059
+  - Join timestamp 1764917675587 relative to expiry 1764917676087
   - Membership? true
   - PASS
 
@@ -209,7 +209,7 @@ Template for entries:
 - Why: Confirms chain-tip-based filtering behavior exposed via API.
 - Output:
   - [testApiFiltersExpiredInvites] START
-  - Minting expired invite at 1764912207663 for bob
+  - Minting expired invite at 1764917670601 for bob
   - Minting TTL=0 invite for chloe
   - Group invites returned: 1
   - Invites for Chloe: 1
@@ -222,12 +222,28 @@ Template for entries:
 - Why: Validates trigger-gated activation of invite expiry enforcement.
 - Output:
   - [testPrePostTriggerActivation] START
-  - Pre-trigger join timestamp 1764912213759 relative to expiry 1764912212759
+  - Pre-trigger join timestamp 1764917676864 relative to expiry 1764917675864
   - Pre-trigger membership? true
-  - Post-trigger join timestamp 1764912213894 relative to expiry 1764912212894
+  - Post-trigger join timestamp 1764917676945 relative to expiry 1764917675945
   - Post-trigger membership? false
   - Post-trigger request stored and invite retained
   - PASS
+
+## testInviteFilteringByChainTip
+- What: API invite filtering hides expired invites and retains TTL=0/unexpired invites using chain-tip timestamp.
+- How: Mint an expired invite, a non-expiring invite, and an unexpired invite; call invitee and group endpoints; assert expired invite filtered out and others returned.
+- Why: Verifies chain-tip-based filtering behavior exposed via API.
+- Output:
+  - TEST START: testInviteFilteringByChainTip - expired invites filtered, TTL=0/unexpired retained.
+  - TEST PASS: testInviteFilteringByChainTip - expected bobInvites size=1, actual=1; expected groupInvites size=2, actual=2
+
+## testInviteFilteringSkippedWhenNoChainTip
+- What: API invite filtering is skipped when no chain tip is available, so expired invites are returned.
+- How: Mint an expired invite, swap repository factory to return null chain tip, call invitee endpoint, and assert expired invite is present.
+- Why: Confirms documented no-tip fallback for API filtering.
+- Output:
+  - TEST START: testInviteFilteringSkippedWhenNoChainTip - filtering is skipped without a chain tip.
+  - TEST PASS: testInviteFilteringSkippedWhenNoChainTip - expired invite present=true
 
 # Test Logging Notes
 - Added descriptive stdout logging (`log(testName, message)`) to new invite-expiry tests to show start, key state, and outcomes when run via CLI.

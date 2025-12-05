@@ -113,14 +113,6 @@ To answer your question: Yes, the core currently lacks any automatic expiry enfo
 
 Post-trigger canonical rule (consensus path): after `groupInviteExpiryHeight`, closed-group membership finalizes only if a matching invite exists and the deterministic transaction timestamp used for finalization is **<= inviteExpiry** (`expiry == null` = never). If expired, ignore the invite and fall back to a join request; do not reject the transaction. Use transaction timestamps, never local time. Transaction timestamps can be forward-dated (~30m) and backdated within the transaction-expiry window (~24h), so a JOIN whose timestamp lies inside the TTL can still consume an invite even if the block is mined later; that’s expected with tx-timestamp semantics.
 
-### Finalized semantics (implemented)
-
-- **Feature trigger:** `groupInviteExpiryHeight` gates enforcement. Pre-trigger behavior is unchanged; expired invites still auto-add members.
-- **Invite-first enforcement:** Post-trigger, a JOIN uses the join transaction timestamp and requires `joinTimestamp <= inviteExpiry` (inclusive). `expiry == null` (TTL=0) means never expires. Expired invites are ignored (treated as absent), causing closed-group joins to become/remain requests; expired invites stay stored.
-- **Join-first auto-approval:** TTL/expiry is intentionally ignored; any matching invite approves a stored request pre- and post-trigger. TTL=0 still works as non-expiring. Backdated/forward-dated join requests are still approved when an invite arrives.
-- **Time basis:** Consensus paths use transaction timestamps, not local time. Forward-dating (~30m) and backdating (tx expiry window) remain possible; a backdated JOIN inside the TTL can consume an invite even if the block is later.
-- **API filtering (non-consensus):** Invite-list endpoints filter expired invites using chain-tip block timestamp, inclusive boundary (`expiry >= tip`), `expiry == null` as never, and skip filtering if no tip. This is unconditional (no trigger) and may hide invites that could still be consumed via back/forward-dated JOINs; this divergence is intentional as a UX safety layer.
-
 To fix this issue, the Qortal Core needs to incorporate the invite expiration logic where appropriate. Based on our analysis, the following changes are recommended:
 
 - Enforce expiration on join: Modify the join processing logic to check the invite’s expiry before using it. If an invite exists but its expiry time has passed (relative to the join transaction’s timestamp), the code should treat it as if no valid invite exists. In practical terms, for a closed group, that would mean:
@@ -168,6 +160,15 @@ With these fixes, the system will align with the intended behavior: invites will
 ## Conclusion
 
 The investigation confirms that the invite expiration issue is caused by a missing enforcement in the code. The Qortal Core defines an expiry for group invites but never uses it when it actually matters, i.e., during join validation. The solution is to introduce checks in the invite-first join path (and API filtering) to honor the expiration timestamp, while explicitly documenting that join-first auto-approvals ignore TTL. By making these changes, group admins can rely on invites expiring for the invite-first flow and understand the documented exception for pending requests.
+
+## Activation status and final semantics
+
+- Trigger wiring: the behavior is gated by `groupInviteExpiryHeight` with a placeholder height of `99999999` on mainnet, immediate activation on testnet (height `0/1`), and immediate activation in all test fixtures; a future release will set a real mainnet activation height.
+- Semantics (invite-first): after activation, invite expiry is enforced using the join transaction timestamp (inclusive boundary, `expiry == null` = never); expired invites are treated as absent and fall back to join requests; pre-trigger behavior is unchanged.
+- Semantics (join-first): TTL is intentionally ignored for pending-request approvals both pre- and post-trigger; any matching invite approves the request, and `expiry == null` still means non-expiring.
+- Time basis and windows: transaction timestamps (not local clock) drive expiry checks; the allowed forward/backdating windows remain, so a backdated join inside the TTL can still succeed even if the block is later.
+- API filtering: the invite-list endpoints filter using the chain-tip timestamp (inclusive, `expiry == null` = never) and skip filtering if there is no chain tip, so clients see only unexpired/non-expiring invites by default.
+- Activation plan: keep the placeholder trigger on mainnet until a coordinated release sets a concrete height and accompanying release notes/changelog entry.
 
 References:
 
