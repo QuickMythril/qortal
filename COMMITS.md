@@ -95,3 +95,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/api/resource/GroupsResource.java
 - What: Applied the same chain-tip-based invite filtering to `/groups/invites/group/{groupid}` via the shared helper, respecting `expiry == null`, inclusive boundary, and no-tip passthrough.
 - Why: Ensures group-level invite listings also hide expired entries without depending on local time.
+
+## Document unconditional filtering
+- Files: src/main/java/org/qortal/api/resource/GroupsResource.java
+- What: Updated swagger summaries for invite endpoints to explicitly state chain-tip-based filtering (inclusive boundary, `expiry == null` sentinel) and left filtering unconditional (no feature trigger) with no local-clock fallback when tip is missing.
+- Why: Makes the filtering behavior clear to API consumers and documents the divergence from consensus time basis.

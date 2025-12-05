@@ -724,7 +724,7 @@ public class GroupsResource {
 	@GET
 	@Path("/invites/{address}")
 	@Operation(
-		summary = "Pending group invites",
+		summary = "Pending group invites (expired invites filtered by chain tip; expiry == null never expires; inclusive boundary)",
 		responses = {
 			@ApiResponse(
 				description = "group invite",
@@ -748,7 +748,7 @@ public class GroupsResource {
 	@GET
 	@Path("/invites/group/{groupid}")
 	@Operation(
-		summary = "Pending group invites",
+		summary = "Pending group invites (expired invites filtered by chain tip; expiry == null never expires; inclusive boundary)",
 		responses = {
 			@ApiResponse(
 				description = "group invite",
