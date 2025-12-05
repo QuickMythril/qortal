@@ -1,7 +1,7 @@
 # TODO – Invite Expiration Work
 
 - [ ] Add `groupInviteExpiryHeight` feature trigger:
-  - [ ] "Add feature trigger enum entry": add `groupInviteExpiryHeight` to `BlockChain.FeatureTrigger` and ensure startup validation covers it.
+  - [x] "Add feature trigger enum entry": add `groupInviteExpiryHeight` to `BlockChain.FeatureTrigger` and ensure startup validation covers it.
   - [ ] "Expose feature trigger getter": add `getGroupInviteExpiryHeight()` in `BlockChain`.
   - [ ] "Wire mainnet config placeholder": add `groupInviteExpiryHeight: 99999999` (or similar) to `src/main/resources/blockchain.json`.
   - [ ] "Wire testnet config": add a low activation height (e.g., 0/1) to `testnet/testchain.json`.
