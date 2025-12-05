@@ -65,3 +65,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Clarified the trigger gate in `Group.join` to note legacy behavior remains unchanged before activation.
 - Why: Documents that expiry enforcement is strictly post-trigger, reassuring reviewers about pre-trigger compatibility.
+
+## Honor TTL=0 and inclusive boundary
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Confirmed invite expiry logic treats `expiry == null` as non-expiring and uses an inclusive `timestamp <= expiry` boundary with an explanatory comment.
+- Why: Ensures invite validation semantics are explicit and deterministic, matching the intended TTL sentinel and boundary behavior.

@@ -12,7 +12,7 @@
   - [x] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
   - [x] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
   - [x] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.
-  - [ ] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
+  - [x] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
 - [ ] Document join-first TTL-agnostic auto-approval:
   - [ ] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
   - [ ] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
