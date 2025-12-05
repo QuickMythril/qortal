@@ -75,3 +75,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Added a code comment clarifying that TTL/expiry is intentionally ignored when an invite approves a pending join request (join-first path), pre- and post-trigger.
 - Why: Documents the deliberate legacy-preserving behavior so reviewers know this path remains TTL-agnostic.
+
+## Auto-approve pending request
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Clarified in code that a matching invite auto-approves and consumes a pending join request in the join-first path, maintaining legacy behavior.
+- Why: Documents the intended behavior for reviewers and affirms no trigger/TTL gating is applied when approving stored requests.

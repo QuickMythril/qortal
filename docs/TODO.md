@@ -7,7 +7,7 @@
   - [x] "Wire testnet config": add a low activation height (e.g., 0/1) to `testnet/testchain.json`.
   - [x] "Wire test fixtures": add low heights to every `src/test/resources/test-chain-*.json`.
   - [x] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
-- [ ] Enforce invite expiry in invite-first flow:
+- [x] Enforce invite expiry in invite-first flow:
   - [x] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
   - [x] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
   - [x] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
@@ -15,7 +15,7 @@
   - [x] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
 - [ ] Document join-first TTL-agnostic auto-approval:
   - [x] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
-  - [ ] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
+  - [x] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
   - [ ] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
 - [ ] API invite filtering:
   - [ ] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
