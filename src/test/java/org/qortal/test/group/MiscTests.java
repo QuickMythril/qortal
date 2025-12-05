@@ -199,6 +199,27 @@ public class MiscTests extends Common {
 	}
 
 	@Test
+	public void testInviteFirstBackdatedJoinWithinExpiry() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			int groupId = createGroup(repository, alice, "invite-first-backdated", false);
+
+			int ttlSeconds = 2;
+			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), ttlSeconds);
+			TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+			// Backdate join within expiry window even if block time is later
+			long backdatedJoinTimestamp = inviteTx.getTimestamp() + (ttlSeconds * 1000L) - 500;
+			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, backdatedJoinTimestamp);
+			TransactionUtils.signAndMint(repository, joinTx, bob);
+
+			assertTrue("Backdated join within expiry should add member", isMember(repository, bob.getAddress(), groupId));
+		}
+	}
+
+	@Test
 	public void testJoinFirstInviteLaterAutoAddsIgnoringTtl() throws DataException {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");

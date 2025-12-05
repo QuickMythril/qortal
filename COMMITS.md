@@ -110,3 +110,8 @@ Template for entries:
 - Files: src/test/java/org/qortal/test/group/MiscTests.java
 - What: Added join-first tests confirming invites auto-approve pending requests regardless of TTL/age (including TTL=0) and that backdated requests still auto-add when an invite arrives later.
 - Why: Documents and validates the TTL-agnostic join-first path and back/forward-dated request approval behavior.
+
+## Test backdated/forward-dated join window
+- Files: src/test/java/org/qortal/test/group/MiscTests.java
+- What: Added invite-first test showing a backdated join within the invite’s expiry window still adds a member (documenting tx-timestamp dating behavior).
+- Why: Captures the expected behavior of the transaction-timestamp window for invite consumption.

@@ -26,7 +26,7 @@
 - [ ] Tests:
   - [x] "Test invite-first expiry enforcement": valid before expiry adds member post-trigger; expired invite treated as request, invite ignored.
   - [x] "Test join-first behavior": valid invite later auto-adds; aged/“expired by wall clock” invite still auto-adds because TTL is ignored for pending requests (documented); TTL=0 still works.
-  - [ ] "Test backdated/forward-dated join window": document/verify behavior when join timestamp <= expiry but block later (tx-timestamp dating windows).
+  - [x] "Test backdated/forward-dated join window": document/verify behavior when join timestamp <= expiry but block later (tx-timestamp dating windows).
   - [ ] "Test pre/post trigger activation": cover behavior using low-height test chains (`groupInviteExpiryHeight`).
   - [ ] "Test API invite filtering": expired omitted, TTL=0/unexpired visible, chain-tip time basis, skip filtering when no tip.
 - [ ] Docs/status updates:
