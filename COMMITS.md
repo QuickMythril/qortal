@@ -120,3 +120,8 @@ Template for entries:
 - Files: src/test/java/org/qortal/test/group/MiscTests.java
 - What: Added an API-level test verifying chain-tip-based filtering hides expired invites while retaining non-expiring ones for both invitee and group endpoints.
 - Why: Confirms the filtering helper and endpoints omit expired invites without local clock use.
+
+## Test pre/post trigger activation
+- Files: src/test/java/org/qortal/test/group/MiscTests.java
+- What: Added coverage showing expired invites auto-add pre-trigger but fall back to join requests post-trigger, using a temporary feature trigger override via reflection.
+- Why: Validates trigger-gated behavior for invite expiry enforcement across activation boundaries.

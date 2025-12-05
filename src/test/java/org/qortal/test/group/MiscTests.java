@@ -25,6 +25,9 @@ import org.qortal.block.BlockChain;
 import org.qortal.data.group.GroupInviteData;
 import org.qortal.data.group.GroupJoinRequestData;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -222,6 +225,56 @@ public class MiscTests extends Common {
 	}
 
 	@Test
+	public void testPrePostTriggerActivation() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			Map<String, Long> originalTriggers = copyFeatureTriggers();
+			try {
+				Map<String, Long> highTrigger = new HashMap<>(originalTriggers);
+				highTrigger.put(BlockChain.FeatureTrigger.groupInviteExpiryHeight.name(), Long.valueOf(Integer.MAX_VALUE));
+				FieldUtils.writeField(BlockChain.getInstance(), "featureTriggers", highTrigger, true);
+
+				PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+				PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+				int groupId = createGroup(repository, alice, "pre-trigger-allow", false);
+
+				GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 1);
+				TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+				long expiredJoinTimestamp = inviteTx.getTimestamp() + 2_000L;
+				JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, expiredJoinTimestamp);
+				TransactionUtils.signAndMint(repository, joinTx, bob);
+
+				assertTrue("Pre-trigger expired invite still adds member", isMember(repository, bob.getAddress(), groupId));
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			} finally {
+				try {
+					FieldUtils.writeField(BlockChain.getInstance(), "featureTriggers", originalTriggers, true);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			// Post-trigger should ignore expired invite (uses restored trigger)
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			int groupId = createGroup(repository, alice, "post-trigger-ignore", false);
+
+			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 1);
+			TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+			long expiredJoinTimestamp = inviteTx.getTimestamp() + 2_000L;
+			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, expiredJoinTimestamp);
+			TransactionUtils.signAndMint(repository, joinTx, bob);
+
+			assertFalse("Post-trigger expired invite should not add member", isMember(repository, bob.getAddress(), groupId));
+			assertNotNull("Join request should be stored post-trigger", getJoinRequest(repository, groupId, bob.getAddress()));
+			assertNotNull("Expired invite should remain stored post-trigger", getInvite(repository, groupId, bob.getAddress()));
+		}
+	}
+@Test
 	public void testApiFiltersExpiredInvites() throws DataException {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
@@ -414,6 +467,16 @@ public class MiscTests extends Common {
 		long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(timestamp);
 		BaseTransactionData baseTransactionData = new BaseTransactionData(timestamp, Group.NO_GROUP, admin.getLastReference(), admin.getPublicKey(), fee, null);
 		return new GroupInviteTransactionData(baseTransactionData, groupId, invitee, timeToLive);
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Long> copyFeatureTriggers() {
+		try {
+			Map<String, Long> current = (Map<String, Long>) FieldUtils.readField(BlockChain.getInstance(), "featureTriggers", true);
+			return new HashMap<>(current);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
