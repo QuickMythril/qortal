@@ -125,3 +125,98 @@ Template for entries:
 - Files: src/test/java/org/qortal/test/group/MiscTests.java
 - What: Added coverage showing expired invites auto-add pre-trigger but fall back to join requests post-trigger, using a temporary feature trigger override via reflection.
 - Why: Validates trigger-gated behavior for invite expiry enforcement across activation boundaries.
+
+# Added Tests (details)
+
+## testInviteFirstValidBeforeExpiryAddsMember
+- What: Invite-first flow where join timestamp is before invite expiry adds the member and consumes the invite; no join request persists.
+- How: Mint invite with short TTL, join using a timestamp before expiry, assert membership and invite/request cleanup.
+- Why: Verifies the success path of invite-first expiry enforcement.
+- Output:
+  - [testInviteFirstValidBeforeExpiryAddsMember] START
+  - Join timestamp 1764911654474 before expiry 1764911655974
+  - Membership? true
+  - Invite should be consumed -> null
+  - Join request should be absent -> null
+  - PASS
+
+## testInviteFirstExpiredCreatesRequest
+- What: Invite-first flow with expired invite results in a stored join request; invite remains stored.
+- How: Mint invite with 1s TTL, join with timestamp past expiry, assert no membership, join request present, invite retained.
+- Why: Confirms expired invites are treated as absent and fall back to request handling.
+- Output:
+  - [testInviteFirstExpiredCreatesRequest] START
+  - Join timestamp 1764911657753 after expiry 1764911657752
+  - Membership? false
+  - Join request stored? true
+  - Expired invite retained? true
+  - PASS
+
+## testInviteFirstBackdatedJoinWithinExpiry
+- What: Backdated join inside the expiry window still adds the member even if block time is later.
+- How: Mint invite with TTL, join using a backdated timestamp inside TTL, assert membership.
+- Why: Documents the transaction-timestamp window behavior for invite consumption.
+- Output:
+  - [testInviteFirstBackdatedJoinWithinExpiry] START
+  - Join timestamp 1764911658928 relative to expiry 1764911659428
+  - Membership? true
+  - PASS
+
+## testJoinFirstInviteLaterAutoAddsIgnoringTtl
+- What: Join-first pending request is auto-approved by a later invite regardless of TTL/age.
+- How: Create request, mint invite with short TTL, assert membership and request/invite consumed.
+- Why: Validates documented TTL-agnostic behavior for join-first path.
+- Output:
+  - [testJoinFirstInviteLaterAutoAddsIgnoringTtl] START
+  - Stored join request? true
+  - Membership after invite? true
+  - PASS
+
+## testJoinFirstInviteLaterWithBackdatedJoinStillAdds
+- What: Backdated join request is approved when a later invite arrives.
+- How: Create backdated request, mint short-TTL invite later, assert membership and request consumed.
+- Why: Confirms forward/backdating of join requests doesn’t block auto-approval.
+- Output:
+  - [testJoinFirstInviteLaterWithBackdatedJoinStillAdds] START
+  - Stored join request? true
+  - Membership after invite? true
+  - PASS
+
+## testJoinFirstInviteLaterTtlZero
+- What: Non-expiring invite (TTL=0) still approves a stored join request.
+- How: Create request, mint TTL=0 invite, assert membership and cleanup.
+- Why: Ensures TTL=0 sentinel applies in join-first auto-approval.
+- Output:
+  - [testJoinFirstInviteLaterTtlZero] START
+  - Stored join request? true
+  - Membership after TTL=0 invite? true
+  - PASS
+
+## testApiFiltersExpiredInvites
+- What: API endpoints omit expired invites and return non-expiring ones using chain-tip time.
+- How: Mint an expired invite and a TTL=0 invite, call both invite endpoints, assert expired invite hidden and TTL=0 visible.
+- Why: Confirms chain-tip-based filtering behavior exposed via API.
+- Output:
+  - [testApiFiltersExpiredInvites] START
+  - Minting expired invite at 1764911653566 for bob
+  - Minting TTL=0 invite for chloe
+  - Group invites returned: 1
+  - Invites for Chloe: 1
+  - Invites for Bob (expired should be filtered): 0
+  - PASS
+
+## testPrePostTriggerActivation
+- What: Expired invites auto-add pre-trigger but become requests post-trigger.
+- How: Use reflection to raise the trigger (pre) to allow expired invite membership, then restore trigger and assert expired invite becomes a request post-trigger.
+- Why: Validates trigger-gated activation of invite expiry enforcement.
+- Output:
+  - [testPrePostTriggerActivation] START
+  - Pre-trigger join timestamp 1764911659966 relative to expiry 1764911658966
+  - Pre-trigger membership? true
+  - Post-trigger join timestamp 1764911660059 relative to expiry 1764911659059
+  - Post-trigger membership? false
+  - Post-trigger request stored and invite retained
+  - PASS
+
+# Test Logging Notes
+- Added descriptive stdout logging (`log(testName, message)`) to new invite-expiry tests to show start, key state, and outcomes when run via CLI.

@@ -161,7 +161,9 @@ public class MiscTests extends Common {
 
 	@Test
 	public void testInviteFirstValidBeforeExpiryAddsMember() throws DataException {
+		final String tn = "testInviteFirstValidBeforeExpiryAddsMember";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
@@ -172,18 +174,25 @@ public class MiscTests extends Common {
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
 			long joinTimestamp = inviteTx.getTimestamp() + 500; // before expiry
+			log(tn, "Join timestamp " + joinTimestamp + " before expiry " + (inviteTx.getTimestamp() + ttlSeconds * 1000L));
 			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, joinTimestamp);
 			TransactionUtils.signAndMint(repository, joinTx, bob);
 
+			log(tn, "Membership? " + isMember(repository, bob.getAddress(), groupId));
 			assertTrue("Invite-first before expiry should add member", isMember(repository, bob.getAddress(), groupId));
+			log(tn, "Invite should be consumed -> " + getInvite(repository, groupId, bob.getAddress()));
 			assertNull("Invite should be consumed", getInvite(repository, groupId, bob.getAddress()));
+			log(tn, "Join request should be absent -> " + getJoinRequest(repository, groupId, bob.getAddress()));
 			assertNull("Join request should not persist", getJoinRequest(repository, groupId, bob.getAddress()));
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testInviteFirstExpiredCreatesRequest() throws DataException {
+		final String tn = "testInviteFirstExpiredCreatesRequest";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
@@ -194,18 +203,25 @@ public class MiscTests extends Common {
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
 			long expiredJoinTimestamp = inviteTx.getTimestamp() + (ttlSeconds * 1000L) + 1;
+			log(tn, "Join timestamp " + expiredJoinTimestamp + " after expiry " + (inviteTx.getTimestamp() + ttlSeconds * 1000L));
 			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, expiredJoinTimestamp);
 			TransactionUtils.signAndMint(repository, joinTx, bob);
 
+			log(tn, "Membership? " + isMember(repository, bob.getAddress(), groupId));
 			assertFalse("Expired invite should not add member", isMember(repository, bob.getAddress(), groupId));
+			log(tn, "Join request stored? " + (getJoinRequest(repository, groupId, bob.getAddress()) != null));
 			assertNotNull("Join request should be stored when invite expired", getJoinRequest(repository, groupId, bob.getAddress()));
+			log(tn, "Expired invite retained? " + (getInvite(repository, groupId, bob.getAddress()) != null));
 			assertNotNull("Expired invite should remain stored", getInvite(repository, groupId, bob.getAddress()));
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testInviteFirstBackdatedJoinWithinExpiry() throws DataException {
+		final String tn = "testInviteFirstBackdatedJoinWithinExpiry";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
@@ -217,16 +233,21 @@ public class MiscTests extends Common {
 
 			// Backdate join within expiry window even if block time is later
 			long backdatedJoinTimestamp = inviteTx.getTimestamp() + (ttlSeconds * 1000L) - 500;
+			log(tn, "Join timestamp " + backdatedJoinTimestamp + " relative to expiry " + (inviteTx.getTimestamp() + ttlSeconds * 1000L));
 			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, backdatedJoinTimestamp);
 			TransactionUtils.signAndMint(repository, joinTx, bob);
 
+			log(tn, "Membership? " + isMember(repository, bob.getAddress(), groupId));
 			assertTrue("Backdated join within expiry should add member", isMember(repository, bob.getAddress(), groupId));
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testPrePostTriggerActivation() throws DataException {
+		final String tn = "testPrePostTriggerActivation";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			Map<String, Long> originalTriggers = copyFeatureTriggers();
 			try {
 				Map<String, Long> highTrigger = new HashMap<>(originalTriggers);
@@ -242,9 +263,11 @@ public class MiscTests extends Common {
 				TransactionUtils.signAndMint(repository, inviteTx, alice);
 
 				long expiredJoinTimestamp = inviteTx.getTimestamp() + 2_000L;
+				log(tn, "Pre-trigger join timestamp " + expiredJoinTimestamp + " relative to expiry " + (inviteTx.getTimestamp() + 1_000L));
 				JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, expiredJoinTimestamp);
 				TransactionUtils.signAndMint(repository, joinTx, bob);
 
+				log(tn, "Pre-trigger membership? " + isMember(repository, bob.getAddress(), groupId));
 				assertTrue("Pre-trigger expired invite still adds member", isMember(repository, bob.getAddress(), groupId));
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
@@ -266,17 +289,23 @@ public class MiscTests extends Common {
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
 			long expiredJoinTimestamp = inviteTx.getTimestamp() + 2_000L;
+			log(tn, "Post-trigger join timestamp " + expiredJoinTimestamp + " relative to expiry " + (inviteTx.getTimestamp() + 1_000L));
 			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, expiredJoinTimestamp);
 			TransactionUtils.signAndMint(repository, joinTx, bob);
 
+			log(tn, "Post-trigger membership? " + isMember(repository, bob.getAddress(), groupId));
 			assertFalse("Post-trigger expired invite should not add member", isMember(repository, bob.getAddress(), groupId));
 			assertNotNull("Join request should be stored post-trigger", getJoinRequest(repository, groupId, bob.getAddress()));
 			assertNotNull("Expired invite should remain stored post-trigger", getInvite(repository, groupId, bob.getAddress()));
+			log(tn, "Post-trigger request stored and invite retained");
+			log(tn, "PASS");
 		}
 	}
 @Test
 	public void testApiFiltersExpiredInvites() throws DataException {
+		final String tn = "testApiFiltersExpiredInvites";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 			PrivateKeyAccount chloe = Common.getTestAccount(repository, "chloe");
@@ -285,30 +314,38 @@ public class MiscTests extends Common {
 
 			// Expired invite (timestamp in the past with short TTL)
 			long expiredTimestamp = System.currentTimeMillis() - 5_000L;
+			log(tn, "Minting expired invite at " + expiredTimestamp + " for bob");
 			GroupInviteTransactionData expiredInvite = buildInviteWithTimestamp(alice, groupId, bob.getAddress(), expiredTimestamp, 1);
 			TransactionUtils.signAndMint(repository, expiredInvite, alice);
 
 			// Non-expiring invite
+			log(tn, "Minting TTL=0 invite for chloe");
 			GroupInviteTransactionData openInvite = buildInviteWithTimestamp(alice, groupId, chloe.getAddress(), System.currentTimeMillis(), 0);
 			TransactionUtils.signAndMint(repository, openInvite, alice);
 
 			GroupsResource groupsResource = new GroupsResource();
 			List<GroupInviteData> invitesByGroup = groupsResource.getInvitesByGroupId(groupId);
 
+			log(tn, "Group invites returned: " + invitesByGroup.size());
 			assertTrue(invitesByGroup.stream().anyMatch(inv -> inv.getInvitee().equals(chloe.getAddress())));
 			assertFalse(invitesByGroup.stream().anyMatch(inv -> inv.getInvitee().equals(bob.getAddress())));
 
 			List<GroupInviteData> invitesForChloe = groupsResource.getInvitesByInvitee(chloe.getAddress());
+			log(tn, "Invites for Chloe: " + invitesForChloe.size());
 			assertFalse(invitesForChloe.isEmpty());
 
 			List<GroupInviteData> invitesForBob = groupsResource.getInvitesByInvitee(bob.getAddress());
+			log(tn, "Invites for Bob (expired should be filtered): " + invitesForBob.size());
 			assertTrue(invitesForBob.isEmpty());
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testJoinFirstInviteLaterAutoAddsIgnoringTtl() throws DataException {
+		final String tn = "testJoinFirstInviteLaterAutoAddsIgnoringTtl";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
@@ -316,6 +353,7 @@ public class MiscTests extends Common {
 
 			// Bob requests to join (no invite yet)
 			joinGroup(repository, bob, groupId);
+			log(tn, "Stored join request? " + (getJoinRequest(repository, groupId, bob.getAddress()) != null));
 			assertNotNull("Join request should be stored", getJoinRequest(repository, groupId, bob.getAddress()));
 			assertFalse("Should not be member yet", isMember(repository, bob.getAddress(), groupId));
 
@@ -324,15 +362,19 @@ public class MiscTests extends Common {
 			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), ttlSeconds);
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
+			log(tn, "Membership after invite? " + isMember(repository, bob.getAddress(), groupId));
 			assertTrue("Invite after request should auto-add member", isMember(repository, bob.getAddress(), groupId));
 			assertNull("Join request should be consumed", getJoinRequest(repository, groupId, bob.getAddress()));
 			assertNull("Invite should be consumed", getInvite(repository, groupId, bob.getAddress()));
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testJoinFirstInviteLaterWithBackdatedJoinStillAdds() throws DataException {
+		final String tn = "testJoinFirstInviteLaterWithBackdatedJoinStillAdds";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
@@ -342,6 +384,7 @@ public class MiscTests extends Common {
 			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, joinTimestamp);
 			TransactionUtils.signAndMint(repository, joinTx, bob);
 
+			log(tn, "Stored join request? " + (getJoinRequest(repository, groupId, bob.getAddress()) != null));
 			assertNotNull("Join request should be stored", getJoinRequest(repository, groupId, bob.getAddress()));
 			assertFalse("Should not be member yet", isMember(repository, bob.getAddress(), groupId));
 
@@ -349,28 +392,35 @@ public class MiscTests extends Common {
 			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 1);
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
+			log(tn, "Membership after invite? " + isMember(repository, bob.getAddress(), groupId));
 			assertTrue("Join-first backdated request should be approved by later invite", isMember(repository, bob.getAddress(), groupId));
 			assertNull("Join request should be consumed", getJoinRequest(repository, groupId, bob.getAddress()));
+			log(tn, "PASS");
 		}
 	}
 
 	@Test
 	public void testJoinFirstInviteLaterTtlZero() throws DataException {
+		final String tn = "testJoinFirstInviteLaterTtlZero";
 		try (final Repository repository = RepositoryManager.getRepository()) {
+			log(tn, "START");
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
 			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
 
 			int groupId = createGroup(repository, alice, "join-first-ttl-zero", false);
 
 			joinGroup(repository, bob, groupId);
+			log(tn, "Stored join request? " + (getJoinRequest(repository, groupId, bob.getAddress()) != null));
 			assertNotNull(getJoinRequest(repository, groupId, bob.getAddress()));
 
 			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 0);
 			TransactionUtils.signAndMint(repository, inviteTx, alice);
 
+			log(tn, "Membership after TTL=0 invite? " + isMember(repository, bob.getAddress(), groupId));
 			assertTrue(isMember(repository, bob.getAddress(), groupId));
 			assertNull(getJoinRequest(repository, groupId, bob.getAddress()));
 			assertNull(getInvite(repository, groupId, bob.getAddress()));
+			log(tn, "PASS");
 		}
 	}
 
@@ -477,6 +527,10 @@ public class MiscTests extends Common {
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void log(String testName, String message) {
+		System.out.println("[" + testName + "] " + message);
 	}
 
 }
