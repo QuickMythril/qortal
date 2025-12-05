@@ -25,3 +25,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/block/BlockChain.java
 - What: Documented the `getGroupInviteExpiryHeight` convenience method with the intended activation scope (invite-first expiry enforcement).
 - Why: Clarifies the purpose of the getter so future invite-expiry logic and reviews have an explicit reference to its role.
+
+## Wire mainnet config placeholder
+- Files: src/main/resources/blockchain.json
+- What: Added a placeholder `groupInviteExpiryHeight` entry (set to 99999999) to the mainnet featureTriggers map.
+- Why: Ensures mainnet config recognizes the new invite-expiry trigger while keeping activation far in the future until a rollout height is chosen.
