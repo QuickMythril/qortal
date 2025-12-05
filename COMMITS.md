@@ -80,3 +80,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Clarified in code that a matching invite auto-approves and consumes a pending join request in the join-first path, maintaining legacy behavior.
 - Why: Documents the intended behavior for reviewers and affirms no trigger/TTL gating is applied when approving stored requests.
+
+## Honor TTL=0 sentinel (join-first)
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Noted that TTL=0 invites remain valid in the join-first auto-approval path.
+- Why: Documents that the non-expiring sentinel applies consistently even when approving stored join requests.

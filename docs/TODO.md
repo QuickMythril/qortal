@@ -16,7 +16,7 @@
 - [ ] Document join-first TTL-agnostic auto-approval:
   - [x] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
   - [x] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
-  - [ ] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
+  - [x] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
 - [ ] API invite filtering:
   - [ ] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [ ] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
