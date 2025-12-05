@@ -8,6 +8,8 @@ import org.qortal.data.transaction.CreateGroupTransactionData;
 import org.qortal.data.transaction.GroupInviteTransactionData;
 import org.qortal.data.transaction.JoinGroupTransactionData;
 import org.qortal.data.transaction.LeaveGroupTransactionData;
+import org.qortal.data.transaction.BaseTransactionData;
+import org.qortal.api.resource.GroupsResource;
 import org.qortal.group.Group.ApprovalThreshold;
 import org.qortal.group.Group;
 import org.qortal.repository.DataException;
@@ -20,9 +22,9 @@ import org.qortal.test.common.transaction.TestTransaction;
 import org.qortal.transaction.Transaction.ValidationResult;
 
 import org.qortal.block.BlockChain;
-import org.qortal.data.transaction.BaseTransactionData;
 import org.qortal.data.group.GroupInviteData;
 import org.qortal.data.group.GroupJoinRequestData;
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -220,6 +222,38 @@ public class MiscTests extends Common {
 	}
 
 	@Test
+	public void testApiFiltersExpiredInvites() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+			PrivateKeyAccount chloe = Common.getTestAccount(repository, "chloe");
+
+			int groupId = createGroup(repository, alice, "api-filter-group", false);
+
+			// Expired invite (timestamp in the past with short TTL)
+			long expiredTimestamp = System.currentTimeMillis() - 5_000L;
+			GroupInviteTransactionData expiredInvite = buildInviteWithTimestamp(alice, groupId, bob.getAddress(), expiredTimestamp, 1);
+			TransactionUtils.signAndMint(repository, expiredInvite, alice);
+
+			// Non-expiring invite
+			GroupInviteTransactionData openInvite = buildInviteWithTimestamp(alice, groupId, chloe.getAddress(), System.currentTimeMillis(), 0);
+			TransactionUtils.signAndMint(repository, openInvite, alice);
+
+			GroupsResource groupsResource = new GroupsResource();
+			List<GroupInviteData> invitesByGroup = groupsResource.getInvitesByGroupId(groupId);
+
+			assertTrue(invitesByGroup.stream().anyMatch(inv -> inv.getInvitee().equals(chloe.getAddress())));
+			assertFalse(invitesByGroup.stream().anyMatch(inv -> inv.getInvitee().equals(bob.getAddress())));
+
+			List<GroupInviteData> invitesForChloe = groupsResource.getInvitesByInvitee(chloe.getAddress());
+			assertFalse(invitesForChloe.isEmpty());
+
+			List<GroupInviteData> invitesForBob = groupsResource.getInvitesByInvitee(bob.getAddress());
+			assertTrue(invitesForBob.isEmpty());
+		}
+	}
+
+	@Test
 	public void testJoinFirstInviteLaterAutoAddsIgnoringTtl() throws DataException {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
@@ -374,6 +408,12 @@ public class MiscTests extends Common {
 		long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(timestamp);
 		BaseTransactionData baseTransactionData = new BaseTransactionData(timestamp, Group.NO_GROUP, joiner.getLastReference(), joiner.getPublicKey(), fee, null);
 		return new JoinGroupTransactionData(baseTransactionData, groupId);
+	}
+
+	private GroupInviteTransactionData buildInviteWithTimestamp(PrivateKeyAccount admin, int groupId, String invitee, long timestamp, int timeToLive) throws DataException {
+		long fee = BlockChain.getInstance().getUnitFeeAtTimestamp(timestamp);
+		BaseTransactionData baseTransactionData = new BaseTransactionData(timestamp, Group.NO_GROUP, admin.getLastReference(), admin.getPublicKey(), fee, null);
+		return new GroupInviteTransactionData(baseTransactionData, groupId, invitee, timeToLive);
 	}
 
 }

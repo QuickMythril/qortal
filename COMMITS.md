@@ -115,3 +115,8 @@ Template for entries:
 - Files: src/test/java/org/qortal/test/group/MiscTests.java
 - What: Added invite-first test showing a backdated join within the invite’s expiry window still adds a member (documenting tx-timestamp dating behavior).
 - Why: Captures the expected behavior of the transaction-timestamp window for invite consumption.
+
+## Test API invite filtering
+- Files: src/test/java/org/qortal/test/group/MiscTests.java
+- What: Added an API-level test verifying chain-tip-based filtering hides expired invites while retaining non-expiring ones for both invitee and group endpoints.
+- Why: Confirms the filtering helper and endpoints omit expired invites without local clock use.
