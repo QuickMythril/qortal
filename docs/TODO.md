@@ -17,14 +17,14 @@
   - [x] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
   - [x] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
   - [x] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
-- [ ] API invite filtering:
+- [x] API invite filtering:
   - [x] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [x] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
   - [x] "Document unconditional filtering": keep filtering unconditional (no trigger) and document the intentional divergence from consensus (tx timestamp basis vs chain tip) as a pre-trigger soft mitigation that may hide invites still consumable via back/forward-dated joins.
   - [x] "Avoid local clock in filtering": ensure repository/API layers avoid local clock use and handle null tip without NPE.
   - [x] "Update API docs for filtering": update swagger annotations in `GroupsResource` invite endpoints (`/groups/invites/{address}`, `/groups/invites/group/{groupid}`) to note chain-tip-based filtering, inclusive boundary (`expiry >= tip`), `expiry == null` sentinel, skip-when-no-tip behavior, and the intentional pre-trigger UX/safety divergence.
 - [ ] Tests:
-  - [ ] "Test invite-first expiry enforcement": valid before expiry adds member post-trigger; expired invite treated as request, invite ignored.
+  - [x] "Test invite-first expiry enforcement": valid before expiry adds member post-trigger; expired invite treated as request, invite ignored.
   - [ ] "Test join-first behavior": valid invite later auto-adds; aged/“expired by wall clock” invite still auto-adds because TTL is ignored for pending requests (documented); TTL=0 still works.
   - [ ] "Test backdated/forward-dated join window": document/verify behavior when join timestamp <= expiry but block later (tx-timestamp dating windows).
   - [ ] "Test pre/post trigger activation": cover behavior using low-height test chains (`groupInviteExpiryHeight`).

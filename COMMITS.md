@@ -100,3 +100,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/api/resource/GroupsResource.java
 - What: Updated swagger summaries for invite endpoints to explicitly state chain-tip-based filtering (inclusive boundary, `expiry == null` sentinel) and left filtering unconditional (no feature trigger) with no local-clock fallback when tip is missing.
 - Why: Makes the filtering behavior clear to API consumers and documents the divergence from consensus time basis.
+
+## Test invite-first expiry enforcement
+- Files: src/test/java/org/qortal/test/group/MiscTests.java
+- What: Added invite-first tests covering valid-before-expiry membership and expired-invite fallback to join request (invite retained), with helper builders for timestamped joins and TTL invites.
+- Why: Verifies post-trigger invite expiry enforcement matches intended behavior in invite-first flow.
