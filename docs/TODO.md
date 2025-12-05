@@ -1,6 +1,6 @@
 # TODO – Invite Expiration Work
 
-- [ ] Add `groupInviteExpiryHeight` feature trigger:
+- [x] Add `groupInviteExpiryHeight` feature trigger:
   - [x] "Add feature trigger enum entry": add `groupInviteExpiryHeight` to `BlockChain.FeatureTrigger` and ensure startup validation covers it.
   - [x] "Expose feature trigger getter": add `getGroupInviteExpiryHeight()` in `BlockChain`.
   - [x] "Wire mainnet config placeholder": add `groupInviteExpiryHeight: 99999999` (or similar) to `src/main/resources/blockchain.json`.
@@ -9,7 +9,7 @@
   - [x] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
 - [ ] Enforce invite expiry in invite-first flow:
   - [x] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
-  - [ ] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
+  - [x] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
   - [ ] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
   - [ ] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.
   - [ ] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.

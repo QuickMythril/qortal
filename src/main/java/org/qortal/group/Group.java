@@ -807,6 +807,21 @@ public class Group {
 	}
 
 	private GroupInviteData applyInviteExpiry(GroupInviteData groupInviteData, JoinGroupTransactionData joinGroupTransactionData) {
+		if (groupInviteData == null) {
+			return null;
+		}
+
+		Long expiry = groupInviteData.getExpiry();
+		if (expiry == null) {
+			return groupInviteData; // TTL=0 sentinel means never expires
+		}
+
+		long joinTimestamp = joinGroupTransactionData.getTimestamp();
+		// Inclusive boundary: invite valid when join timestamp is <= expiry
+		if (joinTimestamp > expiry) {
+			return null;
+		}
+
 		return groupInviteData;
 	}
 
