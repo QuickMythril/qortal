@@ -1,0 +1,35 @@
+# TODO – Invite Expiration Work
+
+- [ ] Add `groupInviteExpiryHeight` feature trigger:
+  - [ ] "Add feature trigger enum entry": add `groupInviteExpiryHeight` to `BlockChain.FeatureTrigger` and ensure startup validation covers it.
+  - [ ] "Expose feature trigger getter": add `getGroupInviteExpiryHeight()` in `BlockChain`.
+  - [ ] "Wire mainnet config placeholder": add `groupInviteExpiryHeight: 99999999` (or similar) to `src/main/resources/blockchain.json`.
+  - [ ] "Wire testnet config": add a low activation height (e.g., 0/1) to `testnet/testchain.json`.
+  - [ ] "Wire test fixtures": add low heights to every `src/test/resources/test-chain-*.json`.
+  - [ ] (No commit): Sanity-check trigger coverage across any other chain configs to avoid startup validation errors.
+- [ ] Enforce invite expiry in invite-first flow:
+  - [ ] "Gate invite-first expiry by trigger": gate `Group.join(...)` invite consumption behind `groupInviteExpiryHeight` using next block height (`nextHeight >= groupInviteExpiryHeight`).
+  - [ ] "Use join tx timestamp for expiry check": use join transaction timestamp (not local clock) when comparing against invite expiry.
+  - [ ] "Treat expired invite as absent in join": for closed groups create/keep join request; do not delete the expired invite.
+  - [ ] "Preserve pre-trigger join behavior": keep legacy behavior pre-trigger and existing invite-reference handling/consumption for unexpired invites.
+  - [ ] "Honor TTL=0 and inclusive boundary": respect `expiry == null` and use `timestamp <= expiry`.
+- [ ] Document join-first TTL-agnostic auto-approval:
+  - [ ] "Document join-first time basis": TTL is ignored for pending-request approvals (any invite approves) both pre- and post-trigger; keep behavior documented.
+  - [ ] "Auto-approve pending request": always auto-add member and consume the pending join request when a matching invite is confirmed; leave invite handling consistent pre-trigger (no trigger gating) and ensure the pending request exists in the DB before approval.
+  - [ ] "Honor TTL=0 sentinel": ensure `expiry == null` continues to mean non-expiring.
+- [ ] API invite filtering:
+  - [ ] "Filter invites-by-invitee API": filter `/groups/invites/{address}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
+  - [ ] "Filter invites-by-group API": filter `/groups/invites/group/{groupid}` using chain-tip timestamp; treat `expiry == null` as never; skip filtering if no chain tip.
+  - [ ] "Document unconditional filtering": keep filtering unconditional (no trigger) and document the intentional divergence from consensus (tx timestamp basis vs chain tip) as a pre-trigger soft mitigation that may hide invites still consumable via back/forward-dated joins.
+  - [ ] "Avoid local clock in filtering": ensure repository/API layers avoid local clock use and handle null tip without NPE.
+  - [ ] "Update API docs for filtering": update swagger annotations in `GroupsResource` invite endpoints (`/groups/invites/{address}`, `/groups/invites/group/{groupid}`) to note chain-tip-based filtering, inclusive boundary (`expiry >= tip`), `expiry == null` sentinel, skip-when-no-tip behavior, and the intentional pre-trigger UX/safety divergence.
+- [ ] Tests:
+  - [ ] "Test invite-first expiry enforcement": valid before expiry adds member post-trigger; expired invite treated as request, invite ignored.
+  - [ ] "Test join-first behavior": valid invite later auto-adds; aged/“expired by wall clock” invite still auto-adds because TTL is ignored for pending requests (documented); TTL=0 still works.
+  - [ ] "Test backdated/forward-dated join window": document/verify behavior when join timestamp <= expiry but block later (tx-timestamp dating windows).
+  - [ ] "Test pre/post trigger activation": cover behavior using low-height test chains (`groupInviteExpiryHeight`).
+  - [ ] "Test API invite filtering": expired omitted, TTL=0/unexpired visible, chain-tip time basis, skip filtering when no tip.
+- [ ] Docs/status updates:
+  - [ ] "Update docs with final semantics": reflect trigger heights, invite expiry semantics (both orderings), join-first TTL decision, transaction-timestamp dating windows (forward/backdating), and API filtering behavior.
+  - [ ] "Document activation plan": note consensus impact and activation plan in release notes/changelog once trigger height is set.
+  - [ ] (No commit): Clean up TODO/checklists when tasks are completed.
