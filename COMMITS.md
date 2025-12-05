@@ -105,3 +105,8 @@ Template for entries:
 - Files: src/test/java/org/qortal/test/group/MiscTests.java
 - What: Added invite-first tests covering valid-before-expiry membership and expired-invite fallback to join request (invite retained), with helper builders for timestamped joins and TTL invites.
 - Why: Verifies post-trigger invite expiry enforcement matches intended behavior in invite-first flow.
+
+## Test join-first behavior
+- Files: src/test/java/org/qortal/test/group/MiscTests.java
+- What: Added join-first tests confirming invites auto-approve pending requests regardless of TTL/age (including TTL=0) and that backdated requests still auto-add when an invite arrives later.
+- Why: Documents and validates the TTL-agnostic join-first path and back/forward-dated request approval behavior.

@@ -25,7 +25,7 @@
   - [x] "Update API docs for filtering": update swagger annotations in `GroupsResource` invite endpoints (`/groups/invites/{address}`, `/groups/invites/group/{groupid}`) to note chain-tip-based filtering, inclusive boundary (`expiry >= tip`), `expiry == null` sentinel, skip-when-no-tip behavior, and the intentional pre-trigger UX/safety divergence.
 - [ ] Tests:
   - [x] "Test invite-first expiry enforcement": valid before expiry adds member post-trigger; expired invite treated as request, invite ignored.
-  - [ ] "Test join-first behavior": valid invite later auto-adds; aged/“expired by wall clock” invite still auto-adds because TTL is ignored for pending requests (documented); TTL=0 still works.
+  - [x] "Test join-first behavior": valid invite later auto-adds; aged/“expired by wall clock” invite still auto-adds because TTL is ignored for pending requests (documented); TTL=0 still works.
   - [ ] "Test backdated/forward-dated join window": document/verify behavior when join timestamp <= expiry but block later (tx-timestamp dating windows).
   - [ ] "Test pre/post trigger activation": cover behavior using low-height test chains (`groupInviteExpiryHeight`).
   - [ ] "Test API invite filtering": expired omitted, TTL=0/unexpired visible, chain-tip time basis, skip filtering when no tip.

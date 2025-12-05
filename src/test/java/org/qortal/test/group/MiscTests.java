@@ -199,6 +199,74 @@ public class MiscTests extends Common {
 	}
 
 	@Test
+	public void testJoinFirstInviteLaterAutoAddsIgnoringTtl() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			int groupId = createGroup(repository, alice, "join-first-auto", false);
+
+			// Bob requests to join (no invite yet)
+			joinGroup(repository, bob, groupId);
+			assertNotNull("Join request should be stored", getJoinRequest(repository, groupId, bob.getAddress()));
+			assertFalse("Should not be member yet", isMember(repository, bob.getAddress(), groupId));
+
+			// Alice sends an invite with very short TTL; TTL is ignored in join-first auto-approval
+			int ttlSeconds = 1;
+			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), ttlSeconds);
+			TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+			assertTrue("Invite after request should auto-add member", isMember(repository, bob.getAddress(), groupId));
+			assertNull("Join request should be consumed", getJoinRequest(repository, groupId, bob.getAddress()));
+			assertNull("Invite should be consumed", getInvite(repository, groupId, bob.getAddress()));
+		}
+	}
+
+	@Test
+	public void testJoinFirstInviteLaterWithBackdatedJoinStillAdds() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			int groupId = createGroup(repository, alice, "join-first-backdated", false);
+
+			long joinTimestamp = System.currentTimeMillis() - 10_000L; // backdated within expiry window
+			JoinGroupTransactionData joinTx = buildJoinWithTimestamp(bob, groupId, joinTimestamp);
+			TransactionUtils.signAndMint(repository, joinTx, bob);
+
+			assertNotNull("Join request should be stored", getJoinRequest(repository, groupId, bob.getAddress()));
+			assertFalse("Should not be member yet", isMember(repository, bob.getAddress(), groupId));
+
+			// Invite later with short TTL; TTL ignored for join-first path
+			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 1);
+			TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+			assertTrue("Join-first backdated request should be approved by later invite", isMember(repository, bob.getAddress(), groupId));
+			assertNull("Join request should be consumed", getJoinRequest(repository, groupId, bob.getAddress()));
+		}
+	}
+
+	@Test
+	public void testJoinFirstInviteLaterTtlZero() throws DataException {
+		try (final Repository repository = RepositoryManager.getRepository()) {
+			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
+			PrivateKeyAccount bob = Common.getTestAccount(repository, "bob");
+
+			int groupId = createGroup(repository, alice, "join-first-ttl-zero", false);
+
+			joinGroup(repository, bob, groupId);
+			assertNotNull(getJoinRequest(repository, groupId, bob.getAddress()));
+
+			GroupInviteTransactionData inviteTx = buildInviteWithTtl(alice, groupId, bob.getAddress(), 0);
+			TransactionUtils.signAndMint(repository, inviteTx, alice);
+
+			assertTrue(isMember(repository, bob.getAddress(), groupId));
+			assertNull(getJoinRequest(repository, groupId, bob.getAddress()));
+			assertNull(getInvite(repository, groupId, bob.getAddress()));
+		}
+	}
+
+	@Test
 	public void testLeaveGroup() throws DataException {
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			PrivateKeyAccount alice = Common.getTestAccount(repository, "alice");
