@@ -60,3 +60,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: When the invite is expired post-trigger, `Group.join` now treats it as missing, falling back to a join request for closed groups without deleting the stale invite.
 - Why: Prevents expired invites from granting membership while preserving the stored invite for deterministic replay/orphan handling.
+
+## Preserve pre-trigger join behavior
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Clarified the trigger gate in `Group.join` to note legacy behavior remains unchanged before activation.
+- Why: Documents that expiry enforcement is strictly post-trigger, reassuring reviewers about pre-trigger compatibility.

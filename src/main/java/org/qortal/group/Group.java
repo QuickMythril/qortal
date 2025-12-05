@@ -733,6 +733,7 @@ public class Group {
 		int nextBlockHeight = this.repository.getBlockRepository().getBlockchainHeight() + 1;
 		boolean enforceInviteExpiry = nextBlockHeight >= BlockChain.getInstance().getGroupInviteExpiryHeight();
 
+		// Pre-trigger: preserve legacy behavior (no expiry enforcement)
 		if (enforceInviteExpiry) {
 			groupInviteData = this.applyInviteExpiry(groupInviteData, joinGroupTransactionData);
 		}
