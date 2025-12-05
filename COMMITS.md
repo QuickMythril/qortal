@@ -70,3 +70,8 @@ Template for entries:
 - Files: src/main/java/org/qortal/group/Group.java
 - What: Confirmed invite expiry logic treats `expiry == null` as non-expiring and uses an inclusive `timestamp <= expiry` boundary with an explanatory comment.
 - Why: Ensures invite validation semantics are explicit and deterministic, matching the intended TTL sentinel and boundary behavior.
+
+## Document join-first time basis
+- Files: src/main/java/org/qortal/group/Group.java
+- What: Added a code comment clarifying that TTL/expiry is intentionally ignored when an invite approves a pending join request (join-first path), pre- and post-trigger.
+- Why: Documents the deliberate legacy-preserving behavior so reviewers know this path remains TTL-agnostic.

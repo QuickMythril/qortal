@@ -647,6 +647,8 @@ public class Group {
 		String invitee = groupInviteTransactionData.getInvitee();
 
 		// If there is a pending "join request" then add new group member
+		// NOTE: TTL/expiry is intentionally NOT enforced in this join-first path (pre- and post-trigger).
+		// Any matching invite auto-approves the stored request to preserve legacy behavior.
 		GroupJoinRequestData groupJoinRequestData = this.getJoinRequest(invitee);
 		if (groupJoinRequestData != null) {
 			this.addMember(invitee, groupInviteTransactionData);
