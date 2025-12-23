@@ -289,22 +289,22 @@ public class PirateChain extends Bitcoiny {
 	public PirateChainBalance getWalletBalances(String entropy58) throws ForeignBlockchainException {
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-			walletController.initWithEntropy58(entropy58);
-			walletController.ensureInitialized();
-			walletController.ensureSynchronized();
-			walletController.ensureNotNullSeed();
+			walletController.beginWalletUse(entropy58, false, true, true);
+			try {
+				// Get balance
+				String response = LiteWalletJni.execute("balance", "");
+				JSONObject json = new JSONObject(response);
+				if (!json.has("zbalance") || !json.has("verified_zbalance")) {
+					throw new ForeignBlockchainException("Unable to determine balance");
+				}
 
-			// Get balance
-			String response = LiteWalletJni.execute("balance", "");
-			JSONObject json = new JSONObject(response);
-			if (!json.has("zbalance") || !json.has("verified_zbalance")) {
-				throw new ForeignBlockchainException("Unable to determine balance");
+				PirateChainBalance balance = new PirateChainBalance();
+				balance.zbalance = json.getLong("zbalance");
+				balance.verified_zbalance = json.getLong("verified_zbalance");
+				return balance;
+			} finally {
+				walletController.endWalletUse();
 			}
-
-			PirateChainBalance balance = new PirateChainBalance();
-			balance.zbalance = json.getLong("zbalance");
-			balance.verified_zbalance = json.getLong("verified_zbalance");
-			return balance;
 		}
 	}
 
@@ -334,130 +334,133 @@ public class PirateChain extends Bitcoiny {
 
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-			walletController.initWithEntropy58(entropy58);
-			walletController.ensureInitialized();
-			walletController.ensureSynchronized();
-			walletController.ensureNotNullSeed();
+			walletController.beginWalletUse(entropy58, false, true, true);
+			try {
+				String myAddress = walletController.getCurrentWallet().getWalletAddress();
 
-			String myAddress = getWalletAddress(entropy58);
+				List<SimpleTransaction> transactions = new ArrayList<>();
 
-			List<SimpleTransaction> transactions = new ArrayList<>();
+				// Get transactions list
+				String response = LiteWalletJni.execute("list", "");
+				JSONArray transactionsJson = new JSONArray(response);
+				if (transactionsJson != null) {
+					for (int i = 0; i < transactionsJson.length(); i++) {
+						JSONObject transactionJson = transactionsJson.getJSONObject(i);
 
-			// Get transactions list
-			String response = LiteWalletJni.execute("list", "");
-			JSONArray transactionsJson = new JSONArray(response);
-			if (transactionsJson != null) {
-				for (int i = 0; i < transactionsJson.length(); i++) {
-					JSONObject transactionJson = transactionsJson.getJSONObject(i);
+						if (transactionJson.has("txid")) {
+							String txId = transactionJson.getString("txid");
+							Long timestamp = transactionJson.getLong("datetime");
+							Long amount = transactionJson.optLong("amount", 0L);
+							Long fee = transactionJson.optLong("fee", 0L);
+							String memo = null;
 
-					if (transactionJson.has("txid")) {
-						String txId = transactionJson.getString("txid");
-						Long timestamp = transactionJson.getLong("datetime");
-						Long amount = transactionJson.optLong("amount", 0L);
-						Long fee = transactionJson.optLong("fee", 0L);
-						String memo = null;
+							List<SimpleTransaction.Input> inputs = new ArrayList<>();
+							List<SimpleTransaction.Output> outputs = new ArrayList<>();
 
-						List<SimpleTransaction.Input> inputs = new ArrayList<>();
-						List<SimpleTransaction.Output> outputs = new ArrayList<>();
+							JSONArray incomingMetadatas = transactionJson.optJSONArray("incoming_metadata");
+							JSONArray outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata");
+							boolean hasIncoming = incomingMetadatas != null && incomingMetadatas.length() > 0;
+							boolean hasOutgoing = outgoingMetadatas != null && outgoingMetadatas.length() > 0;
 
-						JSONArray incomingMetadatas = transactionJson.optJSONArray("incoming_metadata");
-						JSONArray outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata");
-						boolean hasIncoming = incomingMetadatas != null && incomingMetadatas.length() > 0;
-						boolean hasOutgoing = outgoingMetadatas != null && outgoingMetadatas.length() > 0;
+							if (!hasIncoming && !hasOutgoing) {
+								incomingMetadatas = transactionJson.optJSONArray("incoming_metadata_change");
+								outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata_change");
+							}
 
-						if (!hasIncoming && !hasOutgoing) {
-							incomingMetadatas = transactionJson.optJSONArray("incoming_metadata_change");
-							outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata_change");
-						}
+							if (incomingMetadatas != null) {
+								for (int j = 0; j < incomingMetadatas.length(); j++) {
+									JSONObject incomingMetadata = incomingMetadatas.getJSONObject(j);
+									if (incomingMetadata.has("value")) {
+										Long value = incomingMetadata.getLong("value");
 
-						if (incomingMetadatas != null) {
-							for (int j = 0; j < incomingMetadatas.length(); j++) {
-								JSONObject incomingMetadata = incomingMetadatas.getJSONObject(j);
-								if (incomingMetadata.has("value")) {
-									Long value = incomingMetadata.getLong("value");
+										if (incomingMetadata.has("address")) {
+											inputs.add(new SimpleTransaction.Input("[PRIVATE]", value, false));
 
-									if (incomingMetadata.has("address")) {
-										inputs.add(new SimpleTransaction.Input("[PRIVATE]", value, false));
+											String address = incomingMetadata.getString("address");
+											outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
+										}
+									}
 
-										String address = incomingMetadata.getString("address");
-										outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
+									if (incomingMetadata.has("memo") && !incomingMetadata.isNull("memo")) {
+										memo = incomingMetadata.getString("memo");
 									}
 								}
-
-								if (incomingMetadata.has("memo") && !incomingMetadata.isNull("memo")) {
-									memo = incomingMetadata.getString("memo");
-								}
 							}
-						}
 
-						if (outgoingMetadatas != null) {
-							for (int j = 0; j < outgoingMetadatas.length(); j++) {
-								JSONObject outgoingMetadata = outgoingMetadatas.getJSONObject(j);
+							if (outgoingMetadatas != null) {
+								for (int j = 0; j < outgoingMetadatas.length(); j++) {
+									JSONObject outgoingMetadata = outgoingMetadatas.getJSONObject(j);
 
-								if (outgoingMetadata.has("value")) {
-									Long value = outgoingMetadata.getLong("value");
+									if (outgoingMetadata.has("value")) {
+										Long value = outgoingMetadata.getLong("value");
 
-									if (outgoingMetadata.has("address")) {
-										inputs.add(new SimpleTransaction.Input(myAddress, value, true));
+										if (outgoingMetadata.has("address")) {
+											inputs.add(new SimpleTransaction.Input(myAddress, value, true));
 
-										String address = outgoingMetadata.getString("address");
-										outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
+											String address = outgoingMetadata.getString("address");
+											outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
+										}
+									}
+
+									if (outgoingMetadata.has("memo") && !outgoingMetadata.isNull("memo")) {
+										memo = outgoingMetadata.getString("memo");
 									}
 								}
-
-								if (outgoingMetadata.has("memo") && !outgoingMetadata.isNull("memo")) {
-									memo = outgoingMetadata.getString("memo");
-								}
 							}
-						}
 
-						long timestampMillis = Math.toIntExact(timestamp) * 1000L;
-						SimpleTransaction transaction = new SimpleTransaction(txId, timestampMillis, amount, fee, inputs, outputs, memo);
-						transactions.add(transaction);
+							long timestampMillis = Math.toIntExact(timestamp) * 1000L;
+							SimpleTransaction transaction = new SimpleTransaction(txId, timestampMillis, amount, fee, inputs, outputs, memo);
+							transactions.add(transaction);
+						}
 					}
 				}
+
+				double sum = transactions.stream().mapToDouble(SimpleTransaction::getTotalAmount).sum() / 100000000.0;
+				double fees = transactions.stream().mapToDouble(SimpleTransaction::getFeeAmount).sum() / 100000000.0;
+				LOGGER.info("balance = " + (sum - fees));
+
+				return transactions;
+			} finally {
+				walletController.endWalletUse();
 			}
-
-			double sum = transactions.stream().mapToDouble(SimpleTransaction::getTotalAmount).sum() / 100000000.0;
-			double fees = transactions.stream().mapToDouble(SimpleTransaction::getFeeAmount).sum() / 100000000.0;
-			LOGGER.info("balance = " + (sum - fees));
-
-			return transactions;
 		}
 	}
 
 	public String getWalletAddress(String entropy58) throws ForeignBlockchainException {
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-			walletController.initWithEntropy58(entropy58);
-			walletController.ensureInitialized();
-			walletController.ensureNotNullSeed();
-
-			return walletController.getCurrentWallet().getWalletAddress();
+			walletController.beginWalletUse(entropy58, false, false, true);
+			try {
+				return walletController.getCurrentWallet().getWalletAddress();
+			} finally {
+				walletController.endWalletUse();
+			}
 		}
 	}
 
 	public String getPrivateKey(String entropy58) throws ForeignBlockchainException {
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-			walletController.initWithEntropy58(entropy58);
-			walletController.ensureInitialized();
-			walletController.ensureNotNullSeed();
-                        walletController.getCurrentWallet().unlock();
-
-			return walletController.getCurrentWallet().getPrivateKey();
+			walletController.beginWalletUse(entropy58, false, false, true);
+			try {
+				walletController.getCurrentWallet().unlock();
+				return walletController.getCurrentWallet().getPrivateKey();
+			} finally {
+				walletController.endWalletUse();
+			}
 		}
 	}
 
 	public String getWalletSeed(String entropy58) throws ForeignBlockchainException {
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-			walletController.initWithEntropy58(entropy58);
-			walletController.ensureInitialized();
-			walletController.ensureNotNullSeed();
-                        walletController.getCurrentWallet().unlock();
-
-			return walletController.getCurrentWallet().getWalletSeed(entropy58);
+			walletController.beginWalletUse(entropy58, false, false, true);
+			try {
+				walletController.getCurrentWallet().unlock();
+				return walletController.getCurrentWallet().getWalletSeed(entropy58);
+			} finally {
+				walletController.endWalletUse();
+			}
 		}
 	}
 
@@ -469,95 +472,95 @@ public class PirateChain extends Bitcoiny {
 
 	public String sendCoins(PirateChainSendRequest pirateChainSendRequest) throws ForeignBlockchainException {
 		PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-		walletController.initWithEntropy58(pirateChainSendRequest.entropy58);
-		walletController.ensureInitialized();
-		walletController.ensureSynchronized();
-		walletController.ensureNotNullSeed();
-
-		// Unlock wallet
-		walletController.getCurrentWallet().unlock();
-
-		// Build spend
-		JSONObject txn = new JSONObject();
-		txn.put("input", walletController.getCurrentWallet().getWalletAddress());
-		txn.put("fee", MAINNET_FEE);
-
-		JSONObject output = new JSONObject();
-		output.put("address", pirateChainSendRequest.receivingAddress);
-		output.put("amount", pirateChainSendRequest.arrrAmount);
-		output.put("memo", pirateChainSendRequest.memo);
-
-		JSONArray outputs = new JSONArray();
-		outputs.put(output);
-		txn.put("output", outputs);
-
-		String txnString = txn.toString();
-
-		// Send the coins
-		String response = LiteWalletJni.execute("sendp2sh", txnString);
-		JSONObject json = parseLitewalletResponse(response, "sendp2sh");
+		walletController.beginWalletUse(pirateChainSendRequest.entropy58, false, true, true);
 		try {
-			if (json.has("txid")) { // Success
-				return json.getString("txid");
-			}
-			else if (json.has("error")) {
-				String error = json.getString("error");
-				throw new ForeignBlockchainException(error);
+			// Unlock wallet
+			walletController.getCurrentWallet().unlock();
+
+			// Build spend
+			JSONObject txn = new JSONObject();
+			txn.put("input", walletController.getCurrentWallet().getWalletAddress());
+			txn.put("fee", MAINNET_FEE);
+
+			JSONObject output = new JSONObject();
+			output.put("address", pirateChainSendRequest.receivingAddress);
+			output.put("amount", pirateChainSendRequest.arrrAmount);
+			output.put("memo", pirateChainSendRequest.memo);
+
+			JSONArray outputs = new JSONArray();
+			outputs.put(output);
+			txn.put("output", outputs);
+
+			String txnString = txn.toString();
+
+			// Send the coins
+			String response = LiteWalletJni.execute("sendp2sh", txnString);
+			JSONObject json = parseLitewalletResponse(response, "sendp2sh");
+			try {
+				if (json.has("txid")) { // Success
+					return json.getString("txid");
+				}
+				else if (json.has("error")) {
+					String error = json.getString("error");
+					throw new ForeignBlockchainException(error);
+				}
+
+			} catch (JSONException e) {
+				throw new ForeignBlockchainException(e.getMessage());
 			}
 
-		} catch (JSONException e) {
-			throw new ForeignBlockchainException(e.getMessage());
+			throw new ForeignBlockchainException("Something went wrong");
+		} finally {
+			walletController.endWalletUse();
 		}
-
-		throw new ForeignBlockchainException("Something went wrong");
 	}
 
 	public String fundP2SH(String entropy58, String receivingAddress, long amount,
 						   String redeemScript58) throws ForeignBlockchainException {
 
 		PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-		walletController.initWithEntropy58(entropy58);
-		walletController.ensureInitialized();
-		walletController.ensureSynchronized();
-		walletController.ensureNotNullSeed();
-
-		// Unlock wallet
-		walletController.getCurrentWallet().unlock();
-
-		// Build spend
-		JSONObject txn = new JSONObject();
-		txn.put("input", walletController.getCurrentWallet().getWalletAddress());
-		txn.put("fee", MAINNET_FEE);
-
-		JSONObject output = new JSONObject();
-		output.put("address", receivingAddress);
-		output.put("amount", amount);
-		//output.put("memo", memo);
-
-		JSONArray outputs = new JSONArray();
-		outputs.put(output);
-		txn.put("output", outputs);
-		txn.put("script", redeemScript58);
-
-		String txnString = txn.toString();
-
-		// Send the coins
-		String response = LiteWalletJni.execute("send", txnString);
-		JSONObject json = parseLitewalletResponse(response, "send");
+		walletController.beginWalletUse(entropy58, false, true, true);
 		try {
-			if (json.has("txid")) { // Success
-				return json.getString("txid");
-			}
-			else if (json.has("error")) {
-				String error = json.getString("error");
-				throw new ForeignBlockchainException(error);
+			// Unlock wallet
+			walletController.getCurrentWallet().unlock();
+
+			// Build spend
+			JSONObject txn = new JSONObject();
+			txn.put("input", walletController.getCurrentWallet().getWalletAddress());
+			txn.put("fee", MAINNET_FEE);
+
+			JSONObject output = new JSONObject();
+			output.put("address", receivingAddress);
+			output.put("amount", amount);
+			//output.put("memo", memo);
+
+			JSONArray outputs = new JSONArray();
+			outputs.put(output);
+			txn.put("output", outputs);
+			txn.put("script", redeemScript58);
+
+			String txnString = txn.toString();
+
+			// Send the coins
+			String response = LiteWalletJni.execute("send", txnString);
+			JSONObject json = parseLitewalletResponse(response, "send");
+			try {
+				if (json.has("txid")) { // Success
+					return json.getString("txid");
+				}
+				else if (json.has("error")) {
+					String error = json.getString("error");
+					throw new ForeignBlockchainException(error);
+				}
+
+			} catch (JSONException e) {
+				throw new ForeignBlockchainException(e.getMessage());
 			}
 
-		} catch (JSONException e) {
-			throw new ForeignBlockchainException(e.getMessage());
+			throw new ForeignBlockchainException("Something went wrong");
+		} finally {
+			walletController.endWalletUse();
 		}
-
-		throw new ForeignBlockchainException("Something went wrong");
 	}
 
 	public String redeemP2sh(String p2shAddress, String receivingAddress, long amount, String redeemScript58,
@@ -565,50 +568,52 @@ public class PirateChain extends Bitcoiny {
 
 		// Use null seed wallet since we may not have the entropy bytes for a real wallet's seed
 		PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-		walletController.initNullSeedWallet();
-		walletController.ensureInitialized();
-
-		walletController.getCurrentWallet().unlock();
-
-		// Build spend
-		JSONObject txn = new JSONObject();
-		txn.put("input", p2shAddress);
-		txn.put("fee", MAINNET_FEE);
-
-		JSONObject output = new JSONObject();
-		output.put("address", receivingAddress);
-		output.put("amount", amount);
-		// output.put("memo", ""); // Maybe useful in future to include trade details?
-
-		JSONArray outputs = new JSONArray();
-		outputs.put(output);
-		txn.put("output", outputs);
-
-		txn.put("script", redeemScript58);
-		txn.put("txid", fundingTxid58);
-		txn.put("locktime", 0); // Must be 0 when redeeming
-		txn.put("secret", secret58);
-		txn.put("privkey", privateKey58);
-
-		String txnString = txn.toString();
-
-		// Redeem the P2SH
-		String response = LiteWalletJni.execute("redeemp2sh", txnString);
-		JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
+		walletController.beginNullSeedWalletUse(false);
 		try {
-			if (json.has("txid")) { // Success
-				return json.getString("txid");
-			}
-			else if (json.has("error")) {
-				String error = json.getString("error");
-				throw new ForeignBlockchainException(error);
+			walletController.getCurrentWallet().unlock();
+
+			// Build spend
+			JSONObject txn = new JSONObject();
+			txn.put("input", p2shAddress);
+			txn.put("fee", MAINNET_FEE);
+
+			JSONObject output = new JSONObject();
+			output.put("address", receivingAddress);
+			output.put("amount", amount);
+			// output.put("memo", ""); // Maybe useful in future to include trade details?
+
+			JSONArray outputs = new JSONArray();
+			outputs.put(output);
+			txn.put("output", outputs);
+
+			txn.put("script", redeemScript58);
+			txn.put("txid", fundingTxid58);
+			txn.put("locktime", 0); // Must be 0 when redeeming
+			txn.put("secret", secret58);
+			txn.put("privkey", privateKey58);
+
+			String txnString = txn.toString();
+
+			// Redeem the P2SH
+			String response = LiteWalletJni.execute("redeemp2sh", txnString);
+			JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
+			try {
+				if (json.has("txid")) { // Success
+					return json.getString("txid");
+				}
+				else if (json.has("error")) {
+					String error = json.getString("error");
+					throw new ForeignBlockchainException(error);
+				}
+
+			} catch (JSONException e) {
+				throw new ForeignBlockchainException(e.getMessage());
 			}
 
-		} catch (JSONException e) {
-			throw new ForeignBlockchainException(e.getMessage());
+			throw new ForeignBlockchainException("Something went wrong");
+		} finally {
+			walletController.endWalletUse();
 		}
-
-		throw new ForeignBlockchainException("Something went wrong");
 	}
 
 	public String refundP2sh(String p2shAddress, String receivingAddress, long amount, String redeemScript58,
@@ -616,50 +621,52 @@ public class PirateChain extends Bitcoiny {
 
 		// Use null seed wallet since we may not have the entropy bytes for a real wallet's seed
 		PirateChainWalletController walletController = PirateChainWalletController.getInstance();
-		walletController.initNullSeedWallet();
-		walletController.ensureInitialized();
-
-		walletController.getCurrentWallet().unlock();
-
-		// Build spend
-		JSONObject txn = new JSONObject();
-		txn.put("input", p2shAddress);
-		txn.put("fee", MAINNET_FEE);
-
-		JSONObject output = new JSONObject();
-		output.put("address", receivingAddress);
-		output.put("amount", amount);
-		// output.put("memo", ""); // Maybe useful in future to include trade details?
-
-		JSONArray outputs = new JSONArray();
-		outputs.put(output);
-		txn.put("output", outputs);
-
-		txn.put("script", redeemScript58);
-		txn.put("txid", fundingTxid58);
-		txn.put("locktime", lockTime);
-		txn.put("secret", ""); // Must be blank when refunding
-		txn.put("privkey", privateKey58);
-
-		String txnString = txn.toString();
-
-		// Redeem the P2SH
-		String response = LiteWalletJni.execute("redeemp2sh", txnString);
-		JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
+		walletController.beginNullSeedWalletUse(false);
 		try {
-			if (json.has("txid")) { // Success
-				return json.getString("txid");
-			}
-			else if (json.has("error")) {
-				String error = json.getString("error");
-				throw new ForeignBlockchainException(error);
+			walletController.getCurrentWallet().unlock();
+
+			// Build spend
+			JSONObject txn = new JSONObject();
+			txn.put("input", p2shAddress);
+			txn.put("fee", MAINNET_FEE);
+
+			JSONObject output = new JSONObject();
+			output.put("address", receivingAddress);
+			output.put("amount", amount);
+			// output.put("memo", ""); // Maybe useful in future to include trade details?
+
+			JSONArray outputs = new JSONArray();
+			outputs.put(output);
+			txn.put("output", outputs);
+
+			txn.put("script", redeemScript58);
+			txn.put("txid", fundingTxid58);
+			txn.put("locktime", lockTime);
+			txn.put("secret", ""); // Must be blank when refunding
+			txn.put("privkey", privateKey58);
+
+			String txnString = txn.toString();
+
+			// Redeem the P2SH
+			String response = LiteWalletJni.execute("redeemp2sh", txnString);
+			JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
+			try {
+				if (json.has("txid")) { // Success
+					return json.getString("txid");
+				}
+				else if (json.has("error")) {
+					String error = json.getString("error");
+					throw new ForeignBlockchainException(error);
+				}
+
+			} catch (JSONException e) {
+				throw new ForeignBlockchainException(e.getMessage());
 			}
 
-		} catch (JSONException e) {
-			throw new ForeignBlockchainException(e.getMessage());
+			throw new ForeignBlockchainException("Something went wrong");
+		} finally {
+			walletController.endWalletUse();
 		}
-
-		throw new ForeignBlockchainException("Something went wrong");
 	}
 
 	private static JSONObject parseLitewalletResponse(String response, String command) throws ForeignBlockchainException {

@@ -33,6 +33,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class PirateChainWalletController extends Thread {
 
@@ -48,6 +50,21 @@ public class PirateChainWalletController extends Thread {
     private boolean shouldLoadWallet = false;
     private String loadStatus = null;
 
+    private static final long WALLET_LOCK_TIMEOUT_MS = 5_000L;
+    private static final long SWITCH_LOCK_TIMEOUT_MS = 30_000L;
+    private static final long SYNC_STOP_TIMEOUT_MS = 30_000L;
+    private static final long SYNC_WAIT_INTERVAL_MS = 250L;
+    private static final long STATUS_LOCK_TIMEOUT_MS = 500L;
+    private static final String NULL_SEED_ENTROPY58 = Base58.encode(new byte[32]);
+
+    private final ReentrantLock walletLock = new ReentrantLock(true);
+    private final Object syncMonitor = new Object();
+    private final Object switchingMonitor = new Object();
+    private volatile boolean syncInProgress = false;
+    private volatile Thread switchingThread = null;
+    private int switchingDepth = 0;
+    private final ThreadLocal<Integer> switchingClaims = ThreadLocal.withInitial(() -> 0);
+
     private static String qdnWalletSignature = "5W8aoz1mceMTRFFWSyP1TCgy1kaDs8DMoksdE4VXYyWCxT1gaBt3pFH2PFUbb17tmZnbBhrzz9fDt8UbKgeCBeCs";
 
 
@@ -60,6 +77,110 @@ public class PirateChainWalletController extends Thread {
             instance = new PirateChainWalletController();
 
         return instance;
+    }
+
+    private boolean isSwitching() {
+        synchronized (this.switchingMonitor) {
+            return this.switchingThread != null;
+        }
+    }
+
+    private boolean isSwitchingByCurrentThread() {
+        synchronized (this.switchingMonitor) {
+            return Thread.currentThread() == this.switchingThread;
+        }
+    }
+
+    private boolean claimSwitching() {
+        synchronized (this.switchingMonitor) {
+            if (this.switchingThread == null) {
+                this.switchingThread = Thread.currentThread();
+                this.switchingDepth = 1;
+            } else if (this.switchingThread == Thread.currentThread()) {
+                this.switchingDepth++;
+            } else {
+                return false;
+            }
+        }
+        this.switchingClaims.set(this.switchingClaims.get() + 1);
+        return true;
+    }
+
+    private void releaseSwitchingClaim() {
+        int claims = this.switchingClaims.get();
+        if (claims > 0) {
+            this.switchingClaims.set(claims - 1);
+            synchronized (this.switchingMonitor) {
+                if (this.switchingThread == Thread.currentThread()) {
+                    this.switchingDepth--;
+                    if (this.switchingDepth <= 0) {
+                        this.switchingDepth = 0;
+                        this.switchingThread = null;
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean acquireWalletLock(long timeoutMs) {
+        try {
+            return this.walletLock.tryLock(timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private void releaseWalletLockIfHeld() {
+        if (this.walletLock.isHeldByCurrentThread()) {
+            this.walletLock.unlock();
+        }
+    }
+
+    private boolean waitForSyncIdle(long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        synchronized (this.syncMonitor) {
+            while (this.syncInProgress) {
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) {
+                    return false;
+                }
+                long waitTime = Math.min(remaining, SYNC_WAIT_INTERVAL_MS);
+                try {
+                    this.syncMonitor.wait(waitTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void stopSyncIfRunning(long timeoutMs) {
+        if (!this.syncInProgress) {
+            return;
+        }
+
+        try {
+            LiteWalletJni.execute("stop", "");
+        } catch (RuntimeException e) {
+            LOGGER.debug("Unable to stop Pirate Chain sync: {}", e.getMessage());
+        }
+
+        if (!this.waitForSyncIdle(timeoutMs)) {
+            LOGGER.info("Timed out waiting for Pirate Chain sync to stop");
+        }
+    }
+
+    private boolean needsWalletSwitch(byte[] entropyBytes, boolean isNullSeedWallet) {
+        if (this.currentWallet == null) {
+            return true;
+        }
+        if (!this.currentWallet.entropyBytesEqual(entropyBytes)) {
+            return true;
+        }
+        return this.currentWallet.isNullSeedWallet() != isNullSeedWallet;
     }
 
     @Override
@@ -89,31 +210,60 @@ public class PirateChainWalletController extends Thread {
                 // Wallet is downloaded, so clear the status
                 this.loadStatus = null;
 
-                if (this.currentWallet == null) {
+                PirateWallet wallet = this.currentWallet;
+                if (wallet == null) {
                     // Nothing to do yet
                     continue;
                 }
-                if (this.currentWallet.isNullSeedWallet()) {
+                if (wallet.isNullSeedWallet()) {
                     // Don't sync the null seed wallet
                     continue;
                 }
 
-                LOGGER.debug("Syncing Pirate Chain wallet...");
-                String response = LiteWalletJni.execute("sync", "");
-                LOGGER.debug("sync response: {}", response);
+                if (this.isSwitching()) {
+                    continue;
+                }
 
+                if (!this.acquireWalletLock(0)) {
+                    continue;
+                }
+
+                boolean syncStarted = false;
                 try {
-                    JSONObject json = new JSONObject(response);
-                    if (json.has("result")) {
-                        String result = json.getString("result");
+                    if (this.isSwitching()) {
+                        continue;
+                    }
 
-                        // We may have to set wallet to ready if this is the first ever successful sync
-                        if (Objects.equals(result, "success")) {
-                            this.currentWallet.setReady(true);
+                    synchronized (this.syncMonitor) {
+                        this.syncInProgress = true;
+                    }
+                    syncStarted = true;
+
+                    LOGGER.debug("Syncing Pirate Chain wallet...");
+                    String response = LiteWalletJni.execute("sync", "");
+                    LOGGER.debug("sync response: {}", response);
+
+                    try {
+                        JSONObject json = new JSONObject(response);
+                        if (json.has("result")) {
+                            String result = json.getString("result");
+
+                            // We may have to set wallet to ready if this is the first ever successful sync
+                            if (Objects.equals(result, "success")) {
+                                this.currentWallet.setReady(true);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        LOGGER.info("Unable to interpret JSON", e);
+                    }
+                } finally {
+                    if (syncStarted) {
+                        synchronized (this.syncMonitor) {
+                            this.syncInProgress = false;
+                            this.syncMonitor.notifyAll();
                         }
                     }
-                } catch (JSONException e) {
-                    LOGGER.info("Unable to interpret JSON", e);
+                    this.releaseWalletLockIfHeld();
                 }
 
                 // Rate limit sync attempts
@@ -275,46 +425,112 @@ public class PirateChainWalletController extends Thread {
     }
 
     public boolean initNullSeedWallet() {
-        return this.initWithEntropy58(Base58.encode(new byte[32]), true);
+        return this.initWithEntropy58(NULL_SEED_ENTROPY58, true);
     }
 
     private boolean initWithEntropy58(String entropy58, boolean isNullSeedWallet) {
+        try {
+            this.beginWalletUse(entropy58, isNullSeedWallet, false, false);
+            return true;
+        } catch (ForeignBlockchainException e) {
+            return false;
+        } finally {
+            this.endWalletUse();
+        }
+    }
+
+    public void beginWalletUse(String entropy58, boolean isNullSeedWallet, boolean requireSync, boolean requireNotNullSeed)
+            throws ForeignBlockchainException {
         // If the JNI library isn't loaded yet then we can't proceed
         if (!LiteWalletJni.isLoaded()) {
-            shouldLoadWallet = true;
-            return false;
+            this.shouldLoadWallet = true;
+            throw new ForeignBlockchainException("Pirate wallet isn't initialized yet");
+        }
+
+        if (entropy58 == null) {
+            throw new ForeignBlockchainException("Invalid entropy bytes");
         }
 
         byte[] entropyBytes = Base58.decode(entropy58);
-
         if (entropyBytes == null || entropyBytes.length != 32) {
-            LOGGER.info("Invalid entropy bytes");
-            return false;
+            throw new ForeignBlockchainException("Invalid entropy bytes");
         }
 
-        if (this.currentWallet != null) {
-            if (this.currentWallet.entropyBytesEqual(entropyBytes)) {
-                // Wallet already active - nothing to do
-                return true;
+        boolean needsSwitch = this.needsWalletSwitch(entropyBytes, isNullSeedWallet);
+        boolean claimedSwitching = false;
+        if (!needsSwitch && this.isSwitching() && !this.isSwitchingByCurrentThread()) {
+            throw new ForeignBlockchainException("Wallet switch in progress");
+        }
+        if (needsSwitch) {
+            claimedSwitching = this.claimSwitching();
+            if (!claimedSwitching) {
+                throw new ForeignBlockchainException("Wallet switch in progress");
             }
-            else {
-                // Different wallet requested - close the existing one and switch over
-                this.closeCurrentWallet();
+            this.stopSyncIfRunning(SYNC_STOP_TIMEOUT_MS);
+        } else if (this.isSwitchingByCurrentThread()) {
+            claimedSwitching = this.claimSwitching();
+        }
+
+        long timeoutMs = needsSwitch ? SWITCH_LOCK_TIMEOUT_MS : WALLET_LOCK_TIMEOUT_MS;
+        if (!this.acquireWalletLock(timeoutMs)) {
+            if (claimedSwitching) {
+                this.releaseSwitchingClaim();
             }
+            if (this.syncInProgress) {
+                throw new ForeignBlockchainException("Sync in progress. Please try again later.");
+            }
+            if (this.isSwitching()) {
+                throw new ForeignBlockchainException("Wallet switch in progress");
+            }
+            throw new ForeignBlockchainException("Wallet busy. Please try again later.");
         }
 
         try {
-            this.currentWallet = new PirateWallet(entropyBytes, isNullSeedWallet);
-            if (!this.currentWallet.isReady()) {
-                // Don't persist wallets that aren't ready
-                this.currentWallet = null;
+            boolean needsSwitchLocked = this.needsWalletSwitch(entropyBytes, isNullSeedWallet);
+            if (needsSwitchLocked) {
+                this.closeCurrentWallet();
+                this.currentWallet = new PirateWallet(entropyBytes, isNullSeedWallet);
+                if (!this.currentWallet.isReady()) {
+                    this.currentWallet = null;
+                    throw new ForeignBlockchainException("Pirate wallet isn't initialized yet");
+                }
             }
-            return true;
-        } catch (IOException e) {
-            LOGGER.info("Unable to initialize wallet: {}", e.getMessage());
-        }
 
-        return false;
+            this.ensureInitialized();
+            if (requireNotNullSeed) {
+                this.ensureNotNullSeed();
+            }
+            if (requireSync) {
+                this.ensureSynchronized();
+            }
+        } catch (ForeignBlockchainException e) {
+            this.releaseWalletLockIfHeld();
+            if (claimedSwitching) {
+                this.releaseSwitchingClaim();
+            }
+            throw e;
+        } catch (IOException e) {
+            this.releaseWalletLockIfHeld();
+            if (claimedSwitching) {
+                this.releaseSwitchingClaim();
+            }
+            throw new ForeignBlockchainException("Unable to initialize wallet: " + e.getMessage());
+        } catch (RuntimeException e) {
+            this.releaseWalletLockIfHeld();
+            if (claimedSwitching) {
+                this.releaseSwitchingClaim();
+            }
+            throw e;
+        }
+    }
+
+    public void beginNullSeedWalletUse(boolean requireSync) throws ForeignBlockchainException {
+        this.beginWalletUse(NULL_SEED_ENTROPY58, true, requireSync, false);
+    }
+
+    public void endWalletUse() {
+        this.releaseWalletLockIfHeld();
+        this.releaseSwitchingClaim();
     }
 
     private void saveCurrentWallet() {
@@ -322,7 +538,17 @@ public class PirateChainWalletController extends Thread {
             // Nothing to do
             return;
         }
+        boolean lockedHere = false;
+        if (!this.walletLock.isHeldByCurrentThread()) {
+            lockedHere = this.acquireWalletLock(WALLET_LOCK_TIMEOUT_MS);
+            if (!lockedHere) {
+                return;
+            }
+        }
         try {
+            if (this.currentWallet == null) {
+                return;
+            }
             if (this.currentWallet.save()) {
                 Long now = NTP.getTime();
                 if (now != null) {
@@ -331,6 +557,10 @@ public class PirateChainWalletController extends Thread {
             }
         } catch (IOException e) {
             LOGGER.info("Unable to save wallet");
+        } finally {
+            if (lockedHere) {
+                this.releaseWalletLockIfHeld();
+            }
         }
     }
 
@@ -357,6 +587,15 @@ public class PirateChainWalletController extends Thread {
     }
 
     public void ensureSynchronized() throws ForeignBlockchainException {
+        if (this.isSwitching() && !this.isSwitchingByCurrentThread()) {
+            throw new ForeignBlockchainException("Wallet switch in progress");
+        }
+        if (this.syncInProgress) {
+            throw new ForeignBlockchainException("Sync in progress. Please try again later.");
+        }
+        if (!this.walletLock.isHeldByCurrentThread()) {
+            throw new ForeignBlockchainException("Wallet busy. Please try again later.");
+        }
         if (this.currentWallet == null || !this.currentWallet.isSynchronized()) {
             throw new ForeignBlockchainException("Wallet isn't synchronized yet");
         }
@@ -365,18 +604,75 @@ public class PirateChainWalletController extends Thread {
         JSONObject json = new JSONObject(response);
         boolean inProgress = json.optBoolean("in_progress", false);
         if (inProgress) {
-            long syncedBlocks = json.optLong("synced_blocks", -1);
-            long totalBlocks = json.optLong("total_blocks", -1);
-            String progress = (syncedBlocks >= 0 && totalBlocks >= 0)
-                    ? String.format(" (%d / %d)", syncedBlocks, totalBlocks)
-                    : "";
-
-            throw new ForeignBlockchainException(String.format("Sync in progress%s. Please try again later.", progress));
+            String progress = this.formatSyncProgress(json);
+            String progressSuffix = progress != null ? String.format(" (%s)", progress) : "";
+            throw new ForeignBlockchainException(String.format("Sync in progress%s. Please try again later.", progressSuffix));
         }
     }
 
+    private Long fetchChainHeight() {
+        String response = LiteWalletJni.execute("info", "");
+        try {
+            JSONObject json = new JSONObject(response);
+            if (json.has("latest_block_height")) {
+                return json.getLong("latest_block_height");
+            }
+        } catch (JSONException e) {
+            // Fall through to return null.
+        }
+        return null;
+    }
+
+    private String formatSyncProgress(JSONObject statusJson) {
+        long syncedBlocks = statusJson.optLong("synced_blocks", -1);
+        long endBlock = statusJson.optLong("end_block", -1);
+        long startBlock = statusJson.optLong("start_block", -1);
+
+        if (endBlock > 0 && syncedBlocks >= 0) {
+            long currentHeight = endBlock - 1 + syncedBlocks;
+            if (startBlock > 0 && currentHeight > startBlock) {
+                currentHeight = startBlock;
+            }
+
+            Long chainHeight = this.fetchChainHeight();
+            if (chainHeight != null && chainHeight >= 0) {
+                if (currentHeight > chainHeight) {
+                    currentHeight = chainHeight;
+                }
+                return String.format("%d / %d", currentHeight, chainHeight);
+            }
+        }
+
+        long totalBlocks = statusJson.optLong("total_blocks", -1);
+        if (syncedBlocks >= 0 && totalBlocks >= 0) {
+            return String.format("%d / %d", syncedBlocks, totalBlocks);
+        }
+
+        return null;
+    }
+
+    private String formatSyncStatus(PirateWallet wallet) {
+        String syncStatusResponse = LiteWalletJni.execute("syncStatus", "");
+        JSONObject json = new JSONObject(syncStatusResponse);
+        boolean inProgress = json.optBoolean("in_progress", false);
+        if (inProgress) {
+            String progress = this.formatSyncProgress(json);
+            if (progress != null) {
+                return String.format("Sync in progress (%s)", progress);
+            }
+            return "Sync in progress";
+        }
+
+        if (wallet != null && wallet.isSynchronized()) {
+            return "Synchronized";
+        }
+
+        return "Initializing wallet...";
+    }
+
     public String getSyncStatus() {
-        if (this.currentWallet == null || !this.currentWallet.isInitialized()) {
+        PirateWallet wallet = this.currentWallet;
+        if (wallet == null || !wallet.isInitialized()) {
             if (this.loadStatus != null) {
                 return this.loadStatus;
             }
@@ -384,24 +680,41 @@ public class PirateChainWalletController extends Thread {
             return "Not initialized yet";
         }
 
-        String syncStatusResponse = LiteWalletJni.execute("syncStatus", "");
-        org.json.JSONObject json = new JSONObject(syncStatusResponse);
-        boolean inProgress = json.optBoolean("in_progress", false);
-        if (inProgress) {
-            long syncedBlocks = json.optLong("synced_blocks", -1);
-            long totalBlocks = json.optLong("total_blocks", -1);
-            if (syncedBlocks >= 0 && totalBlocks >= 0) {
-                return String.format("Sync in progress (%d / %d)", syncedBlocks, totalBlocks);
+        if (this.isSwitching() && !this.isSwitchingByCurrentThread()) {
+            return "Wallet switch in progress";
+        }
+        if (this.syncInProgress) {
+            return this.formatSyncStatus(wallet);
+        }
+
+        boolean lockedHere = false;
+        if (!this.walletLock.isHeldByCurrentThread()) {
+            lockedHere = this.acquireWalletLock(STATUS_LOCK_TIMEOUT_MS);
+            if (!lockedHere) {
+                if (this.syncInProgress) {
+                    return this.formatSyncStatus(wallet);
+                }
+                if (this.isSwitching()) {
+                    return "Wallet switch in progress";
+                }
+                return "Wallet busy";
             }
-            return "Sync in progress";
         }
 
-        boolean isSynchronized = this.currentWallet.isSynchronized();
-        if (isSynchronized) {
-            return "Synchronized";
-        }
+        try {
+            if (this.currentWallet == null || !this.currentWallet.isInitialized()) {
+                if (this.loadStatus != null) {
+                    return this.loadStatus;
+                }
+                return "Not initialized yet";
+            }
 
-        return "Initializing wallet...";
+            return this.formatSyncStatus(this.currentWallet);
+        } finally {
+            if (lockedHere) {
+                this.releaseWalletLockIfHeld();
+            }
+        }
     }
 
 }

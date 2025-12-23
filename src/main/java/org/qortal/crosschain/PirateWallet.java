@@ -17,6 +17,7 @@ import org.qortal.utils.Base58;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -86,11 +87,20 @@ public class PirateWallet {
                 inputSeedPhrase = inputSeedJson.getString("seedPhrase");
             }
 
+            int configuredBirthday = Settings.getInstance().getArrrDefaultBirthday();
+            boolean forceFullRescan = !this.isNullSeedWallet && configuredBirthday <= 1;
+
             String wallet = this.load();
+            boolean loadedFromCache = wallet != null;
+            if (wallet != null && forceFullRescan) {
+                this.deleteWalletCache();
+                wallet = null;
+                loadedFromCache = false;
+            }
             if (wallet == null) {
                 // Wallet doesn't exist, so create a new one
 
-                int birthday = Settings.getInstance().getArrrDefaultBirthday();
+                int birthday = configuredBirthday;
                 if (this.isNullSeedWallet) {
                     try {
                         // Attempt to set birthday to the current block for null seed wallets
@@ -102,22 +112,9 @@ public class PirateWallet {
                 }
 
                 // Initialize new wallet
-                String birthdayString = String.format("%d", birthday);
-                String outputSeedResponse = LiteWalletJni.initfromseed(serverUri, this.params, inputSeedPhrase, birthdayString, this.saplingOutput64, this.saplingSpend64); // Thread-safe.
-                String outputSeedPhrase = parseSeedPhrase(outputSeedResponse, "initfromseed");
-                if (outputSeedPhrase == null) {
-                    LOGGER.info("Unable to initialize Pirate Chain wallet: init response did not contain a seed phrase");
+                if (!this.initFromSeed(serverUri, inputSeedPhrase, birthday)) {
                     return false;
                 }
-
-                // Ensure seed phrase in response matches supplied seed phrase
-                if (inputSeedPhrase == null || !Objects.equals(inputSeedPhrase, outputSeedPhrase)) {
-                    LOGGER.info("Unable to initialize Pirate Chain wallet: seed phrases do not match, or are null");
-                    return false;
-                }
-
-                this.seedPhrase = outputSeedPhrase;
-
             } else {
                 // Restore existing wallet
                 String response = LiteWalletJni.initfromb64(serverUri, params, wallet, saplingOutput64, saplingSpend64);
@@ -130,13 +127,126 @@ public class PirateWallet {
 
             // Check that we're able to communicate with the library
             Integer ourHeight = this.getHeight();
-            return (ourHeight != null && ourHeight > 0);
+            if (ourHeight == null || ourHeight <= 0) {
+                return false;
+            }
+
+            if (!this.isNullSeedWallet && configuredBirthday > 1 && ourHeight < configuredBirthday) {
+                if (loadedFromCache) {
+                    LOGGER.warn("Pirate wallet height {} below configured birthday {}. Recreating wallet cache.", ourHeight, configuredBirthday);
+                    this.deleteWalletCache();
+                    if (!this.initFromSeed(serverUri, inputSeedPhrase, configuredBirthday)) {
+                        return false;
+                    }
+                    ourHeight = this.getHeight();
+                }
+
+                if (ourHeight == null || ourHeight <= 0 || ourHeight < configuredBirthday) {
+                    LOGGER.warn("Pirate wallet initialized below configured birthday {} (height {}).", configuredBirthday, ourHeight);
+                    return false;
+                }
+            }
+
+            return true;
 
         } catch (IOException | JSONException | UnsatisfiedLinkError e) {
             LOGGER.info("Unable to initialize Pirate Chain wallet: {}", e.getMessage());
         }
 
         return false;
+    }
+
+    private boolean initFromSeed(String serverUri, String inputSeedPhrase, int birthday) {
+        String birthdayString = String.format("%d", birthday);
+        String outputSeedResponse = LiteWalletJni.initfromseed(serverUri, this.params, inputSeedPhrase, birthdayString, this.saplingOutput64, this.saplingSpend64); // Thread-safe.
+        String outputSeedPhrase = parseSeedPhrase(outputSeedResponse, "initfromseed");
+        if (outputSeedPhrase == null) {
+            LOGGER.info("Unable to initialize Pirate Chain wallet: init response did not contain a seed phrase");
+            return false;
+        }
+
+        // Ensure seed phrase in response matches supplied seed phrase
+        if (inputSeedPhrase == null || !Objects.equals(inputSeedPhrase, outputSeedPhrase)) {
+            LOGGER.info("Unable to initialize Pirate Chain wallet: seed phrases do not match, or are null");
+            return false;
+        }
+
+        this.seedPhrase = outputSeedPhrase;
+        return true;
+    }
+
+    private void deleteWalletCache() {
+        Path walletPath = this.getCurrentWalletPath();
+        try {
+            Files.deleteIfExists(walletPath);
+        } catch (IOException e) {
+            LOGGER.info("Unable to delete Pirate Chain wallet cache at {}: {}", walletPath, e.getMessage());
+        }
+
+        this.deleteLitewalletCache();
+    }
+
+    private void deleteLitewalletCache() {
+        Path pirateDir = this.getLitewalletDataDirectory();
+        Path defaultWalletPath = pirateDir.resolve("arrr-light-wallet.dat");
+        try {
+            Files.deleteIfExists(defaultWalletPath);
+        } catch (IOException e) {
+            LOGGER.info("Unable to delete litewallet cache at {}: {}", defaultWalletPath, e.getMessage());
+        }
+
+        Path tempDir = pirateDir.resolve("temp");
+        if (Files.isDirectory(tempDir)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(tempDir, "arrr-light-wallet-*.dat")) {
+                for (Path path : stream) {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        LOGGER.info("Unable to delete litewallet temp cache at {}: {}", path, e.getMessage());
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.info("Unable to scan litewallet temp directory at {}: {}", tempDir, e.getMessage());
+            }
+        }
+    }
+
+    private Path getLitewalletDataDirectory() {
+        String osName = System.getProperty("os.name");
+        String homeDir = System.getProperty("user.home");
+        Path baseDir;
+
+        if (osName != null && osName.contains("Windows")) {
+            String appData = System.getenv("APPDATA");
+            if (appData != null && !appData.isEmpty()) {
+                baseDir = Paths.get(appData, "Pirate");
+            } else if (homeDir != null && !homeDir.isEmpty()) {
+                baseDir = Paths.get(homeDir, "AppData", "Roaming", "Pirate");
+            } else {
+                baseDir = Paths.get("Pirate");
+            }
+        } else if ("Mac OS X".equals(osName)) {
+            if (homeDir != null && !homeDir.isEmpty()) {
+                baseDir = Paths.get(homeDir, "Library", "Application Support", "Pirate");
+            } else {
+                baseDir = Paths.get("Pirate");
+            }
+        } else {
+            if (homeDir != null && !homeDir.isEmpty()) {
+                baseDir = Paths.get(homeDir, ".pirate");
+            } else {
+                baseDir = Paths.get(".pirate");
+            }
+        }
+
+        PirateChain.PirateChainNet pirateChainNet = Settings.getInstance().getPirateChainNet();
+        if (pirateChainNet == PirateChain.PirateChainNet.TEST3) {
+            baseDir = baseDir.resolve("testnet3");
+        } else if (pirateChainNet == PirateChain.PirateChainNet.REGTEST) {
+            baseDir = baseDir.resolve("regtest");
+        }
+
+        return baseDir;
     }
 
     public boolean isReady() {
