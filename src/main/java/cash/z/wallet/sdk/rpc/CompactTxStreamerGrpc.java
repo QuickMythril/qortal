@@ -12,7 +12,7 @@ public final class CompactTxStreamerGrpc {
 
   private CompactTxStreamerGrpc() {}
 
-  public static final String SERVICE_NAME = "cash.z.wallet.sdk.rpc.CompactTxStreamer";
+  public static final String SERVICE_NAME = "pirate.wallet.sdk.rpc.CompactTxStreamer";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<cash.z.wallet.sdk.rpc.Service.ChainSpec,

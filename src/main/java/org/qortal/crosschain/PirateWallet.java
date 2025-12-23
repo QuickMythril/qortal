@@ -76,7 +76,11 @@ public class PirateWallet {
 
             // Derive seed phrase from entropy bytes
             String inputSeedResponse = LiteWalletJni.getseedphrasefromentropyb64(entropy64);
-            JSONObject inputSeedJson =  new JSONObject(inputSeedResponse);
+            JSONObject inputSeedJson = parseJsonObject(inputSeedResponse, "getseedphrasefromentropyb64");
+            if (inputSeedJson == null) {
+                LOGGER.info("Unable to initialize Pirate Chain wallet: seed phrase response was not valid JSON");
+                return false;
+            }
             String inputSeedPhrase = null;
             if (inputSeedJson.has("seedPhrase")) {
                 inputSeedPhrase = inputSeedJson.getString("seedPhrase");
@@ -100,10 +104,10 @@ public class PirateWallet {
                 // Initialize new wallet
                 String birthdayString = String.format("%d", birthday);
                 String outputSeedResponse = LiteWalletJni.initfromseed(serverUri, this.params, inputSeedPhrase, birthdayString, this.saplingOutput64, this.saplingSpend64); // Thread-safe.
-                JSONObject outputSeedJson =  new JSONObject(outputSeedResponse);
-                String outputSeedPhrase = null;
-                if (outputSeedJson.has("seed")) {
-                    outputSeedPhrase = outputSeedJson.getString("seed");
+                String outputSeedPhrase = parseSeedPhrase(outputSeedResponse, "initfromseed");
+                if (outputSeedPhrase == null) {
+                    LOGGER.info("Unable to initialize Pirate Chain wallet: init response did not contain a seed phrase");
+                    return false;
                 }
 
                 // Ensure seed phrase in response matches supplied seed phrase
@@ -300,13 +304,97 @@ public class PirateWallet {
         return height >= (chainTip - 2);
     }
 
+    private JSONObject parseJsonObject(String response, String context) {
+        if (response == null) {
+            LOGGER.info("Pirate wallet {} response was null", context);
+            return null;
+        }
+
+        String trimmed = response.trim();
+        if (trimmed.isEmpty()) {
+            LOGGER.info("Pirate wallet {} response was empty", context);
+            return null;
+        }
+        if (!trimmed.startsWith("{")) {
+            LOGGER.info("Pirate wallet {} returned non-JSON response (length {})", context, trimmed.length());
+            return null;
+        }
+
+        try {
+            return new JSONObject(trimmed);
+        } catch (JSONException e) {
+            LOGGER.info("Pirate wallet {} returned invalid JSON: {}", context, e.getMessage());
+            return null;
+        }
+    }
+
+    private String parseSeedPhrase(String response, String context) {
+        if (response == null) {
+            LOGGER.info("Pirate wallet {} response was null", context);
+            return null;
+        }
+
+        String trimmed = response.trim();
+        if (trimmed.isEmpty()) {
+            LOGGER.info("Pirate wallet {} response was empty", context);
+            return null;
+        }
+
+        if (trimmed.startsWith("{")) {
+            JSONObject json = parseJsonObject(trimmed, context);
+            if (json == null) {
+                return null;
+            }
+            if (json.has("seed")) {
+                return json.getString("seed");
+            }
+            if (json.has("error")) {
+                LOGGER.info("Pirate wallet {} error: {}", context, json.optString("error"));
+                return null;
+            }
+            LOGGER.info("Pirate wallet {} response missing seed phrase", context);
+            return null;
+        }
+
+        if (trimmed.startsWith("Error:")) {
+            LOGGER.info("Pirate wallet {} error: {}", context, trimmed);
+            return null;
+        }
+
+        return trimmed;
+    }
+
+    private JSONArray parseJsonArray(String response, String context) {
+        if (response == null) {
+            LOGGER.info("Pirate wallet {} response was null", context);
+            return null;
+        }
+
+        String trimmed = response.trim();
+        if (trimmed.isEmpty()) {
+            LOGGER.info("Pirate wallet {} response was empty", context);
+            return null;
+        }
+        if (!trimmed.startsWith("[")) {
+            LOGGER.info("Pirate wallet {} returned non-JSON response (length {})", context, trimmed.length());
+            return null;
+        }
+
+        try {
+            return new JSONArray(trimmed);
+        } catch (JSONException e) {
+            LOGGER.info("Pirate wallet {} returned invalid JSON: {}", context, e.getMessage());
+            return null;
+        }
+    }
+
 
     // APIs
 
     public Integer getHeight() {
         String response = LiteWalletJni.execute("height", "");
-        JSONObject json = new JSONObject(response);
-        if (json.has("height")) {
+        JSONObject json = parseJsonObject(response, "height");
+        if (json != null && json.has("height")) {
             return json.getInt("height");
         }
         return null;
@@ -314,8 +402,8 @@ public class PirateWallet {
 
     public Integer getChainTip() {
         String response = LiteWalletJni.execute("info", "");
-        JSONObject json = new JSONObject(response);
-        if (json.has("latest_block_height")) {
+        JSONObject json = parseJsonObject(response, "info");
+        if (json != null && json.has("latest_block_height")) {
             return json.getInt("latest_block_height");
         }
         return null;
@@ -327,8 +415,8 @@ public class PirateWallet {
 
     public Boolean isEncrypted() {
         String response = LiteWalletJni.execute("encryptionstatus", "");
-        JSONObject json = new JSONObject(response);
-        if (json.has("encrypted")) {
+        JSONObject json = parseJsonObject(response, "encryptionstatus");
+        if (json != null && json.has("encrypted")) {
             return json.getBoolean("encrypted");
         }
         return null;
@@ -336,30 +424,30 @@ public class PirateWallet {
 
     public boolean doEncrypt(String key) {
         String response = LiteWalletJni.execute("encrypt", key);
-        JSONObject json = new JSONObject(response);
-        String result = json.getString("result");
-        if (json.has("result")) {
-            return (Objects.equals(result, "success"));
+        JSONObject json = parseJsonObject(response, "encrypt");
+        if (json != null && json.has("result")) {
+            String result = json.getString("result");
+            return Objects.equals(result, "success");
         }
         return false;
     }
 
     public boolean doDecrypt(String key) {
         String response = LiteWalletJni.execute("decrypt", key);
-        JSONObject json = new JSONObject(response);
-        String result = json.getString("result");
-        if (json.has("result")) {
-            return (Objects.equals(result, "success"));
+        JSONObject json = parseJsonObject(response, "decrypt");
+        if (json != null && json.has("result")) {
+            String result = json.getString("result");
+            return Objects.equals(result, "success");
         }
         return false;
     }
 
     public boolean doUnlock(String key) {
         String response = LiteWalletJni.execute("unlock", key);
-        JSONObject json = new JSONObject(response);
-        String result = json.getString("result");
-        if (json.has("result")) {
-            return (Objects.equals(result, "success"));
+        JSONObject json = parseJsonObject(response, "unlock");
+        if (json != null && json.has("result")) {
+            String result = json.getString("result");
+            return Objects.equals(result, "success");
         }
         return false;
     }
@@ -367,10 +455,10 @@ public class PirateWallet {
     public String getWalletAddress() {
         // Get balance, which also contains wallet addresses
         String response = LiteWalletJni.execute("balance", "");
-        JSONObject json = new JSONObject(response);
+        JSONObject json = parseJsonObject(response, "balance");
         String address = null;
 
-        if (json.has("z_addresses")) {
+        if (json != null && json.has("z_addresses")) {
             JSONArray z_addresses = json.getJSONArray("z_addresses");
 
             if (z_addresses != null && !z_addresses.isEmpty()) {
@@ -385,8 +473,8 @@ public class PirateWallet {
 
     public String getPrivateKey() {
         String response = LiteWalletJni.execute("export", "");
-        JSONArray addressesJson = new JSONArray(response);
-        if (!addressesJson.isEmpty()) {
+        JSONArray addressesJson = parseJsonArray(response, "export");
+        if (addressesJson != null && !addressesJson.isEmpty()) {
             JSONObject addressJson = addressesJson.getJSONObject(0);
             if (addressJson.has("private_key")) {
                 //String address = addressJson.getString("address");
@@ -408,9 +496,9 @@ public class PirateWallet {
 
         // Derive seed phrase from entropy bytes
         String mySeedResponse = LiteWalletJni.getseedphrasefromentropyb64(myEntropy64);
-        JSONObject mySeedJson =  new JSONObject(mySeedResponse);
+        JSONObject mySeedJson = parseJsonObject(mySeedResponse, "getseedphrasefromentropyb64");
         String mySeedPhrase = null;
-        if (mySeedJson.has("seedPhrase")) {
+        if (mySeedJson != null && mySeedJson.has("seedPhrase")) {
             mySeedPhrase = mySeedJson.getString("seedPhrase");
 
             return mySeedPhrase;

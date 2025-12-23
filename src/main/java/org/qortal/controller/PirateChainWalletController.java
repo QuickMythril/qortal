@@ -48,7 +48,7 @@ public class PirateChainWalletController extends Thread {
     private boolean shouldLoadWallet = false;
     private String loadStatus = null;
 
-    private static String qdnWalletSignature = "EsfUw54perxkEtfoUoL7Z97XPrNsZRZXePVZPz3cwRm9qyEPSofD5KmgVpDqVitQp7LhnZRmL6z2V9hEe1YS45T";
+    private static String qdnWalletSignature = "5W8aoz1mceMTRFFWSyP1TCgy1kaDs8DMoksdE4VXYyWCxT1gaBt3pFH2PFUbb17tmZnbBhrzz9fDt8UbKgeCBeCs";
 
 
     private PirateChainWalletController() {
@@ -363,14 +363,15 @@ public class PirateChainWalletController extends Thread {
 
         String response = LiteWalletJni.execute("syncStatus", "");
         JSONObject json = new JSONObject(response);
-        if (json.has("syncing")) {
-            boolean isSyncing = Boolean.valueOf(json.getString("syncing"));
-            if (isSyncing) {
-                long syncedBlocks = json.getLong("synced_blocks");
-                long totalBlocks = json.getLong("total_blocks");
+        boolean inProgress = json.optBoolean("in_progress", false);
+        if (inProgress) {
+            long syncedBlocks = json.optLong("synced_blocks", -1);
+            long totalBlocks = json.optLong("total_blocks", -1);
+            String progress = (syncedBlocks >= 0 && totalBlocks >= 0)
+                    ? String.format(" (%d / %d)", syncedBlocks, totalBlocks)
+                    : "";
 
-                throw new ForeignBlockchainException(String.format("Sync in progress (%d / %d). Please try again later.", syncedBlocks, totalBlocks));
-            }
+            throw new ForeignBlockchainException(String.format("Sync in progress%s. Please try again later.", progress));
         }
     }
 
@@ -385,13 +386,14 @@ public class PirateChainWalletController extends Thread {
 
         String syncStatusResponse = LiteWalletJni.execute("syncStatus", "");
         org.json.JSONObject json = new JSONObject(syncStatusResponse);
-        if (json.has("syncing")) {
-            boolean isSyncing = Boolean.valueOf(json.getString("syncing"));
-            if (isSyncing) {
-                long syncedBlocks = json.getLong("synced_blocks");
-                long totalBlocks = json.getLong("total_blocks");
+        boolean inProgress = json.optBoolean("in_progress", false);
+        if (inProgress) {
+            long syncedBlocks = json.optLong("synced_blocks", -1);
+            long totalBlocks = json.optLong("total_blocks", -1);
+            if (syncedBlocks >= 0 && totalBlocks >= 0) {
                 return String.format("Sync in progress (%d / %d)", syncedBlocks, totalBlocks);
             }
+            return "Sync in progress";
         }
 
         boolean isSynchronized = this.currentWallet.isSynchronized();

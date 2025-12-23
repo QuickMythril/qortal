@@ -30,6 +30,7 @@ public class PirateLightClient extends BitcoinyBlockchainProvider {
 
 	private static final int RESPONSE_TIME_READINGS = 5;
 	private static final long MAX_AVG_RESPONSE_TIME = 500L; // ms
+	private static final ChainSpec DEFAULT_CHAIN_SPEC = ChainSpec.newBuilder().build();
 
 	public static class Server implements ChainableServer{
 		String hostname;
@@ -158,7 +159,7 @@ public class PirateLightClient extends BitcoinyBlockchainProvider {
 	 */
 	@Override
 	public int getCurrentHeight() throws ForeignBlockchainException {
-		BlockID latestBlock = this.getCompactTxStreamerStub().getLatestBlock(null);
+		BlockID latestBlock = this.getCompactTxStreamerStub().getLatestBlock(DEFAULT_CHAIN_SPEC);
 
 		if (!(latestBlock instanceof BlockID))
 			throw new ForeignBlockchainException.NetworkException("Unexpected output from Pirate Chain getLatestBlock gRPC");
@@ -488,7 +489,7 @@ public class PirateLightClient extends BitcoinyBlockchainProvider {
 		try {
 			// Firstly we need to get the latest block
 			int defaultBirthday = Settings.getInstance().getArrrDefaultBirthday();
-			BlockID endBlock = this.getCompactTxStreamerStub().getLatestBlock(null);
+			BlockID endBlock = this.getCompactTxStreamerStub().getLatestBlock(DEFAULT_CHAIN_SPEC);
 			BlockID startBlock = BlockID.newBuilder().setHeight(defaultBirthday).build();
 			BlockRange blockRange = BlockRange.newBuilder().setStart(startBlock).setEnd(endBlock).build();
 

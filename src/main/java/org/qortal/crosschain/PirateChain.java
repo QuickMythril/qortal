@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.libdohj.params.LitecoinRegTestParams;
 import org.libdohj.params.LitecoinTestNet3Params;
 import org.libdohj.params.PirateChainMainNetParams;
+import org.qortal.api.model.crosschain.PirateChainBalance;
 import org.qortal.api.model.crosschain.PirateChainSendRequest;
 import org.qortal.controller.PirateChainWalletController;
 import org.qortal.crosschain.PirateLightClient.Server;
@@ -54,8 +55,9 @@ public class PirateChain extends Bitcoiny {
 			@Override
 			public Collection<Server> getServers() {
 				return Arrays.asList(
-					// Servers chosen on NO BASIS WHATSOEVER from various sources!
-					new Server("lightd.pirate.black", Server.ConnectionType.SSL, 443)
+					new Server("lightd1.pirate.black", Server.ConnectionType.SSL, 443),
+					new Server("piratelightd1.cryptoforge.cc", Server.ConnectionType.SSL, 443),
+					new Server("piratelightd2.cryptoforge.cc", Server.ConnectionType.SSL, 443)
 				);
 			}
 
@@ -280,7 +282,11 @@ public class PirateChain extends Bitcoiny {
 	}
 
 	public Long getWalletBalance(String entropy58) throws ForeignBlockchainException {
+		PirateChainBalance balance = getWalletBalances(entropy58);
+		return balance == null ? null : balance.zbalance;
+	}
 
+	public PirateChainBalance getWalletBalances(String entropy58) throws ForeignBlockchainException {
 		synchronized (this) {
 			PirateChainWalletController walletController = PirateChainWalletController.getInstance();
 			walletController.initWithEntropy58(entropy58);
@@ -291,11 +297,14 @@ public class PirateChain extends Bitcoiny {
 			// Get balance
 			String response = LiteWalletJni.execute("balance", "");
 			JSONObject json = new JSONObject(response);
-			if (json.has("zbalance")) {
-				return json.getLong("zbalance");
+			if (!json.has("zbalance") || !json.has("verified_zbalance")) {
+				throw new ForeignBlockchainException("Unable to determine balance");
 			}
 
-			throw new ForeignBlockchainException("Unable to determine balance");
+			PirateChainBalance balance = new PirateChainBalance();
+			balance.zbalance = json.getLong("zbalance");
+			balance.verified_zbalance = json.getLong("verified_zbalance");
+			return balance;
 		}
 	}
 
@@ -344,50 +353,51 @@ public class PirateChain extends Bitcoiny {
 					if (transactionJson.has("txid")) {
 						String txId = transactionJson.getString("txid");
 						Long timestamp = transactionJson.getLong("datetime");
-						Long amount = 0L;
-						Long fee = 0L;
+						Long amount = transactionJson.optLong("amount", 0L);
+						Long fee = transactionJson.optLong("fee", 0L);
 						String memo = null;
 
 						List<SimpleTransaction.Input> inputs = new ArrayList<>();
 						List<SimpleTransaction.Output> outputs = new ArrayList<>();
 
-						if (transactionJson.has("incoming_metadata")) {
-							JSONArray incomingMetadatas = transactionJson.getJSONArray("incoming_metadata");
-							if (incomingMetadatas != null) {
-								for (int j = 0; j < incomingMetadatas.length(); j++) {
-									JSONObject incomingMetadata = incomingMetadatas.getJSONObject(j);
-									if (incomingMetadata.has("value")) {
-										Long value = incomingMetadata.getLong("value");
-										amount += value;
+						JSONArray incomingMetadatas = transactionJson.optJSONArray("incoming_metadata");
+						JSONArray outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata");
+						boolean hasIncoming = incomingMetadatas != null && incomingMetadatas.length() > 0;
+						boolean hasOutgoing = outgoingMetadatas != null && outgoingMetadatas.length() > 0;
 
-										if(incomingMetadata.has("address")) {
+						if (!hasIncoming && !hasOutgoing) {
+							incomingMetadatas = transactionJson.optJSONArray("incoming_metadata_change");
+							outgoingMetadatas = transactionJson.optJSONArray("outgoing_metadata_change");
+						}
 
-											inputs.add(new SimpleTransaction.Input("[PRIVATE]", value, false));
+						if (incomingMetadatas != null) {
+							for (int j = 0; j < incomingMetadatas.length(); j++) {
+								JSONObject incomingMetadata = incomingMetadatas.getJSONObject(j);
+								if (incomingMetadata.has("value")) {
+									Long value = incomingMetadata.getLong("value");
 
-											String address = incomingMetadata.getString("address");
-											outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
-										}
+									if (incomingMetadata.has("address")) {
+										inputs.add(new SimpleTransaction.Input("[PRIVATE]", value, false));
+
+										String address = incomingMetadata.getString("address");
+										outputs.add(new SimpleTransaction.Output(address, value, address.equals(myAddress)));
 									}
+								}
 
-									if (incomingMetadata.has("memo") && !incomingMetadata.isNull("memo")) {
-										memo = incomingMetadata.getString("memo");
-									}
+								if (incomingMetadata.has("memo") && !incomingMetadata.isNull("memo")) {
+									memo = incomingMetadata.getString("memo");
 								}
 							}
 						}
 
-						if (transactionJson.has("outgoing_metadata")) {
-							JSONArray outgoingMetadatas = transactionJson.getJSONArray("outgoing_metadata");
+						if (outgoingMetadatas != null) {
 							for (int j = 0; j < outgoingMetadatas.length(); j++) {
 								JSONObject outgoingMetadata = outgoingMetadatas.getJSONObject(j);
 
-								if(outgoingMetadata.has("value")) {
+								if (outgoingMetadata.has("value")) {
 									Long value = outgoingMetadata.getLong("value");
-									amount -= value;
-									fee += MAINNET_FEE; // add the standard fee for each send
 
-									if(outgoingMetadata.has("address")) {
-
+									if (outgoingMetadata.has("address")) {
 										inputs.add(new SimpleTransaction.Input(myAddress, value, true));
 
 										String address = outgoingMetadata.getString("address");
@@ -484,8 +494,8 @@ public class PirateChain extends Bitcoiny {
 		String txnString = txn.toString();
 
 		// Send the coins
-		String response = LiteWalletJni.execute("send", txnString);
-		JSONObject json = new JSONObject(response);
+		String response = LiteWalletJni.execute("sendp2sh", txnString);
+		JSONObject json = parseLitewalletResponse(response, "sendp2sh");
 		try {
 			if (json.has("txid")) { // Success
 				return json.getString("txid");
@@ -532,8 +542,8 @@ public class PirateChain extends Bitcoiny {
 		String txnString = txn.toString();
 
 		// Send the coins
-		String response = LiteWalletJni.execute("sendp2sh", txnString);
-		JSONObject json = new JSONObject(response);
+		String response = LiteWalletJni.execute("send", txnString);
+		JSONObject json = parseLitewalletResponse(response, "send");
 		try {
 			if (json.has("txid")) { // Success
 				return json.getString("txid");
@@ -584,7 +594,7 @@ public class PirateChain extends Bitcoiny {
 
 		// Redeem the P2SH
 		String response = LiteWalletJni.execute("redeemp2sh", txnString);
-		JSONObject json = new JSONObject(response);
+		JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
 		try {
 			if (json.has("txid")) { // Success
 				return json.getString("txid");
@@ -635,7 +645,7 @@ public class PirateChain extends Bitcoiny {
 
 		// Redeem the P2SH
 		String response = LiteWalletJni.execute("redeemp2sh", txnString);
-		JSONObject json = new JSONObject(response);
+		JSONObject json = parseLitewalletResponse(response, "redeemp2sh");
 		try {
 			if (json.has("txid")) { // Success
 				return json.getString("txid");
@@ -650,6 +660,16 @@ public class PirateChain extends Bitcoiny {
 		}
 
 		throw new ForeignBlockchainException("Something went wrong");
+	}
+
+	private static JSONObject parseLitewalletResponse(String response, String command) throws ForeignBlockchainException {
+		try {
+			return new JSONObject(response);
+		} catch (JSONException e) {
+			String trimmedResponse = response == null ? "" : response.trim();
+			String message = String.format("LiteWalletJni %s returned non-JSON: %s", command, trimmedResponse);
+			throw new ForeignBlockchainException(message);
+		}
 	}
 
 	public String getSyncStatus(String entropy58) throws ForeignBlockchainException {
