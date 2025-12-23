@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 
@@ -160,6 +161,12 @@ public class PirateWallet {
         String birthdayString = String.format("%d", birthday);
         String outputSeedResponse = LiteWalletJni.initfromseed(serverUri, this.params, inputSeedPhrase, birthdayString, this.saplingOutput64, this.saplingSpend64); // Thread-safe.
         String outputSeedPhrase = parseSeedPhrase(outputSeedResponse, "initfromseed");
+        if (outputSeedPhrase == null && isWalletAlreadyExistsError(outputSeedResponse)) {
+            LOGGER.info("Clearing litewallet cache after initfromseed reported existing wallet");
+            this.deleteLitewalletCache();
+            outputSeedResponse = LiteWalletJni.initfromseed(serverUri, this.params, inputSeedPhrase, birthdayString, this.saplingOutput64, this.saplingSpend64); // Thread-safe.
+            outputSeedPhrase = parseSeedPhrase(outputSeedResponse, "initfromseed");
+        }
         if (outputSeedPhrase == null) {
             LOGGER.info("Unable to initialize Pirate Chain wallet: init response did not contain a seed phrase");
             return false;
@@ -173,6 +180,14 @@ public class PirateWallet {
 
         this.seedPhrase = outputSeedPhrase;
         return true;
+    }
+
+    private boolean isWalletAlreadyExistsError(String response) {
+        if (response == null) {
+            return false;
+        }
+        String normalized = response.toLowerCase(Locale.ROOT);
+        return normalized.contains("wallet already exists");
     }
 
     private void deleteWalletCache() {
