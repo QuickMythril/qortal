@@ -3,6 +3,7 @@ package org.qortal.controller.arbitrary;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.qortal.controller.Controller;
+import org.qortal.controller.Synchronizer;
 import org.qortal.data.arbitrary.ArbitraryResourceData;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.event.DataMonitorEvent;
@@ -83,6 +84,10 @@ public class ArbitraryDataCacheManager extends Thread {
 
 
     private void processResourceQueue() {
+        if (Synchronizer.getInstance().isSynchronizing()) {
+            return;
+        }
+
         if (this.updateQueue.isEmpty()) {
             // Nothing to do
             return;

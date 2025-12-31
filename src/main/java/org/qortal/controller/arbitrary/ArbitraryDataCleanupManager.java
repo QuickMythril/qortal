@@ -6,6 +6,7 @@ import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.event.DataMonitorEvent;
 import org.qortal.event.EventBus;
+import org.qortal.controller.Synchronizer;
 import org.qortal.repository.DataException;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
@@ -104,6 +105,11 @@ public class ArbitraryDataCleanupManager extends Thread {
 				// Don't run if QDN is disabled
 				if (!Settings.getInstance().isQdnEnabled()) {
 					Thread.sleep(60 * 60 * 1000L);
+					continue;
+				}
+
+				// Skip cleanup while syncing to reduce disk contention
+				if (Synchronizer.getInstance().isSynchronizing()) {
 					continue;
 				}
 

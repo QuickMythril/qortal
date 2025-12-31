@@ -2505,7 +2505,7 @@ public class Block {
 			final long foundersShare = 1_00000000 - totalShares;
 			BlockRewardCandidate rewardCandidate = new BlockRewardCandidate("Founders", foundersShare, founderDistributor);
 			rewardCandidates.add(rewardCandidate);
-			LOGGER.info("logging foundersShare prior to reward modifications {}",foundersShare);
+			LOGGER.debug("logging foundersShare prior to reward modifications {}",foundersShare);
 		}
 		else if (this.blockData.getHeight() >= BlockChain.getInstance().getAdminsReplaceFoundersHeight()) {
 			try (final Repository repository = RepositoryManager.getRepository()) {

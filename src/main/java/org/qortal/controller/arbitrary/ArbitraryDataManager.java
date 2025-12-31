@@ -8,6 +8,7 @@ import org.qortal.arbitrary.ArbitraryDataResource;
 import org.qortal.arbitrary.metadata.ArbitraryDataTransactionMetadata;
 import org.qortal.arbitrary.misc.Service;
 import org.qortal.controller.Controller;
+import org.qortal.controller.Synchronizer;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.data.transaction.TransactionData;
 import org.qortal.event.DataMonitorEvent;
@@ -109,6 +110,11 @@ public class ArbitraryDataManager extends Thread {
 				// Don't run if QDN is disabled
 				if (!Settings.getInstance().isQdnEnabled()) {
 					Thread.sleep(60 * 60 * 1000L);
+					continue;
+				}
+
+				// Skip data fetching while syncing to reduce disk contention
+				if (Synchronizer.getInstance().isSynchronizing()) {
 					continue;
 				}
 

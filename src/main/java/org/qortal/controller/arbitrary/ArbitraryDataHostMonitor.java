@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.qortal.data.transaction.ArbitraryHostedDataItemInfo;
 import org.qortal.data.transaction.ArbitraryTransactionData;
 import org.qortal.data.transaction.TransactionData;
+import org.qortal.controller.Synchronizer;
 import org.qortal.repository.Repository;
 import org.qortal.repository.RepositoryManager;
 import org.qortal.settings.Settings;
@@ -73,6 +74,9 @@ public class ArbitraryDataHostMonitor extends Thread{
                 Thread.sleep(600_000);
 
                 if( isStopping ) break;
+                if (Synchronizer.getInstance().isSynchronizing()) {
+                    continue;
+                }
 
                 LOGGER.info("Collecting index paths ...");
 
