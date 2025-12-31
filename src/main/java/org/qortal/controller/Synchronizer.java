@@ -65,6 +65,8 @@ public class Synchronizer extends Thread {
 	private static final int BLOCK_PREFETCH_WINDOW = 8;
 	private static final int BLOCK_PREFETCH_WORKERS = 8;
 	private static final int PREFETCH_LOG_SAMPLE_SIZE = 100;
+	private static final int SYNC_COMMIT_BLOCKS = 10;
+	private static final long SYNC_COMMIT_MAX_MS = 2000L;
 
 	private boolean running;
 	private final ExecutorService blockFetchExecutor;
@@ -1594,6 +1596,8 @@ public class Synchronizer extends Thread {
 		long processTotalMs = 0L;
 		long fetchDurationTotalMs = 0L;
 		int sampleCount = 0;
+		List<BlockData> pendingBlocks = new ArrayList<>(SYNC_COMMIT_BLOCKS);
+		long lastCommitTime = System.currentTimeMillis();
 
 		try {
 			while (nextHeightToProcess <= targetHeight) {
@@ -1707,7 +1711,7 @@ public class Synchronizer extends Thread {
 
 				LOGGER.trace(String.format("Processed block height %d, sig %.8s", newBlock.getBlockData().getHeight(), Base58.encode(newBlock.getBlockData().getSignature())));
 
-				repository.saveChanges();
+				pendingBlocks.add(newBlock.getBlockData());
 				processTotalMs += System.currentTimeMillis() - processStart;
 				fetchDurationTotalMs += prefetched.fetchDurationMs;
 
@@ -1716,8 +1720,6 @@ public class Synchronizer extends Thread {
 						this.blocksRemaining = peer.getChainTipData().getHeight() - newBlock.getBlockData().getHeight();
 					}
 				}
-
-				Controller.getInstance().onNewBlock(newBlock.getBlockData());
 
 				ourHeight = newBlock.getBlockData().getHeight();
 				++nextHeightToProcess;
@@ -1729,7 +1731,15 @@ public class Synchronizer extends Thread {
 							fetchDurationTotalMs / sampleCount,
 							processTotalMs / sampleCount));
 				}
+
+				long nowMs = System.currentTimeMillis();
+				if (pendingBlocks.size() >= SYNC_COMMIT_BLOCKS || nowMs - lastCommitTime >= SYNC_COMMIT_MAX_MS) {
+					processTotalMs += commitPendingBlocks(repository, pendingBlocks);
+					lastCommitTime = System.currentTimeMillis();
+				}
 			}
+
+			processTotalMs += commitPendingBlocks(repository, pendingBlocks);
 		} finally {
 			for (Future<PrefetchedBlock> future : inFlight.values()) {
 				future.cancel(true);
@@ -1737,6 +1747,22 @@ public class Synchronizer extends Thread {
 		}
 
 		return SynchronizationResult.OK;
+	}
+
+	private long commitPendingBlocks(Repository repository, List<BlockData> pendingBlocks) throws DataException {
+		if (pendingBlocks.isEmpty())
+			return 0L;
+
+		long commitStart = System.currentTimeMillis();
+		repository.saveChanges();
+		long commitDuration = System.currentTimeMillis() - commitStart;
+
+		for (BlockData blockData : pendingBlocks) {
+			Controller.getInstance().onNewBlock(blockData);
+		}
+		pendingBlocks.clear();
+
+		return commitDuration;
 	}
 
 	private List<BlockSummaryData> getBlockSummaries(Peer peer, byte[] parentSignature, int numberRequested) throws InterruptedException {
