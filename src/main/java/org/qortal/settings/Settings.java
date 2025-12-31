@@ -449,6 +449,20 @@ public class Settings {
 	private int synchronizerThreadPriority = 10;
 
 	/**
+	 * Synchronizer Commit Blocks
+	 *
+	 * How many blocks to process before committing during sync.
+	 */
+	private int synchronizerCommitBlocks = 1;
+
+	/**
+	 * Synchronizer Commit Max Ms
+	 *
+	 * Maximum time between commits during sync.
+	 */
+	private long synchronizerCommitMaxMs = 2000L;
+
+	/**
 	 * Archiving Pause
 	 *
 	 * In milliseconds
@@ -779,6 +793,12 @@ public class Settings {
 			String possibleValues = EnumUtils.getNames(StoragePolicy.class, ", ");
 			throwValidationError(String.format("storagePolicy must be one of: %s", possibleValues));
 		}
+
+		if (this.synchronizerCommitBlocks < 1)
+			throwValidationError("synchronizerCommitBlocks must be at least 1");
+
+		if (this.synchronizerCommitMaxMs < 0)
+			throwValidationError("synchronizerCommitMaxMs must be at least 0");
 	}
 
 	private void setAdditionalDefaults() {
@@ -1361,6 +1381,14 @@ public class Settings {
 
 	public int getSynchronizerThreadPriority() {
 		return synchronizerThreadPriority;
+	}
+
+	public int getSynchronizerCommitBlocks() {
+		return synchronizerCommitBlocks;
+	}
+
+	public long getSynchronizerCommitMaxMs() {
+		return synchronizerCommitMaxMs;
 	}
 
 	public long getArchivingPause() {

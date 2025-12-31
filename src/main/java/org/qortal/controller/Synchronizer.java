@@ -65,8 +65,6 @@ public class Synchronizer extends Thread {
 	private static final int BLOCK_PREFETCH_WINDOW = 8;
 	private static final int BLOCK_PREFETCH_WORKERS = 8;
 	private static final int PREFETCH_LOG_SAMPLE_SIZE = 100;
-	private static final int SYNC_COMMIT_BLOCKS = 10;
-	private static final long SYNC_COMMIT_MAX_MS = 2000L;
 
 	private boolean running;
 	private final ExecutorService blockFetchExecutor;
@@ -1581,6 +1579,13 @@ public class Synchronizer extends Thread {
 		if (blocksToFetch <= 0)
 			return SynchronizationResult.OK;
 
+		int syncCommitBlocks = Settings.getInstance().getSynchronizerCommitBlocks();
+		long syncCommitMaxMs = Settings.getInstance().getSynchronizerCommitMaxMs();
+		if (syncCommitBlocks < 1)
+			syncCommitBlocks = 1;
+		if (syncCommitMaxMs < 0)
+			syncCommitMaxMs = 0L;
+
 		Deque<byte[]> signatureQueue = new ArrayDeque<>(peerBlockSummaries.stream().map(BlockSummaryData::getSignature).collect(Collectors.toList()));
 		while (signatureQueue.size() > blocksToFetch)
 			signatureQueue.removeLast();
@@ -1596,7 +1601,7 @@ public class Synchronizer extends Thread {
 		long processTotalMs = 0L;
 		long fetchDurationTotalMs = 0L;
 		int sampleCount = 0;
-		List<BlockData> pendingBlocks = new ArrayList<>(SYNC_COMMIT_BLOCKS);
+		List<BlockData> pendingBlocks = new ArrayList<>(syncCommitBlocks);
 		long lastCommitTime = System.currentTimeMillis();
 
 		try {
@@ -1733,7 +1738,7 @@ public class Synchronizer extends Thread {
 				}
 
 				long nowMs = System.currentTimeMillis();
-				if (pendingBlocks.size() >= SYNC_COMMIT_BLOCKS || nowMs - lastCommitTime >= SYNC_COMMIT_MAX_MS) {
+				if (pendingBlocks.size() >= syncCommitBlocks || nowMs - lastCommitTime >= syncCommitMaxMs) {
 					processTotalMs += commitPendingBlocks(repository, pendingBlocks);
 					lastCommitTime = System.currentTimeMillis();
 				}
