@@ -22,8 +22,8 @@ public interface ATRepository {
 	/** Returns AT creator's public key, or null if not found */
 	public byte[] getCreatorPublicKey(String atAddress) throws DataException;
 
-	/** Returns list of executable ATs, empty if none found */
-	public List<ATData> getAllExecutableATs() throws DataException;
+	/** Returns list of executable ATs, empty if none found. */
+	public List<ATData> getAllExecutableATs(int height) throws DataException;
 
 	/** Returns list of ATs with matching code hash, optionally executable only. */
 	public List<ATData> getATsByFunctionality(byte[] codeHash, Boolean isExecutable, Integer limit, Integer offset, Boolean reverse) throws DataException;

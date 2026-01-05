@@ -106,7 +106,8 @@
 		"adminsReplaceFoundersHeight": 9999999999999,
 		"ignoreLevelForRewardShareHeight": 9999999999999,
 		"nullGroupMembershipHeight": 20,
-		"adminQueryFixHeight": 9999999999999
+		"adminQueryFixHeight": 9999999999999,
+		"deterministicAtOrderingHeight": 9999999999999
 	},
 	"genesisInfo": {
 		"version": 4,

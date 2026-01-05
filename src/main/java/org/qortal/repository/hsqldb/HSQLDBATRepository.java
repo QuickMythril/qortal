@@ -4,6 +4,7 @@ import com.google.common.primitives.Longs;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.qortal.block.BlockChain;
 import org.qortal.controller.Controller;
 import org.qortal.crypto.Crypto;
 import org.qortal.data.at.ATData;
@@ -161,17 +162,21 @@ public class HSQLDBATRepository implements ATRepository {
 	}
 
 	@Override
-	public List<ATData> getAllExecutableATs() throws DataException {
-		String sql = "SELECT AT_address, creator, created_when, version, asset_id, code_bytes, code_hash, "
-				+ "is_sleeping, sleep_until_height, had_fatal_error, "
-				+ "is_frozen, frozen_balance, sleep_until_message_timestamp "
-				+ "FROM ATs "
-				+ "WHERE is_finished = false "
-				+ "ORDER BY created_when ASC";
+	public List<ATData> getAllExecutableATs(int height) throws DataException {
+		StringBuilder sql = new StringBuilder(256);
+		sql.append("SELECT AT_address, creator, created_when, version, asset_id, code_bytes, code_hash, ")
+				.append("is_sleeping, sleep_until_height, had_fatal_error, ")
+				.append("is_frozen, frozen_balance, sleep_until_message_timestamp ")
+				.append("FROM ATs ")
+				.append("WHERE is_finished = false ")
+				.append("ORDER BY created_when ASC");
+
+		if (height >= BlockChain.getInstance().getDeterministicAtOrderingHeight())
+			sql.append(", AT_address ASC");
 
 		List<ATData> executableATs = new ArrayList<>();
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql)) {
+		try (ResultSet resultSet = this.repository.checkedExecute(sql.toString())) {
 			if (resultSet == null)
 				return executableATs;
 
@@ -702,16 +707,20 @@ public class HSQLDBATRepository implements ATRepository {
 
 	@Override
 	public List<ATStateData> getBlockATStatesAtHeight(int height) throws DataException {
-		String sql = "SELECT AT_address, state_hash, fees, is_initial "
-				+ "FROM ATs "
-				+ "JOIN ATStates "
-				+ "ON ATStates.AT_address = ATs.AT_address "
-				+ "WHERE height = ? "
-				+ "ORDER BY created_when ASC";
+		StringBuilder sql = new StringBuilder(256);
+		sql.append("SELECT AT_address, state_hash, fees, is_initial ")
+				.append("FROM ATs ")
+				.append("JOIN ATStates ")
+				.append("ON ATStates.AT_address = ATs.AT_address ")
+				.append("WHERE height = ? ")
+				.append("ORDER BY ATs.created_when ASC");
+
+		if (height >= BlockChain.getInstance().getDeterministicAtOrderingHeight())
+			sql.append(", ATs.AT_address ASC");
 
 		List<ATStateData> atStates = new ArrayList<>();
 
-		try (ResultSet resultSet = this.repository.checkedExecute(sql, height)) {
+		try (ResultSet resultSet = this.repository.checkedExecute(sql.toString(), height)) {
 			if (resultSet == null)
 				return atStates; // No atStates in this block
 

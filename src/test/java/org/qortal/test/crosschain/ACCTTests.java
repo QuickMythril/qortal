@@ -635,7 +635,7 @@ public abstract class ACCTTests extends Common {
 
 			DeployAtTransaction deployAtTransaction = doDeploy(repository, deployer, tradeAccount.getAddress());
 
-			List<ATData> executableAts = repository.getATRepository().getAllExecutableATs();
+			List<ATData> executableAts = repository.getATRepository().getAllExecutableATs(repository.getBlockRepository().getBlockchainHeight());
 
 			for (ATData atData : executableAts) {
 				String atAddress = atData.getATAddress();

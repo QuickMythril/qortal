@@ -94,7 +94,8 @@ public class BlockChain {
 		ignoreLevelForRewardShareHeight,
 		adminQueryFixHeight,
 		multipleNamesPerAccountHeight,
-		mintedBlocksAdjustmentRemovalHeight
+		mintedBlocksAdjustmentRemovalHeight,
+		deterministicAtOrderingHeight
 	}
 
 	// Custom transaction fees
@@ -698,6 +699,10 @@ public class BlockChain {
 
 	public int getMintedBlocksAdjustmentRemovalHeight() {
 		return this.featureTriggers.get(FeatureTrigger.mintedBlocksAdjustmentRemovalHeight.name()).intValue();
+	}
+
+	public int getDeterministicAtOrderingHeight() {
+		return this.featureTriggers.get(FeatureTrigger.deterministicAtOrderingHeight.name()).intValue();
 	}
 
 	// More complex getters for aspects that change by height or timestamp

@@ -1544,7 +1544,7 @@ public class Block {
 		this.ourAtFees = 0;
 
 		// Find all executable ATs, ordered by earliest creation date first
-		List<ATData> executableATs = this.repository.getATRepository().getAllExecutableATs();
+		List<ATData> executableATs = this.repository.getATRepository().getAllExecutableATs(this.blockData.getHeight());
 
 		// Run each AT, appends AT-Transactions and corresponding AT states, to our lists
 		for (ATData atData : executableATs) {
