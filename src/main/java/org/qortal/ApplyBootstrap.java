@@ -43,14 +43,20 @@ public class ApplyBootstrap {
 
 	private static final long CHECK_INTERVAL = 15 * 1000L; // ms
 	private static final int MAX_ATTEMPTS = 20;
+	private static final String PARENT_PID_ARG = "--parent-pid";
+	private static final long PARENT_SHUTDOWN_TIMEOUT = 5 * 60 * 1000L; // ms
+	private static final long PARENT_SHUTDOWN_CHECK_INTERVAL = 5 * 1000L; // ms
 
 	public static void main(String[] args) {
 		Security.insertProviderAt(new BouncyCastleProvider(), 0);
 		Security.insertProviderAt(new BouncyCastleJsseProvider(), 1);
 
+		BootstrapArgs parsedArgs = parseArgs(args);
+		String[] filteredArgs = parsedArgs.filteredArgs;
+
 		// Load/check settings, which potentially sets up blockchain config, etc.
-		if (args.length > 0)
-			Settings.fileInstance(args[0]);
+		if (filteredArgs.length > 0)
+			Settings.fileInstance(filteredArgs[0]);
 		else
 			Settings.getInstance();
 
@@ -60,11 +66,13 @@ public class ApplyBootstrap {
 		if (!shutdownNode())
 			return;
 
+		waitForParentExit(parsedArgs.parentPid);
+
 		// Delete db
 		deleteDB();
 
 		// Restart node
-		restartNode(args);
+		restartNode(filteredArgs);
 
 		LOGGER.info("Bootstrapping...");
 	}
@@ -169,6 +177,37 @@ public class ApplyBootstrap {
 		}
 	}
 
+	private static void waitForParentExit(Long parentPid) {
+		if (parentPid == null) {
+			LOGGER.info("No parent PID provided; skipping shutdown wait");
+			return;
+		}
+
+		LOGGER.info("Waiting for parent process {} to exit...", parentPid);
+		long startTime = System.currentTimeMillis();
+
+		while (true) {
+			Optional<ProcessHandle> handle = ProcessHandle.of(parentPid);
+			if (handle.isEmpty() || !handle.get().isAlive()) {
+				LOGGER.info("Parent process {} has exited", parentPid);
+				return;
+			}
+
+			if (System.currentTimeMillis() - startTime >= PARENT_SHUTDOWN_TIMEOUT) {
+				LOGGER.warn("Timeout waiting for parent process {} to exit; continuing", parentPid);
+				return;
+			}
+
+			try {
+				Thread.sleep(PARENT_SHUTDOWN_CHECK_INTERVAL);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				LOGGER.warn("Interrupted while waiting for parent process {} to exit", parentPid);
+				return;
+			}
+		}
+	}
+
 	private static void restartNode(String[] args) {
 		String javaHome = System.getProperty("java.home");
 		LOGGER.debug(() -> String.format("Java home: %s", javaHome));
@@ -222,6 +261,61 @@ public class ApplyBootstrap {
 			process.getOutputStream().close();
 		} catch (Exception e) {
 			LOGGER.error(String.format("Failed to restart node (BAD): %s", e.getMessage()));
+		}
+	}
+
+	private static BootstrapArgs parseArgs(String[] args) {
+		if (args == null || args.length == 0) {
+			return new BootstrapArgs(null, new String[0]);
+		}
+
+		List<String> filteredArgs = new ArrayList<>();
+		Long parentPid = null;
+
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
+			if (arg == null) {
+				continue;
+			}
+
+			if (arg.startsWith(PARENT_PID_ARG + "=")) {
+				String value = arg.substring(PARENT_PID_ARG.length() + 1);
+				parentPid = parsePid(value, parentPid);
+				continue;
+			}
+
+			if (PARENT_PID_ARG.equals(arg)) {
+				if (i + 1 < args.length) {
+					parentPid = parsePid(args[i + 1], parentPid);
+					i++;
+					continue;
+				}
+				LOGGER.warn("Missing value for {}", PARENT_PID_ARG);
+				continue;
+			}
+
+			filteredArgs.add(arg);
+		}
+
+		return new BootstrapArgs(parentPid, filteredArgs.toArray(new String[0]));
+	}
+
+	private static Long parsePid(String value, Long fallback) {
+		try {
+			return Long.parseLong(value);
+		} catch (NumberFormatException e) {
+			LOGGER.warn("Invalid parent pid value: {}", value);
+			return fallback;
+		}
+	}
+
+	private static class BootstrapArgs {
+		private final Long parentPid;
+		private final String[] filteredArgs;
+
+		private BootstrapArgs(Long parentPid, String[] filteredArgs) {
+			this.parentPid = parentPid;
+			this.filteredArgs = filteredArgs;
 		}
 	}
 }
