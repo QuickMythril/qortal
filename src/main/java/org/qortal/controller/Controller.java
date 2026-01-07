@@ -417,36 +417,6 @@ public class Controller extends Thread {
 				// RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);
 			}
-
-			if( Settings.getInstance().isDbCacheEnabled() ) {
-				LOGGER.info("Db Cache Starting ...");
-				HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager();
-				hsqldbDataCacheManager.start();
-			}
-			else {
-				LOGGER.info("Db Cache Disabled");
-			}
-
-			LOGGER.info("Arbitrary Indexing Starting ...");
-			ArbitraryIndexUtils.startCaching(
-				Settings.getInstance().getArbitraryIndexingPriority(),
-				Settings.getInstance().getArbitraryIndexingFrequency()
-			);
-
-			if( Settings.getInstance().isBalanceRecorderEnabled() ) {
-				Optional<HSQLDBBalanceRecorder> recorder = HSQLDBBalanceRecorder.getInstance();
-
-				if( recorder.isPresent() ) {
-					LOGGER.info("Balance Recorder Starting ...");
-					recorder.get().start();
-				}
-				else {
-					LOGGER.info("Balance Recorder won't start.");
-				}
-			}
-			else {
-				LOGGER.info("Balance Recorder Disabled");
-			}
 		} catch (DataException e) {
 			// If exception has no cause or message then repository is in use by some other process.
 			if (e.getCause() == null && e.getMessage() == null) {
@@ -501,6 +471,37 @@ public class Controller extends Thread {
 		} catch (DataException e) {
 			LOGGER.error("Error checking transaction sequences in repository", e);
 			return;
+		}
+
+		// Start cache/indexing timers after validation to avoid repository swaps during bootstrap.
+		if( Settings.getInstance().isDbCacheEnabled() ) {
+			LOGGER.info("Db Cache Starting ...");
+			HSQLDBDataCacheManager hsqldbDataCacheManager = new HSQLDBDataCacheManager();
+			hsqldbDataCacheManager.start();
+		}
+		else {
+			LOGGER.info("Db Cache Disabled");
+		}
+
+		LOGGER.info("Arbitrary Indexing Starting ...");
+		ArbitraryIndexUtils.startCaching(
+			Settings.getInstance().getArbitraryIndexingPriority(),
+			Settings.getInstance().getArbitraryIndexingFrequency()
+		);
+
+		if( Settings.getInstance().isBalanceRecorderEnabled() ) {
+			Optional<HSQLDBBalanceRecorder> recorder = HSQLDBBalanceRecorder.getInstance();
+
+			if( recorder.isPresent() ) {
+				LOGGER.info("Balance Recorder Starting ...");
+				recorder.get().start();
+			}
+			else {
+				LOGGER.info("Balance Recorder won't start.");
+			}
+		}
+		else {
+			LOGGER.info("Balance Recorder Disabled");
 		}
 
 		// Import current trade bot states and minting accounts if they exist
