@@ -413,6 +413,20 @@ public class Controller extends Thread {
 			RepositoryManager.setRepositoryFactory(repositoryFactory);
 			RepositoryManager.setRequestedCheckpoint(Boolean.TRUE);
 
+			if (Bootstrap.isBootstrapRequested()) {
+				LOGGER.info("Bootstrap requested on startup. Applying bootstrap...");
+				try {
+					Bootstrap bootstrap = new Bootstrap();
+					bootstrap.startImport();
+					if (!Controller.isStopping()) {
+						Bootstrap.clearBootstrapRequest();
+					}
+				} catch (InterruptedException e) {
+					LOGGER.error("Interrupted while applying bootstrap", e);
+					return; // Not System.exit() so that GUI can display error
+				}
+			}
+
 			try (final Repository repository = RepositoryManager.getRepository()) {
 				// RepositoryManager.rebuildTransactionSequences(repository);
 				ArbitraryDataCacheManager.getInstance().buildArbitraryResourcesCache(repository, false);

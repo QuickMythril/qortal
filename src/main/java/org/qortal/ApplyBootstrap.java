@@ -7,16 +7,14 @@ import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 import org.qortal.api.ApiKey;
 import org.qortal.api.ApiRequest;
 import org.qortal.controller.BootstrapNode;
+import org.qortal.repository.Bootstrap;
 import org.qortal.settings.Settings;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.Security;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -68,8 +66,7 @@ public class ApplyBootstrap {
 
 		waitForParentExit(parsedArgs.parentPid);
 
-		// Delete db
-		deleteDB();
+		requestBootstrapMarker();
 
 		// Restart node
 		restartNode(filteredArgs);
@@ -152,28 +149,11 @@ public class ApplyBootstrap {
 		}
 	}
 
-	private static void deleteDB() {
-		// Get the repository path from settings
-		String repositoryPath = Settings.getInstance().getRepositoryPath();
-		LOGGER.debug(String.format("Repository path: %s", repositoryPath));
-
+	private static void requestBootstrapMarker() {
 		try {
-			Path directory = Paths.get(repositoryPath);
-			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Files.delete(file);
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					Files.delete(dir);
-					return FileVisitResult.CONTINUE;
-				}
-			});
+			Bootstrap.requestBootstrap();
 		} catch (IOException e) {
-			LOGGER.error("Error deleting DB: {}", e.getMessage());
+			LOGGER.error("Error creating bootstrap request marker: {}", e.getMessage());
 		}
 	}
 
