@@ -1,6 +1,7 @@
 package org.qortal.test.crosschain;
 
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.junit.After;
 import org.junit.Before;
@@ -107,6 +108,7 @@ public abstract class BitcoinyTests extends Common {
 		String transaction = bitcoiny.repairOldWallet(xprv58);
 
 		assertNotNull(transaction);
+		Sha256Hash.wrap(transaction);
 	}
 
 	@Test
