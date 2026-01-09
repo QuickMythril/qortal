@@ -1,5 +1,6 @@
 package org.qortal.test.crosschain;
 
+import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.junit.After;
 import org.junit.Before;
@@ -100,7 +101,7 @@ public abstract class BitcoinyTests extends Common {
 		assertNotNull(transaction);
 	}
 	@Test
-	public void testRepair() throws ForeignBlockchainException {
+	public void testRepair() throws ForeignBlockchainException, InsufficientMoneyException {
 		String xprv58 = getDeterministicKey58();
 
 		String transaction = bitcoiny.repairOldWallet(xprv58);

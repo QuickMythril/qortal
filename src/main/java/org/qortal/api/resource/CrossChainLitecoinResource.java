@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.qortal.api.ApiError;
 import org.qortal.api.ApiErrors;
@@ -479,7 +480,7 @@ public class CrossChainLitecoinResource {
 					)
 			}
 	)
-	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
+	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
 	@SecurityRequirement(name = "apiKey")
 	public String repairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey, String key58) {
 		Security.checkApiCallAllowed(request);
@@ -491,6 +492,8 @@ public class CrossChainLitecoinResource {
 
 		try {
 			return litecoin.repairOldWallet(key58);
+		} catch (InsufficientMoneyException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE);
 		} catch (ForeignBlockchainException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 		}

@@ -1644,12 +1644,12 @@ private Set<String> processKeysIterative(ExecutorService executor, Deterministic
 	 *
 	 * @param privateMasterKey
 	 *
-	 * @return the transaction Id of the spend operation that moves the balances or the exception name if an exception
-	 * is thrown
+	 * @return the transaction Id of the spend operation that moves the balances
 	 *
 	 * @throws ForeignBlockchainException
+	 * @throws InsufficientMoneyException
 	 */
-	public String repairOldWallet(String privateMasterKey) throws ForeignBlockchainException {
+	public String repairOldWallet(String privateMasterKey) throws ForeignBlockchainException, InsufficientMoneyException {
 
 		// create a deterministic wallet to satisfy the bitcoinj API
 		Wallet wallet = Wallet.createDeterministic(this.bitcoinjContext, ScriptType.P2PKH);
@@ -1679,10 +1679,13 @@ private Set<String> processKeysIterative(ExecutorService executor, Deterministic
 			// return the transaction Id
 			return sendRequest.tx.getTxId().toString();
 		}
-		catch( Exception e ) {
-			// log error and return exception name
-			LOGGER.error(e.getMessage(), e);
-			return e.getClass().getSimpleName();
+		catch (InsufficientMoneyException e) {
+			LOGGER.warn("Unable to repair wallet due to insufficient funds", e);
+			throw e;
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to repair wallet", e);
+			throw new ForeignBlockchainException("Unable to repair wallet", e);
 		}
 	}
 }
