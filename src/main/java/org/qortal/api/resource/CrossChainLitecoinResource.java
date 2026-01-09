@@ -1,6 +1,7 @@
 package org.qortal.api.resource;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -523,7 +524,10 @@ public class CrossChainLitecoinResource {
 	)
 	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.INVALID_CRITERIA, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
 	@SecurityRequirement(name = "apiKey")
-	public String repairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey, @QueryParam("force") Boolean force, String key58) {
+	public String repairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey,
+			@Parameter(description = "Force repair even if preview does not recommend it", example = "true")
+			@QueryParam("force") Boolean force,
+			String key58) {
 		Security.checkApiCallAllowed(request);
 
 		Litecoin litecoin = Litecoin.getInstance();
