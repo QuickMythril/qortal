@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.qortal.api.ApiError;
-import org.qortal.api.ApiException;
 import org.qortal.api.resource.CrossChainBitcoinResource;
 import org.qortal.api.resource.CrossChainDigibyteResource;
 import org.qortal.api.resource.CrossChainDogecoinResource;
@@ -23,10 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class CrossChainRepairApiTests extends ApiCommon {
 
@@ -123,16 +120,6 @@ public class CrossChainRepairApiTests extends ApiCommon {
 		assertTrue(preview.getAddressCountOld() > 0);
 		assertTrue(preview.getAddressCountCurrent() > 0);
 		assertTrue(preview.getMissingUtxoCount() >= 0);
-	}
-
-	private void assertApiError(ApiError expectedApiError, Runnable apiCall) {
-		try {
-			apiCall.run();
-			fail("Expected ApiException");
-		} catch (ApiException e) {
-			ApiError actualApiError = ApiError.fromCode(e.error);
-			assertEquals(expectedApiError, actualApiError);
-		}
 	}
 
 	private BitcoinyBlockchainProvider installDummyProvider(Bitcoiny bitcoiny, String netId) throws IllegalAccessException {
