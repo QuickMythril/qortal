@@ -143,6 +143,16 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 		}
 	}
 
+	public boolean isValidDeterministicPrivateKey(String key58) {
+		try {
+			Context.propagate(this.bitcoinjContext);
+			DeterministicKey key = DeterministicKey.deserializeB58(null, key58, this.params);
+			return key.hasPrivKey();
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
 	/** Returns P2PKH address using passed public key hash. */
 	public String pkhToAddress(byte[] publicKeyHash) {
 		Context.propagate(this.bitcoinjContext);

@@ -461,15 +461,15 @@ public class CrossChainLitecoinResource {
 	@Path("/repair")
 	@Operation(
 			summary = "Sends all coins in wallet to primary receive address",
-			description = "Supply BIP32 'm' private/public key in base58, starting with 'xprv'/'xpub' for mainnet, 'tprv'/'tpub' for testnet",
+			description = "Supply BIP32 'm' private key in base58, starting with 'xprv' for mainnet, 'tprv' for testnet",
 			requestBody = @RequestBody(
 					required = true,
 					content = @Content(
 							mediaType = MediaType.TEXT_PLAIN,
 							schema = @Schema(
 									type = "string",
-									description = "BIP32 'm' private/public key in base58",
-									example = "tpubD6NzVbkrYhZ4XTPc4btCZ6SMgn8CxmWkj6VBVZ1tfcJfMq4UwAjZbG8U74gGSypL9XBYk2R2BLbDBe8pcEyBKM1edsGQEPKXNbEskZozeZc"
+									description = "BIP32 'm' private key in base58",
+									example = "tprv8ZgxMBicQKsPdahhFSrCdvC1bsWyzHHZfTneTVqUXN6s1wEtZLwAkZXzFP6TYLg2aQMecZLXLre5bTVGajEB55L1HYJcawpdFG66STVAWPJ"
 							)
 					)
 			),
@@ -486,7 +486,7 @@ public class CrossChainLitecoinResource {
 
 		Litecoin litecoin = Litecoin.getInstance();
 
-		if (!litecoin.isValidDeterministicKey(key58))
+		if (!litecoin.isValidDeterministicPrivateKey(key58))
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
 
 		try {
