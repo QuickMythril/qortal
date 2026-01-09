@@ -21,6 +21,7 @@ import org.qortal.crosschain.ChainableServer;
 import org.qortal.crosschain.ElectrumX;
 import org.qortal.crosschain.ForeignBlockchainException;
 import org.qortal.crosschain.Litecoin;
+import org.qortal.crosschain.RepairWalletPreview;
 import org.qortal.crosschain.ServerConnectionInfo;
 import org.qortal.crosschain.ServerInfo;
 import org.qortal.crosschain.SimpleTransaction;
@@ -455,6 +456,45 @@ public class CrossChainLitecoinResource {
 					false,
 					System.currentTimeMillis(),
 					CrossChainUtils.getNotes(e));
+		}
+	}
+
+	@POST
+	@Path("/repair/preview")
+	@Operation(
+			summary = "Previews wallet repair sweep",
+			description = "Supply BIP32 'm' private/public key in base58, starting with 'xprv'/'xpub' for mainnet, 'tprv'/'tpub' for testnet",
+			requestBody = @RequestBody(
+					required = true,
+					content = @Content(
+							mediaType = MediaType.TEXT_PLAIN,
+							schema = @Schema(
+									type = "string",
+									description = "BIP32 'm' private/public key in base58",
+									example = "tpubD6NzVbkrYhZ4XTPc4btCZ6SMgn8CxmWkj6VBVZ1tfcJfMq4UwAjZbG8U74gGSypL9XBYk2R2BLbDBe8pcEyBKM1edsGQEPKXNbEskZozeZc"
+							)
+					)
+			),
+			responses = {
+					@ApiResponse(
+							content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = RepairWalletPreview.class))
+					)
+			}
+	)
+	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
+	@SecurityRequirement(name = "apiKey")
+	public RepairWalletPreview previewRepairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey, String key58) {
+		Security.checkApiCallAllowed(request);
+
+		Litecoin litecoin = Litecoin.getInstance();
+
+		if (!litecoin.isValidDeterministicKey(key58))
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
+
+		try {
+			return litecoin.previewRepairOldWallet(key58);
+		} catch (ForeignBlockchainException e) {
+			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE);
 		}
 	}
 

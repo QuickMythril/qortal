@@ -10,6 +10,7 @@ import org.qortal.crosschain.AddressInfo;
 import org.qortal.crosschain.Bitcoiny;
 import org.qortal.crosschain.BitcoinyHTLC;
 import org.qortal.crosschain.ForeignBlockchainException;
+import org.qortal.crosschain.RepairWalletPreview;
 import org.qortal.repository.DataException;
 import org.qortal.test.common.Common;
 
@@ -109,6 +110,23 @@ public abstract class BitcoinyTests extends Common {
 
 		assertNotNull(transaction);
 		Sha256Hash.wrap(transaction);
+	}
+
+	@Test
+	public void testRepairPreview() throws ForeignBlockchainException {
+		String xpub58 = getDeterministicPublicKey58();
+
+		RepairWalletPreview preview = bitcoiny.previewRepairOldWallet(xpub58);
+
+		assertNotNull(preview);
+		assertTrue(preview.getOldBalance() >= 0L);
+		assertTrue(preview.getCurrentBalance() >= 0L);
+		assertTrue(preview.getMissingBalance() >= 0L);
+		assertTrue(preview.getEstimatedFee() >= 0L);
+		assertTrue(preview.getDustThreshold() >= 0L);
+		assertTrue(preview.getAddressCountOld() > 0);
+		assertTrue(preview.getAddressCountCurrent() > 0);
+		assertTrue(preview.getMissingUtxoCount() >= 0);
 	}
 
 	@Test
