@@ -32,6 +32,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
@@ -502,7 +503,7 @@ public class CrossChainLitecoinResource {
 	@Path("/repair")
 	@Operation(
 			summary = "Sends all coins in wallet to primary receive address",
-			description = "Supply BIP32 'm' private key in base58, starting with 'xprv' for mainnet, 'tprv' for testnet",
+			description = "Supply BIP32 'm' private key in base58, starting with 'xprv' for mainnet, 'tprv' for testnet. If repair is not recommended, set force=true to override.",
 			requestBody = @RequestBody(
 					required = true,
 					content = @Content(
@@ -520,9 +521,9 @@ public class CrossChainLitecoinResource {
 					)
 			}
 	)
-	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
+	@ApiErrors({ApiError.INVALID_PRIVATE_KEY, ApiError.INVALID_CRITERIA, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE, ApiError.FOREIGN_BLOCKCHAIN_NETWORK_ISSUE})
 	@SecurityRequirement(name = "apiKey")
-	public String repairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey, String key58) {
+	public String repairOldWallet(@HeaderParam(Security.API_KEY_HEADER) String apiKey, @QueryParam("force") Boolean force, String key58) {
 		Security.checkApiCallAllowed(request);
 
 		Litecoin litecoin = Litecoin.getInstance();
@@ -531,6 +532,12 @@ public class CrossChainLitecoinResource {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.INVALID_PRIVATE_KEY);
 
 		try {
+			if (force == null || !force) {
+				RepairWalletPreview preview = litecoin.previewRepairOldWallet(key58);
+				if (!preview.isRepairRecommended())
+					throw ApiExceptionFactory.INSTANCE.createCustomException(request, ApiError.INVALID_CRITERIA, "Repair not recommended; use force=true to override");
+			}
+
 			return litecoin.repairOldWallet(key58);
 		} catch (InsufficientMoneyException e) {
 			throw ApiExceptionFactory.INSTANCE.createException(request, ApiError.FOREIGN_BLOCKCHAIN_BALANCE_ISSUE);
