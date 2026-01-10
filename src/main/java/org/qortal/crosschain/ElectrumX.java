@@ -37,7 +37,7 @@ public class ElectrumX extends BitcoinyBlockchainProvider {
 	// See: https://electrumx.readthedocs.io/en/latest/protocol-changes.html
 	private static final double MIN_PROTOCOL_VERSION = 1.2;
 	private static final double MAX_PROTOCOL_VERSION = 2.0; // Higher than current latest, for hopeful future-proofing
-	private static final String CLIENT_NAME = "Qortal";
+	private static final String CLIENT_NAME = "Recovery";
 
 	private static final int BLOCK_HEADER_LENGTH = 80;
 
