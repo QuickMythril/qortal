@@ -183,6 +183,8 @@ public class Settings {
 	/** Block height range to scan for prunable blocks.<br>
 	 * This has a significant effect on execution time. */
 	private int blockPruneBatchSize = 10000; // blocks
+	/** How far behind the local chain tip maintenance tasks are allowed to run during sync. 0 disables maintenance during sync. */
+	private int maintenanceLagBlocks = 6000;
 
 	/** Whether we should archive old data to reduce the database size */
 	private boolean archiveEnabled = true;
@@ -1213,6 +1215,10 @@ public class Settings {
 
 	public int getBlockPruneBatchSize() {
 		return this.blockPruneBatchSize;
+	}
+	/** How far behind the local chain tip maintenance tasks can run while syncing. 0 keeps existing behavior of pausing maintenance during sync. */
+	public int getMaintenanceLagBlocks() {
+		return this.maintenanceLagBlocks;
 	}
 
 	public boolean isNamesIntegrityCheckEnabled() {

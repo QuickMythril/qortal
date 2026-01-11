@@ -28,6 +28,7 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 			return;
 		}
 
+		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
 		int trimStartHeight;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
@@ -52,13 +53,25 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 					if (chainTip == null || NTP.getTime() == null)
 						continue;
 
-					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-					if (Synchronizer.getInstance().isSynchronizing())
+					final boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+					final boolean applySyncLag = maintenanceLagBlocks > 0 && isSynchronizing;
+
+					// Don't even attempt if we're mid-sync and sync maintenance is disabled
+					if (!applySyncLag && isSynchronizing)
 						continue;
 
 					// Trim blockchain by removing 'old' online accounts signatures
 					long upperTrimmableTimestamp = NTP.getTime() - BlockChain.getInstance().getOnlineAccountSignaturesMaxLifetime();
 					int upperTrimmableHeight = repository.getBlockRepository().getHeightFromTimestamp(upperTrimmableTimestamp);
+
+					if (applySyncLag) {
+						final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
+						if (syncLagHeight <= trimStartHeight) {
+							repository.discardChanges();
+							continue;
+						}
+						upperTrimmableHeight = Math.min(upperTrimmableHeight, syncLagHeight);
+					}
 
 					int upperBatchHeight = trimStartHeight + Settings.getInstance().getOnlineSignaturesTrimBatchSize();
 					int upperTrimHeight = Math.min(upperBatchHeight, upperTrimmableHeight);

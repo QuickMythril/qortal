@@ -31,6 +31,7 @@ public class BlockArchiver implements Runnable {
 		}
 
 		int startHeight;
+		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			// Don't even start building until initial rush has ended
@@ -65,20 +66,37 @@ public class BlockArchiver implements Runnable {
 						continue;
 					}
 
-					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-					if (Synchronizer.getInstance().isSynchronizing()) {
-						continue;
-					}
+					final boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+					final boolean applySyncLag = maintenanceLagBlocks > 0 && isSynchronizing;
 
-					// Don't attempt to archive if we're not synced yet
-					final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
-					if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
-						continue;
+					// Maintain original behavior if sync maintenance is disabled
+					if (!applySyncLag) {
+						if (isSynchronizing) {
+							continue;
+						}
+
+						// Don't attempt to archive if we're not synced yet
+						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
+						if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
+							continue;
+						}
 					}
 
 					// Build cache of blocks
 					try {
-						final int maximumArchiveHeight = BlockArchiveWriter.getMaxArchiveHeight(repository);
+						int maximumArchiveHeight = BlockArchiveWriter.getMaxArchiveHeight(repository);
+
+						if (applySyncLag) {
+							final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
+							if (syncLagHeight <= startHeight) {
+								// Not enough headroom yet; wait for more blocks
+								repository.discardChanges();
+								Thread.sleep(Settings.getInstance().getArchiveInterval());
+								continue;
+							}
+							maximumArchiveHeight = Math.min(maximumArchiveHeight, syncLagHeight);
+						}
+
 						BlockArchiveWriter writer = new BlockArchiveWriter(startHeight, maximumArchiveHeight, repository);
 						BlockArchiveWriter.BlockArchiveWriteResult result = writer.write();
 						switch (result) {

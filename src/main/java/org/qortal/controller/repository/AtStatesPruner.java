@@ -41,6 +41,7 @@ public class AtStatesPruner implements Runnable {
 
 		int pruneStartHeight;
 		int maxLatestAtStatesHeight;
+		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			pruneStartHeight = repository.getATRepository().getAtPruneHeight();
@@ -66,17 +67,30 @@ public class AtStatesPruner implements Runnable {
 					if (chainTip == null || NTP.getTime() == null)
 						continue;
 
-					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-					if (Synchronizer.getInstance().isSynchronizing())
+					final boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+					final boolean applySyncLag = maintenanceLagBlocks > 0 && isSynchronizing;
+
+					// Don't even attempt if we're mid-sync and sync maintenance is disabled
+					if (!applySyncLag && isSynchronizing)
 						continue;
 
 					// Prune AT states for all blocks up until our latest minus pruneBlockLimit
 					final int ourLatestHeight = chainTip.getHeight();
 					int upperPrunableHeight = ourLatestHeight - Settings.getInstance().getPruneBlockLimit();
 
+					if (applySyncLag) {
+						final int syncLagHeight = ourLatestHeight - maintenanceLagBlocks;
+						if (syncLagHeight <= pruneStartHeight) {
+							// Wait until we're further ahead before pruning during sync
+							repository.discardChanges();
+							continue;
+						}
+						upperPrunableHeight = Math.min(upperPrunableHeight, syncLagHeight);
+					}
+
 					// In archive mode we are only allowed to trim blocks that have already been archived
 					if (archiveMode) {
-						upperPrunableHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1;
+						upperPrunableHeight = Math.min(upperPrunableHeight, repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1);
 
 						// TODO: validate that the actual archived data exists before pruning it?
 					}

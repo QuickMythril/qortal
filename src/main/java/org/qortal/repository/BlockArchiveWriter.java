@@ -160,8 +160,10 @@ public class BlockArchiveWriter {
                 return BlockArchiveWriteResult.STOPPING;
             }
 
-            // wait until the Synchronizer stops
-            if( Synchronizer.getInstance().isSynchronizing() )
+            // Allow maintenance during sync if configured; otherwise wait until synchronization finishes
+            boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+            boolean allowSyncMaintenance = Settings.getInstance().getMaintenanceLagBlocks() > 0;
+            if (!allowSyncMaintenance && isSynchronizing)
                 continue;
 
             int currentHeight = startHeight + i;

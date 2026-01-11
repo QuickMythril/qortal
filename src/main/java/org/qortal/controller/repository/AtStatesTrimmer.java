@@ -28,6 +28,7 @@ public class AtStatesTrimmer implements Runnable {
 
 		int trimStartHeight;
 		int maxLatestAtStatesHeight;
+		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			trimStartHeight = repository.getATRepository().getAtTrimHeight();
@@ -52,8 +53,11 @@ public class AtStatesTrimmer implements Runnable {
 					if (chainTip == null || NTP.getTime() == null)
 						continue;
 
-					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-					if (Synchronizer.getInstance().isSynchronizing())
+					final boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+					final boolean applySyncLag = maintenanceLagBlocks > 0 && isSynchronizing;
+
+					// Don't even attempt if we're mid-sync and sync maintenance is disabled
+					if (!applySyncLag && isSynchronizing)
 						continue;
 
 					long currentTrimmableTimestamp = NTP.getTime() - Settings.getInstance().getAtStatesMaxLifetime();
@@ -62,6 +66,15 @@ public class AtStatesTrimmer implements Runnable {
 
 					long upperTrimmableTimestamp = Math.min(currentTrimmableTimestamp, chainTrimmableTimestamp);
 					int upperTrimmableHeight = repository.getBlockRepository().getHeightFromTimestamp(upperTrimmableTimestamp);
+
+					if (applySyncLag) {
+						final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
+						if (syncLagHeight <= trimStartHeight) {
+							repository.discardChanges();
+							continue;
+						}
+						upperTrimmableHeight = Math.min(upperTrimmableHeight, syncLagHeight);
+					}
 
 					int upperBatchHeight = trimStartHeight + Settings.getInstance().getAtStatesTrimBatchSize();
 					int upperTrimHeight = Math.min(upperBatchHeight, upperTrimmableHeight);

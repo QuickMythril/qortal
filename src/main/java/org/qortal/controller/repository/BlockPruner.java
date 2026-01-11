@@ -40,6 +40,7 @@ public class BlockPruner implements Runnable {
 		}
 
 		int pruneStartHeight;
+		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			pruneStartHeight = repository.getBlockRepository().getBlockPruneHeight();
@@ -68,24 +69,39 @@ public class BlockPruner implements Runnable {
 					if (chainTip == null || NTP.getTime() == null)
 						continue;
 
-					// Don't even attempt if we're mid-sync as our repository requests will be delayed for ages
-					if (Synchronizer.getInstance().isSynchronizing()) {
+					final boolean isSynchronizing = Synchronizer.getInstance().isSynchronizing();
+					final boolean applySyncLag = maintenanceLagBlocks > 0 && isSynchronizing;
+
+					// Don't even attempt if we're mid-sync and sync maintenance is disabled
+					if (!applySyncLag && isSynchronizing) {
 						continue;
 					}
 
-					// Don't attempt to prune if we're not synced yet
-					final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
-					if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
-						continue;
+					// Don't attempt to prune if we're not synced yet (unless we're intentionally pruning during sync with a lag window)
+					if (!applySyncLag) {
+						final Long minLatestBlockTimestamp = Controller.getMinimumLatestBlockTimestamp();
+						if (minLatestBlockTimestamp == null || chainTip.getTimestamp() < minLatestBlockTimestamp) {
+							continue;
+						}
 					}
 
 					// Prune all blocks up until our latest minus pruneBlockLimit
 					final int ourLatestHeight = chainTip.getHeight();
 					int upperPrunableHeight = ourLatestHeight - Settings.getInstance().getPruneBlockLimit();
 
+					if (applySyncLag) {
+						final int syncLagHeight = ourLatestHeight - maintenanceLagBlocks;
+						if (syncLagHeight <= pruneStartHeight) {
+							// Wait until we're further ahead before pruning during sync
+							repository.discardChanges();
+							continue;
+						}
+						upperPrunableHeight = Math.min(upperPrunableHeight, syncLagHeight);
+					}
+
 					// In archive mode we are only allowed to trim blocks that have already been archived
 					if (archiveMode) {
-						upperPrunableHeight = repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1;
+						upperPrunableHeight = Math.min(upperPrunableHeight, repository.getBlockArchiveRepository().getBlockArchiveHeight() - 1);
 					}
 
 					int upperBatchHeight = pruneStartHeight + Settings.getInstance().getBlockPruneBatchSize();
