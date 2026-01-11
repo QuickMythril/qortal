@@ -398,9 +398,9 @@ public class Controller extends Thread {
 
 		final Controller controller = Controller.newInstance(args);
 
-		NETWORK_BLOCK_SUMMARIES_V_2_MESSAGE_SCHEDULER.scheduleAtFixedRate(() -> processNetworkBlockSummariesV2Messages(), 60, 1, TimeUnit.SECONDS);
+		NETWORK_BLOCK_SUMMARIES_V_2_MESSAGE_SCHEDULER.scheduleAtFixedRate(() -> processNetworkBlockSummariesV2Messages(), 0, 1, TimeUnit.SECONDS);
 
-		GET_BLOCK_MESSAGE_SCHEDULER.scheduleAtFixedRate( () -> controller.processNetworkGetBlockMessages(), 60, 1, TimeUnit.SECONDS);
+		GET_BLOCK_MESSAGE_SCHEDULER.scheduleAtFixedRate( () -> controller.processNetworkGetBlockMessages(), 0, 1, TimeUnit.SECONDS);
 
 		cleanChunkUploadTempDir(); // cleanup leftover chunks from streaming to disk
 
