@@ -453,7 +453,7 @@ public class Settings {
 	 *
 	 * How many blocks to process before committing during sync.
 	 */
-	private int synchronizerCommitBlocks = 1;
+	private int synchronizerCommitBlocks = 10;
 
 	/**
 	 * Synchronizer Commit Max Ms
