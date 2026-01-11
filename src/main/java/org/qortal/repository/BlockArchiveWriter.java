@@ -165,6 +165,9 @@ public class BlockArchiveWriter {
             boolean allowSyncMaintenance = Settings.getInstance().getMaintenanceLagBlocks() > 0;
             if (!allowSyncMaintenance && isSynchronizing)
                 continue;
+            if (allowSyncMaintenance && isSynchronizing && LOGGER.isInfoEnabled()) {
+                LOGGER.info("Continuing archive write during sync (maintenance lag enabled)");
+            }
 
             int currentHeight = startHeight + i;
             if (currentHeight > endHeight) {

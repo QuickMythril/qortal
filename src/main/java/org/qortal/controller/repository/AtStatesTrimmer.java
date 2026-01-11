@@ -16,6 +16,7 @@ import static java.lang.Thread.MIN_PRIORITY;
 public class AtStatesTrimmer implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(AtStatesTrimmer.class);
+	private static final long SKIP_LOG_INTERVAL = 60 * 1000L; // ms
 
 	@Override
 	public void run() {
@@ -29,6 +30,10 @@ public class AtStatesTrimmer implements Runnable {
 		int trimStartHeight;
 		int maxLatestAtStatesHeight;
 		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
+		if (maintenanceLagBlocks > 0) {
+			LOGGER.info("AT States trimmer: maintenance lag enabled ({} blocks)", maintenanceLagBlocks);
+		}
+		long lastSkipLog = 0L;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			trimStartHeight = repository.getATRepository().getAtTrimHeight();
@@ -71,9 +76,15 @@ public class AtStatesTrimmer implements Runnable {
 						final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
 						if (syncLagHeight <= trimStartHeight) {
 							repository.discardChanges();
+							if (System.currentTimeMillis() - lastSkipLog > SKIP_LOG_INTERVAL) {
+								LOGGER.debug("Skipping AT states trim during sync: trimStartHeight={}, tip={}, lagBlocks={}, minAllowedHeight={}",
+										trimStartHeight, chainTip.getHeight(), maintenanceLagBlocks, syncLagHeight);
+								lastSkipLog = System.currentTimeMillis();
+							}
 							continue;
 						}
 						upperTrimmableHeight = Math.min(upperTrimmableHeight, syncLagHeight);
+						LOGGER.info("Trimming AT states during sync with lag {} blocks: trimming up to height {}", maintenanceLagBlocks, upperTrimmableHeight);
 					}
 
 					int upperBatchHeight = trimStartHeight + Settings.getInstance().getAtStatesTrimBatchSize();

@@ -16,6 +16,7 @@ import static java.lang.Thread.NORM_PRIORITY;
 public class BlockPruner implements Runnable {
 
 	private static final Logger LOGGER = LogManager.getLogger(BlockPruner.class);
+	private static final long SKIP_LOG_INTERVAL = 60 * 1000L; // ms
 
 	@Override
 	public void run() {
@@ -41,6 +42,10 @@ public class BlockPruner implements Runnable {
 
 		int pruneStartHeight;
 		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
+		if (maintenanceLagBlocks > 0) {
+			LOGGER.info("Block pruner: maintenance lag enabled ({} blocks)", maintenanceLagBlocks);
+		}
+		long lastSkipLog = 0L;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			pruneStartHeight = repository.getBlockRepository().getBlockPruneHeight();
@@ -93,10 +98,16 @@ public class BlockPruner implements Runnable {
 						final int syncLagHeight = ourLatestHeight - maintenanceLagBlocks;
 						if (syncLagHeight <= pruneStartHeight) {
 							// Wait until we're further ahead before pruning during sync
+							if (System.currentTimeMillis() - lastSkipLog > SKIP_LOG_INTERVAL) {
+								LOGGER.debug("Skipping block prune during sync: startHeight={}, tip={}, lagBlocks={}, minAllowedHeight={}",
+										pruneStartHeight, ourLatestHeight, maintenanceLagBlocks, syncLagHeight);
+								lastSkipLog = System.currentTimeMillis();
+							}
 							repository.discardChanges();
 							continue;
 						}
 						upperPrunableHeight = Math.min(upperPrunableHeight, syncLagHeight);
+						LOGGER.info("Pruning during sync with lag {} blocks: pruning up to height {}", maintenanceLagBlocks, upperPrunableHeight);
 					}
 
 					// In archive mode we are only allowed to trim blocks that have already been archived

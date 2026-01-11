@@ -22,6 +22,7 @@ public class BlockArchiver implements Runnable {
 	private static final Logger LOGGER = LogManager.getLogger(BlockArchiver.class);
 
 	private static final long INITIAL_SLEEP_PERIOD = 15 * 60 * 1000L; // ms
+	private static final long SKIP_LOG_INTERVAL = 60 * 1000L; // ms
 
 	public void run() {
 		Thread.currentThread().setName("Block archiver");
@@ -32,6 +33,10 @@ public class BlockArchiver implements Runnable {
 
 		int startHeight;
 		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
+		if (maintenanceLagBlocks > 0) {
+			LOGGER.info("Block archiver: maintenance lag enabled ({} blocks)", maintenanceLagBlocks);
+		}
+		long lastSkipLog = 0L;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
 			// Don't even start building until initial rush has ended
@@ -90,11 +95,17 @@ public class BlockArchiver implements Runnable {
 							final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
 							if (syncLagHeight <= startHeight) {
 								// Not enough headroom yet; wait for more blocks
+								if (System.currentTimeMillis() - lastSkipLog > SKIP_LOG_INTERVAL) {
+									LOGGER.debug("Skipping archiving during sync: startHeight={}, tip={}, lagBlocks={}, minAllowedHeight={}",
+											startHeight, chainTip.getHeight(), maintenanceLagBlocks, syncLagHeight);
+									lastSkipLog = System.currentTimeMillis();
+								}
 								repository.discardChanges();
 								Thread.sleep(Settings.getInstance().getArchiveInterval());
 								continue;
 							}
 							maximumArchiveHeight = Math.min(maximumArchiveHeight, syncLagHeight);
+							LOGGER.info("Archiving during sync with lag {} blocks: writing up to height {}", maintenanceLagBlocks, maximumArchiveHeight);
 						}
 
 						BlockArchiveWriter writer = new BlockArchiveWriter(startHeight, maximumArchiveHeight, repository);

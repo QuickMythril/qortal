@@ -19,6 +19,7 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 	private static final Logger LOGGER = LogManager.getLogger(OnlineAccountsSignaturesTrimmer.class);
 
 	private static final long INITIAL_SLEEP_PERIOD = 5 * 60 * 1000L + 1234L; // ms
+	private static final long SKIP_LOG_INTERVAL = 60 * 1000L; // ms
 
 	public void run() {
 		Thread.currentThread().setName("Online Accounts trimmer");
@@ -29,6 +30,10 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 		}
 
 		final int maintenanceLagBlocks = Settings.getInstance().getMaintenanceLagBlocks();
+		if (maintenanceLagBlocks > 0) {
+			LOGGER.info("Online accounts signatures trimmer: maintenance lag enabled ({} blocks)", maintenanceLagBlocks);
+		}
+		long lastSkipLog = 0L;
 		int trimStartHeight;
 
 		try (final Repository repository = RepositoryManager.getRepository()) {
@@ -68,9 +73,15 @@ public class OnlineAccountsSignaturesTrimmer implements Runnable {
 						final int syncLagHeight = chainTip.getHeight() - maintenanceLagBlocks;
 						if (syncLagHeight <= trimStartHeight) {
 							repository.discardChanges();
+							if (System.currentTimeMillis() - lastSkipLog > SKIP_LOG_INTERVAL) {
+								LOGGER.debug("Skipping online signatures trim during sync: trimStartHeight={}, tip={}, lagBlocks={}, minAllowedHeight={}",
+										trimStartHeight, chainTip.getHeight(), maintenanceLagBlocks, syncLagHeight);
+								lastSkipLog = System.currentTimeMillis();
+							}
 							continue;
 						}
 						upperTrimmableHeight = Math.min(upperTrimmableHeight, syncLagHeight);
+						LOGGER.info("Trimming online signatures during sync with lag {} blocks: trimming up to height {}", maintenanceLagBlocks, upperTrimmableHeight);
 					}
 
 					int upperBatchHeight = trimStartHeight + Settings.getInstance().getOnlineSignaturesTrimBatchSize();
