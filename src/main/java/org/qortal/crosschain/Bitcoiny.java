@@ -38,6 +38,7 @@ public abstract class Bitcoiny implements ForeignBlockchain {
 
 	public static final int HASH160_LENGTH = 20;
 	private static final int TIMEOUT = 10;
+	private static final int HISTORY_TIMEOUT = 15;
 	private static final int RETRIES = 3;
 
 	protected final BitcoinyBlockchainProvider blockchainProvider;
@@ -1207,7 +1208,7 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 				Future<Boolean> future = futureMap.get(index);
 
 				try {
-					if( future.get(TIMEOUT, TimeUnit.SECONDS) ) {
+					if( future.get(HISTORY_TIMEOUT, TimeUnit.SECONDS) ) {
 						result = BooleanResult.TRUE_FOUND;
 						break;
 					}
