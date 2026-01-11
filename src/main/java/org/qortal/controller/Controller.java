@@ -1996,7 +1996,7 @@ public class Controller extends Thread {
 
 						if (responseMessage == null || !peer.sendMessage(responseMessage)) {
 							peer.disconnect("failed to send our chain tip info");
-							return;
+							continue;
 						}
 					}
 				}
@@ -2009,7 +2009,7 @@ public class Controller extends Thread {
 					 * Hence, these are NOT simple "here's my chain tip" broadcasts from other peers.
 					 */
 					LOGGER.debug("Discarding late {} message with ID {} from {}", message.getType().name(), message.getId(), peer);
-					return;
+					continue;
 				}
 
 				// Update peer chain tip data
