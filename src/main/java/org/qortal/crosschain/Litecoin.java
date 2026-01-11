@@ -54,12 +54,40 @@ public class Litecoin extends Bitcoiny {
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=ltc
 					new Server("backup.electrum-ltc.org", Server.ConnectionType.SSL, 443),
 					new Server("electrum.ltc.xurious.com", Server.ConnectionType.SSL, 50002),
-					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 50002),
 					new Server("electrum-ltc.petrkr.net", Server.ConnectionType.SSL, 60002),
-					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20063),
-					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20063),
-					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20063),
-					new Server("ltc.rentonrisk.com", Server.ConnectionType.SSL, 50002)
+					new Server("electrum-ltc.bysh.me", Server.ConnectionType.SSL, 51002),
+					new Server("l.fem.sh", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("5.78.97.174", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("157.230.64.188", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("137.184.250.112", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("65.109.111.123", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("5.161.216.180", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("ltc.aftrek.org", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("ltc.rentonisk.com", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("ltc-electrum.cakewallet.com", Server.ConnectionType.SSL, 50002), // from 1209k, responsive 2026-01-11
+					new Server("litecoin.stackwallet.com", Server.ConnectionType.SSL, 20063), // from 1209k, responsive 2026-01-11
+					new Server("188.166.208.106", Server.ConnectionType.SSL, 50002), // from 1209k, responsive 2026-01-11
+					new Server("backup.electrum-ltc.org", Server.ConnectionType.SSL, 50002), // alt port, responsive 2026-01-11
+					new Server("electrum-ltc.bysh.me", Server.ConnectionType.SSL, 50002), // alt port, responsive 2026-01-11
+					new Server("electrum.petrkr.net", Server.ConnectionType.SSL, 60002), // alt host, responsive 2026-01-11
+					new Server("209.94.191.212", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("176.9.150.253", Server.ConnectionType.SSL, 50091), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("23.176.184.73", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("128.140.88.107", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("3.23.113.210", Server.ConnectionType.SSL, 60002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("24.199.78.132", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("146.190.15.65", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("18.209.198.92", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("18.217.127.128", Server.ConnectionType.SSL, 60002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("213.168.183.227", Server.ConnectionType.SSL, 60002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("194.13.80.185", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("37.48.123.213", Server.ConnectionType.SSL, 50002), // from peers of 188.166.208.106, responsive 2026-01-11
+					new Server("95.211.193.101", Server.ConnectionType.SSL, 443) // from peers of 188.166.208.106, responsive 2026-01-11
+					// new Server("electrum.qortal.link", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20063), // unavailable 2026-01-11
+					// new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20063), // unavailable 2026-01-11
+					// new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20063), // unavailable 2026-01-11
+					// new Server("ltc.rentonrisk.com", Server.ConnectionType.SSL, 50002) // offline 2026-01-11
 				);
 			}
 

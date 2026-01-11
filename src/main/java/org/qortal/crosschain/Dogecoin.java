@@ -47,10 +47,11 @@ public class Dogecoin extends Bitcoiny {
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=doge
 					new Server("dogecoin.stackwallet.com", Server.ConnectionType.SSL, 50022),
-					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 54002),
-					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20060),
-					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20060),
-					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20060)
+					new Server("doge.aftrek.org", Server.ConnectionType.SSL, 50002) // listed via 1209k, responsive 2026-01-11
+					// new Server("electrum.qortal.link", Server.ConnectionType.SSL, 54002), // offline 2026-01-11
+					// new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20060), // unavailable 2026-01-11
+					// new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20060), // unavailable 2026-01-11
+					// new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20060) // unavailable 2026-01-11
 				);
 			}
 

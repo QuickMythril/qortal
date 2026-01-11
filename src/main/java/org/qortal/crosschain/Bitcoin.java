@@ -51,61 +51,61 @@ public class Bitcoin extends Bitcoiny {
 				return Arrays.asList(
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=btc
-					new Server("104.198.149.61", Server.ConnectionType.SSL, 50002),
-					new Server("128.0.190.26", Server.ConnectionType.SSL, 50002),
-					new Server("157.245.172.236", Server.ConnectionType.SSL, 50002),
 					new Server("260.whyza.net", Server.ConnectionType.SSL, 50002),
-					new Server("34.136.93.37", Server.ConnectionType.SSL, 50002),
-					new Server("34.67.22.216", Server.ConnectionType.SSL, 50002),
-					new Server("34.68.133.78", Server.ConnectionType.SSL, 50002),
 					new Server("alviss.coinjoined.com", Server.ConnectionType.SSL, 50002),
 					new Server("b.1209k.com", Server.ConnectionType.SSL, 50002),
-					new Server("b6.1209k.com", Server.ConnectionType.SSL, 50002),
-					new Server("bitcoin.dermichi.com", Server.ConnectionType.SSL, 50002),
 					new Server("bitcoin.lu.ke", Server.ConnectionType.SSL, 50002),
 					new Server("bitcoin.lukechilds.co", Server.ConnectionType.SSL, 50002),
-					new Server("blkhub.net", Server.ConnectionType.SSL, 50002),
 					new Server("btc.aftrek.org", Server.ConnectionType.SSL, 50002),
 					new Server("btc.hodler.ninja", Server.ConnectionType.SSL, 50002),
 					new Server("btc.ocf.sh", Server.ConnectionType.SSL, 50002),
 					new Server("btce.iiiiiii.biz", Server.ConnectionType.SSL, 50002),
 					new Server("caleb.vegas", Server.ConnectionType.SSL, 50002),
 					new Server("d762li0k0g.d.firewalla.org", Server.ConnectionType.SSL, 50002),
-					new Server("de.poiuty.com", Server.ConnectionType.SSL, 50002),
 					new Server("dijon.anties.org", Server.ConnectionType.SSL, 50002),
 					new Server("eai.coincited.net", Server.ConnectionType.SSL, 50002),
 					new Server("electrum.bitaroo.net", Server.ConnectionType.SSL, 50002),
 					new Server("electrum.bitrefill.com", Server.ConnectionType.SSL, 50002),
-					new Server("electrum.brainshome.de", Server.ConnectionType.SSL, 50002),
 					new Server("electrum.emzy.de", Server.ConnectionType.SSL, 50002),
 					new Server("electrum.kendigisland.xyz", Server.ConnectionType.SSL, 50002),
-					new Server("electrum.thomasfischbach.de", Server.ConnectionType.SSL, 50002),
-					new Server("electrum-btc.leblancnet.us", Server.ConnectionType.SSL, 50002),
-					new Server("electrum0.snel.it", Server.ConnectionType.SSL, 50002),
-					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20000),
-					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20000),
-					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20000),
-					new Server("electrumx.blockfinance-eco.li", Server.ConnectionType.SSL, 50002),
-					new Server("electrumx.indoor.app", Server.ConnectionType.SSL, 50002),
 					new Server("electrumx.iodata.org", Server.ConnectionType.SSL, 50002),
-					new Server("electrumx-core.1209k.com", Server.ConnectionType.SSL, 50002),
 					new Server("elx.bitske.com", Server.ConnectionType.SSL, 50002),
 					new Server("exs.dyshek.org", Server.ConnectionType.SSL, 50002),
 					new Server("guichet.centure.cc", Server.ConnectionType.SSL, 50002),
 					new Server("hodl.artyomk13.me", Server.ConnectionType.SSL, 50002),
-					new Server("hodlers.beer", Server.ConnectionType.SSL, 50002),
 					new Server("kareoke.qoppa.org", Server.ConnectionType.SSL, 50002),
 					new Server("kirsche.emzy.de", Server.ConnectionType.SSL, 50002),
-					new Server("kittyserver.ddnsfree.com", Server.ConnectionType.SSL, 50002),
 					new Server("lille.anties.org", Server.ConnectionType.SSL, 50002),
 					new Server("marseille.anties.org", Server.ConnectionType.SSL, 50002),
-					new Server("node1.btccuracao.com", Server.ConnectionType.SSL, 50002),
-					new Server("osr1ex1.compumundohipermegared.one", Server.ConnectionType.SSL, 50002),
 					new Server("paris.anties.org", Server.ConnectionType.SSL, 50002),
 					new Server("ragtor.duckdns.org", Server.ConnectionType.SSL, 50002),
-					new Server("stavver.dyshek.org", Server.ConnectionType.SSL, 50002),
-					new Server("vmd63185.contaboserver.net", Server.ConnectionType.SSL, 50002),
-					new Server("xtrum.com", Server.ConnectionType.SSL, 50002)
+					new Server("stavver.dyshek.org", Server.ConnectionType.SSL, 50002)
+					// new Server("104.198.149.61", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("128.0.190.26", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("157.245.172.236", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("34.136.93.37", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("34.67.22.216", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("34.68.133.78", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("b6.1209k.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("bitcoin.dermichi.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("blkhub.net", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("de.poiuty.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum.brainshome.de", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum.thomasfischbach.de", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum-btc.leblancnet.us", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum0.snel.it", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20000), // unavailable 2026-01-11
+					// new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20000), // unavailable 2026-01-11
+					// new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20000), // unavailable 2026-01-11
+					// new Server("electrumx.blockfinance-eco.li", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrumx.indoor.app", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("electrumx-core.1209k.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("hodlers.beer", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("kittyserver.ddnsfree.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("node1.btccuracao.com", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("osr1ex1.compumundohipermegared.one", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("vmd63185.contaboserver.net", Server.ConnectionType.SSL, 50002), // offline 2026-01-11
+					// new Server("xtrum.com", Server.ConnectionType.SSL, 50002) // offline 2026-01-11
 				);
 			}
 

@@ -46,12 +46,15 @@ public class Ravencoin extends Bitcoiny {
 				return Arrays.asList(
 					// Servers chosen on NO BASIS WHATSOEVER from various sources!
 					// Status verified at https://1209k.com/bitcoin-eye/ele.php?chain=rvn
-					new Server("electrum.qortal.link", Server.ConnectionType.SSL, 56002),
-					new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20051),
-					new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20051),
-					new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20051),
 					new Server("rvn-dashboard.com", Server.ConnectionType.SSL, 50002),
-					new Server("rvn4lyfe.com", Server.ConnectionType.SSL, 50002)
+					new Server("rvn4lyfe.com", Server.ConnectionType.SSL, 50002),
+					new Server("twister32.changeip.net", Server.ConnectionType.SSL, 50102), // discovered via peers.subscribe 2026-01-11
+					new Server("electrum-rvn.moontree.com", Server.ConnectionType.SSL, 50002), // discovered via peers.subscribe 2026-01-11
+					new Server("162.19.153.65", Server.ConnectionType.SSL, 50002) // discovered via peers.subscribe 2026-01-11
+					// new Server("electrum.qortal.link", Server.ConnectionType.SSL, 56002), // offline 2026-01-11
+					// new Server("electrum1.cipig.net", Server.ConnectionType.SSL, 20051), // unavailable 2026-01-11
+					// new Server("electrum2.cipig.net", Server.ConnectionType.SSL, 20051), // unavailable 2026-01-11
+					// new Server("electrum3.cipig.net", Server.ConnectionType.SSL, 20051) // unavailable 2026-01-11
 				);
 			}
 
