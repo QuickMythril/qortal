@@ -65,6 +65,7 @@ public class Synchronizer extends Thread {
 	private static final int BLOCK_PREFETCH_WINDOW = 8;
 	private static final int BLOCK_PREFETCH_WORKERS = 8;
 	private static final int PREFETCH_LOG_SAMPLE_SIZE = 100;
+	private static final long PREFETCH_STATE_LOG_INTERVAL = 30 * 1000L; // ms
 
 	private boolean running;
 	private final ExecutorService blockFetchExecutor;
@@ -341,7 +342,19 @@ public class Synchronizer extends Thread {
 			return Integer.compare(getPeerFailedSyncCount(a), getPeerFailedSyncCount(b));
 		});
 
-		return peers.get(0);
+		Peer bestPeer = peers.get(0);
+
+		if (LOGGER.isInfoEnabled()) {
+			LOGGER.info(String.format("Selected peer %s (height %d, ping %d ms, failedSync %d) from %d candidate%s",
+					bestPeer,
+					getPeerHeight(bestPeer),
+					getPeerPingMillis(bestPeer),
+					getPeerFailedSyncCount(bestPeer),
+					peers.size(),
+					(peers.size() != 1 ? "s" : "")));
+		}
+
+		return bestPeer;
 	}
 
 	private static int getPeerHeight(Peer peer) {
@@ -1565,8 +1578,6 @@ public class Synchronizer extends Thread {
 
 	private SynchronizationResult applyNewBlocks(Repository repository, BlockData commonBlockData, int ourInitialHeight,
 												 Peer peer, int peerHeight, List<BlockSummaryData> peerBlockSummaries) throws InterruptedException, DataException {
-		LOGGER.debug(String.format("Fetching new blocks from peer %s (pipelined)", peer));
-
 		final int commonBlockHeight = commonBlockData.getHeight();
 		final byte[] commonBlockSig = commonBlockData.getSignature();
 
@@ -1586,6 +1597,11 @@ public class Synchronizer extends Thread {
 		if (syncCommitMaxMs < 0)
 			syncCommitMaxMs = 0L;
 
+		if (LOGGER.isInfoEnabled()) {
+			LOGGER.info(String.format("Fetching new blocks from peer %s (pipelined, prefetch window %d, workers %d, commitBlocks %d, commitMaxMs %d)",
+					peer, BLOCK_PREFETCH_WINDOW, BLOCK_PREFETCH_WORKERS, syncCommitBlocks, syncCommitMaxMs));
+		}
+
 		Deque<byte[]> signatureQueue = new ArrayDeque<>(peerBlockSummaries.stream().map(BlockSummaryData::getSignature).collect(Collectors.toList()));
 		while (signatureQueue.size() > blocksToFetch)
 			signatureQueue.removeLast();
@@ -1603,6 +1619,8 @@ public class Synchronizer extends Thread {
 		int sampleCount = 0;
 		List<BlockData> pendingBlocks = new ArrayList<>(syncCommitBlocks);
 		long lastCommitTime = System.currentTimeMillis();
+		long lastPrefetchStateLog = 0L;
+		long lastCommitLog = 0L;
 
 		try {
 			while (nextHeightToProcess <= targetHeight) {
@@ -1741,6 +1759,16 @@ public class Synchronizer extends Thread {
 				if (pendingBlocks.size() >= syncCommitBlocks || nowMs - lastCommitTime >= syncCommitMaxMs) {
 					processTotalMs += commitPendingBlocks(repository, pendingBlocks);
 					lastCommitTime = System.currentTimeMillis();
+					if (LOGGER.isDebugEnabled() && nowMs - lastCommitLog > PREFETCH_STATE_LOG_INTERVAL) {
+						LOGGER.debug(String.format("Committed batch during sync: batchSize=%d, sinceLastCommit=%dms", pendingBlocks.size(), nowMs - lastCommitTime));
+						lastCommitLog = nowMs;
+					}
+				}
+
+				if (LOGGER.isDebugEnabled() && nowMs - lastPrefetchStateLog > PREFETCH_STATE_LOG_INTERVAL) {
+					LOGGER.debug(String.format("Prefetch state: inFlight=%d, sigQueue=%d, nextRequest=%d, nextProcess=%d",
+							inFlight.size(), signatureQueue.size(), nextHeightToRequest, nextHeightToProcess));
+					lastPrefetchStateLog = nowMs;
 				}
 			}
 
