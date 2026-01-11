@@ -28,6 +28,12 @@ import org.qortal.utils.DaemonThreadFactory;
 import org.qortal.utils.NTP;
 
 import java.math.BigInteger;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -67,6 +73,14 @@ public class Synchronizer extends Thread {
 	private static final int PREFETCH_LOG_SAMPLE_SIZE = 100;
 	private static final long PREFETCH_STATE_LOG_INTERVAL = 30 * 1000L; // ms
 
+	/** Interval for logging long-running full-sync progress. */
+	private static final long FULL_SYNC_LOG_INTERVAL_MS = 5 * 60 * 1000L;
+	/** Only start tracking full sync when we are effectively at genesis. */
+	private static final int FULL_SYNC_START_HEIGHT_THRESHOLD = 2;
+	/** Start tracking if we are significantly behind our target peer. */
+	private static final int FULL_SYNC_START_MIN_GAP = 25_000;
+	private static final String FULL_SYNC_PROGRESS_FILENAME = "sync-progress.properties";
+
 	private boolean running;
 	private final ExecutorService blockFetchExecutor;
 
@@ -97,6 +111,30 @@ public class Synchronizer extends Thread {
 	private Map<ByteArray, Long> invalidBlockSignatures = Collections.synchronizedMap(new HashMap<>());
 	public Long timeValidBlockLastReceived = null;
 	public Long timeInvalidBlockLastReceived = null;
+
+	private static class FullSyncProgress {
+		private long startTimeMs;
+		private int startHeight;
+		private int lastHeight;
+		private long totalBlocksApplied;
+		private int targetHeight;
+		private long lastLogTimeMs;
+		private int lastLogHeight;
+
+		private FullSyncProgress(long startTimeMs, int startHeight, int targetHeight, int lastHeight) {
+			this.startTimeMs = startTimeMs;
+			this.startHeight = startHeight;
+			this.targetHeight = targetHeight;
+			this.lastHeight = lastHeight;
+			this.totalBlocksApplied = 0L;
+			this.lastLogTimeMs = 0L;
+			this.lastLogHeight = startHeight;
+		}
+	}
+
+	private final Object fullSyncLock = new Object();
+	private FullSyncProgress fullSyncProgress;
+	private Path fullSyncProgressPath;
 
 	private static Synchronizer instance;
 
@@ -144,6 +182,8 @@ public class Synchronizer extends Thread {
 				BLOCK_PREFETCH_WORKERS,
 				new DaemonThreadFactory("Sync-BlockFetch", Settings.getInstance().getSynchronizerThreadPriority())
 		);
+		this.fullSyncProgressPath = Paths.get(Settings.getInstance().getRepositoryPath(), FULL_SYNC_PROGRESS_FILENAME).toAbsolutePath();
+		this.loadFullSyncProgress();
 	}
 
 	public static Synchronizer getInstance() {
@@ -155,6 +195,251 @@ public class Synchronizer extends Thread {
 		}
 
 		return instance;
+	}
+
+	private long nowMs() {
+		Long now = NTP.getTime();
+		return now != null ? now : System.currentTimeMillis();
+	}
+
+	private void loadFullSyncProgress() {
+		if (this.fullSyncProgressPath == null || !Files.exists(this.fullSyncProgressPath))
+			return;
+
+		Properties properties = new Properties();
+		try (InputStream inputStream = Files.newInputStream(this.fullSyncProgressPath)) {
+			properties.load(inputStream);
+
+			long startTimeMs = Long.parseLong(properties.getProperty("startTimeMs"));
+			int startHeight = Integer.parseInt(properties.getProperty("startHeight"));
+			int lastHeight = Integer.parseInt(properties.getProperty("lastHeight", String.valueOf(startHeight)));
+			long totalBlocksApplied = Long.parseLong(properties.getProperty("totalBlocksApplied", "0"));
+			int targetHeight = Integer.parseInt(properties.getProperty("targetHeight", String.valueOf(lastHeight)));
+			long lastLogTimeMs = Long.parseLong(properties.getProperty("lastLogTimeMs", "0"));
+			int lastLogHeight = Integer.parseInt(properties.getProperty("lastLogHeight", String.valueOf(startHeight)));
+
+			this.fullSyncProgress = new FullSyncProgress(startTimeMs, startHeight, targetHeight, lastHeight);
+			this.fullSyncProgress.totalBlocksApplied = totalBlocksApplied;
+			this.fullSyncProgress.lastLogTimeMs = lastLogTimeMs;
+			this.fullSyncProgress.lastLogHeight = lastLogHeight;
+		} catch (Exception e) {
+			LOGGER.debug("Unable to load full sync progress state: {}", e.getMessage());
+		}
+	}
+
+	private void persistFullSyncProgress() {
+		if (this.fullSyncProgress == null || this.fullSyncProgressPath == null)
+			return;
+
+		try {
+			if (this.fullSyncProgressPath.getParent() != null)
+				Files.createDirectories(this.fullSyncProgressPath.getParent());
+		} catch (IOException e) {
+			LOGGER.debug("Unable to create directories for full sync progress: {}", e.getMessage());
+		}
+
+		Properties properties = new Properties();
+		properties.setProperty("startTimeMs", Long.toString(this.fullSyncProgress.startTimeMs));
+		properties.setProperty("startHeight", Integer.toString(this.fullSyncProgress.startHeight));
+		properties.setProperty("lastHeight", Integer.toString(this.fullSyncProgress.lastHeight));
+		properties.setProperty("totalBlocksApplied", Long.toString(this.fullSyncProgress.totalBlocksApplied));
+		properties.setProperty("targetHeight", Integer.toString(this.fullSyncProgress.targetHeight));
+		properties.setProperty("lastLogTimeMs", Long.toString(this.fullSyncProgress.lastLogTimeMs));
+		properties.setProperty("lastLogHeight", Integer.toString(this.fullSyncProgress.lastLogHeight));
+
+		try (OutputStream outputStream = Files.newOutputStream(this.fullSyncProgressPath)) {
+			properties.store(outputStream, "Full sync progress");
+		} catch (IOException e) {
+			LOGGER.debug("Unable to persist full sync progress: {}", e.getMessage());
+		}
+	}
+
+	private void tryDeleteFullSyncProgressFile() {
+		if (this.fullSyncProgressPath == null)
+			return;
+		try {
+			Files.deleteIfExists(this.fullSyncProgressPath);
+		} catch (IOException e) {
+			LOGGER.debug("Unable to delete full sync progress file: {}", e.getMessage());
+		}
+	}
+
+	private void startFullSyncProgressIfNeeded(BlockData priorChainTip, int targetHeight) {
+		if (priorChainTip == null)
+			return;
+
+		synchronized (this.fullSyncLock) {
+			if (this.fullSyncProgress != null)
+				return;
+
+			boolean nearGenesis = priorChainTip.getHeight() <= FULL_SYNC_START_HEIGHT_THRESHOLD;
+			boolean farBehind = targetHeight > priorChainTip.getHeight() && (targetHeight - priorChainTip.getHeight()) >= FULL_SYNC_START_MIN_GAP;
+
+			if (!nearGenesis && !farBehind)
+				return;
+
+			long now = this.nowMs();
+			int effectiveTargetHeight = Math.max(targetHeight, priorChainTip.getHeight());
+			this.fullSyncProgress = new FullSyncProgress(now, priorChainTip.getHeight(), effectiveTargetHeight, priorChainTip.getHeight());
+			this.fullSyncProgress.lastLogTimeMs = now;
+			LOGGER.info(String.format("Started tracking full sync progress from height %d", priorChainTip.getHeight()));
+			this.persistFullSyncProgress();
+		}
+	}
+
+	private void refreshFullSyncTargetHeight(int targetHeight) {
+		if (targetHeight <= 0)
+			return;
+
+		synchronized (this.fullSyncLock) {
+			if (this.fullSyncProgress != null && targetHeight > this.fullSyncProgress.targetHeight) {
+				this.fullSyncProgress.targetHeight = targetHeight;
+				this.persistFullSyncProgress();
+			}
+		}
+	}
+
+	private void recordBlockApplied(int newHeight, int targetHeight) {
+		long now = this.nowMs();
+		boolean checkCompletion = false;
+		boolean shouldLog = false;
+
+		synchronized (this.fullSyncLock) {
+			if (this.fullSyncProgress == null)
+				return;
+
+			this.fullSyncProgress.totalBlocksApplied++;
+			this.fullSyncProgress.lastHeight = newHeight;
+
+			if (targetHeight > 0 && targetHeight > this.fullSyncProgress.targetHeight)
+				this.fullSyncProgress.targetHeight = targetHeight;
+
+			long remainingBlocks = (long) this.fullSyncProgress.targetHeight - this.fullSyncProgress.lastHeight;
+			if (remainingBlocks <= 0)
+				checkCompletion = true;
+
+			if (this.fullSyncProgress.lastLogTimeMs == 0 || now - this.fullSyncProgress.lastLogTimeMs >= FULL_SYNC_LOG_INTERVAL_MS)
+				shouldLog = true;
+		}
+
+		if (shouldLog)
+			maybeLogFullSyncProgress(now);
+
+		if (checkCompletion && this.isNodeUpToDate()) {
+			completeFullSyncProgress();
+		}
+	}
+
+	private boolean isNodeUpToDate() {
+		Long now = NTP.getTime();
+		if (now == null)
+			now = System.currentTimeMillis();
+		Long minLatestBlockTimestamp = now - (60 * 60 * 1000L);
+		return Controller.getInstance().isUpToDate(minLatestBlockTimestamp);
+	}
+
+	private void maybeLogFullSyncProgress(long now) {
+		FullSyncProgress snapshot;
+		long previousLogTimeMs;
+		int previousLogHeight;
+
+		synchronized (this.fullSyncLock) {
+			if (this.fullSyncProgress == null)
+				return;
+
+			if (this.fullSyncProgress.lastLogTimeMs != 0 && now - this.fullSyncProgress.lastLogTimeMs < FULL_SYNC_LOG_INTERVAL_MS)
+				return;
+
+			snapshot = new FullSyncProgress(
+					this.fullSyncProgress.startTimeMs,
+					this.fullSyncProgress.startHeight,
+					this.fullSyncProgress.targetHeight,
+					this.fullSyncProgress.lastHeight
+			);
+			snapshot.totalBlocksApplied = this.fullSyncProgress.totalBlocksApplied;
+			previousLogTimeMs = this.fullSyncProgress.lastLogTimeMs;
+			previousLogHeight = this.fullSyncProgress.lastLogHeight;
+			this.fullSyncProgress.lastLogTimeMs = now;
+			this.fullSyncProgress.lastLogHeight = this.fullSyncProgress.lastHeight;
+		}
+
+		long elapsedMs = Math.max(0L, now - snapshot.startTimeMs);
+		long processedBlocks = snapshot.totalBlocksApplied;
+		long remainingBlocks = snapshot.targetHeight > 0 ? Math.max(0L, (long) snapshot.targetHeight - snapshot.lastHeight) : -1L;
+
+		double overallRate = (processedBlocks > 0 && elapsedMs > 0) ? (processedBlocks * 1000.0) / elapsedMs : 0.0;
+
+		double recentRate = 0.0;
+		if (previousLogTimeMs > 0) {
+			long deltaMs = now - previousLogTimeMs;
+			int deltaBlocks = snapshot.lastHeight - previousLogHeight;
+			if (deltaMs > 0 && deltaBlocks > 0)
+				recentRate = (deltaBlocks * 1000.0) / deltaMs;
+		}
+
+		double rateForEta = recentRate > 0 ? recentRate : overallRate;
+		Long etaMs = null;
+		if (rateForEta > 0 && remainingBlocks >= 0)
+			etaMs = (long) ((remainingBlocks / rateForEta) * 1000L);
+
+		String etaString = etaMs != null ? formatDuration(etaMs) : "n/a";
+		String elapsedString = formatDuration(elapsedMs);
+		double percent = snapshot.targetHeight > 0 ? (snapshot.lastHeight * 100.0) / snapshot.targetHeight : 0.0;
+
+		LOGGER.info(String.format(
+				"Full sync progress: height %d / %d (%.2f%%), remaining ~%d, rate %.2f blk/s (overall %.2f), ETA ~%s, elapsed %s",
+				snapshot.lastHeight,
+				snapshot.targetHeight,
+				percent,
+				remainingBlocks >= 0 ? remainingBlocks : 0,
+				recentRate,
+				overallRate,
+				etaString,
+				elapsedString
+		));
+
+		this.persistFullSyncProgress();
+	}
+
+	private void completeFullSyncProgress() {
+		FullSyncProgress snapshot;
+		long now = this.nowMs();
+		synchronized (this.fullSyncLock) {
+			if (this.fullSyncProgress == null)
+				return;
+			snapshot = this.fullSyncProgress;
+			this.fullSyncProgress = null;
+			this.tryDeleteFullSyncProgressFile();
+		}
+
+		long elapsedMs = Math.max(0L, now - snapshot.startTimeMs);
+		LOGGER.info(String.format("Full sync completed after %s (processed ~%d blocks)", formatDuration(elapsedMs), snapshot.totalBlocksApplied));
+	}
+
+	private String formatDuration(long durationMs) {
+		if (durationMs <= 0)
+			return "0s";
+
+		long seconds = durationMs / 1000;
+		long minutes = seconds / 60;
+		long hours = minutes / 60;
+		long days = hours / 24;
+
+		seconds %= 60;
+		minutes %= 60;
+		hours %= 24;
+
+		StringBuilder builder = new StringBuilder();
+		if (days > 0)
+			builder.append(days).append("d");
+		if (hours > 0)
+			builder.append(builder.length() > 0 ? " " : "").append(hours).append("h");
+		if (minutes > 0)
+			builder.append(builder.length() > 0 ? " " : "").append(minutes).append("m");
+		if (seconds > 0 || builder.length() == 0)
+			builder.append(builder.length() > 0 ? " " : "").append(seconds).append("s");
+
+		return builder.toString();
 	}
 
 
@@ -382,9 +667,14 @@ public class Synchronizer extends Thread {
 	public SynchronizationResult actuallySynchronize(Peer peer, boolean force) throws InterruptedException {
 		boolean hasStatusChanged = false;
 		BlockData priorChainTip = Controller.getInstance().getChainTip();
+		int initialPeerHeight = peer.getChainTipData() != null ? peer.getChainTipData().getHeight() : 0;
+
+		this.startFullSyncProgressIfNeeded(priorChainTip, initialPeerHeight);
+		this.refreshFullSyncTargetHeight(initialPeerHeight);
 
 		synchronized (this.syncLock) {
-			this.syncPercent = (priorChainTip.getHeight() * 100) / peer.getChainTipData().getHeight();
+			if (initialPeerHeight > 0)
+				this.syncPercent = (priorChainTip.getHeight() * 100) / initialPeerHeight;
 
 			// Only update SysTray if we're potentially changing height
 			if (this.syncPercent < 100) {
@@ -1561,6 +1851,8 @@ public class Synchronizer extends Thread {
 
 			LOGGER.trace(String.format("Processed block height %d, sig %.8s", newBlock.getBlockData().getHeight(), Base58.encode(newBlock.getBlockData().getSignature())));
 
+			this.recordBlockApplied(newBlock.getBlockData().getHeight(), peerHeight);
+
 			repository.saveChanges();
 
 			synchronized (this.syncLock) {
@@ -1735,6 +2027,7 @@ public class Synchronizer extends Thread {
 				LOGGER.trace(String.format("Processed block height %d, sig %.8s", newBlock.getBlockData().getHeight(), Base58.encode(newBlock.getBlockData().getSignature())));
 
 				pendingBlocks.add(newBlock.getBlockData());
+				this.recordBlockApplied(newBlock.getBlockData().getHeight(), peerHeight);
 				processTotalMs += System.currentTimeMillis() - processStart;
 				fetchDurationTotalMs += prefetched.fetchDurationMs;
 

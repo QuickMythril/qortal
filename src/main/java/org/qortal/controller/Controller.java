@@ -711,33 +711,30 @@ public class Controller extends Thread {
 						return;
 					}
 
-					int index = new SecureRandom().nextInt(seeds.size());
-					String syncNode = String.valueOf(seeds.get(index));
-					PeerAddress peerAddress = PeerAddress.fromString(syncNode);
-					InetSocketAddress resolvedAddress = null;
+					// Shuffle to try a different peer each run
+					Collections.shuffle(seeds, new SecureRandom());
+					boolean synced = false;
 
-					try {
-						resolvedAddress = peerAddress.toSocketAddress();
-					} catch (UnknownHostException e) {
-						throw new RuntimeException(e);
+					for (Peer targetPeer : seeds) {
+						Synchronizer.SynchronizationResult syncResult;
+						try {
+							syncResult = Synchronizer.getInstance().actuallySynchronize(targetPeer, true);
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+
+						if (syncResult == Synchronizer.SynchronizationResult.OK) {
+							synced = true;
+							break;
+						}
 					}
 
-					InetSocketAddress finalResolvedAddress = resolvedAddress;
-					Peer targetPeer = seeds.stream().filter(peer -> peer.getResolvedAddress().equals(finalResolvedAddress)).findFirst().orElse(null);
-					Synchronizer.SynchronizationResult syncResult;
-
-					try {
-						do {
-							try {
-								syncResult = Synchronizer.getInstance().actuallySynchronize(targetPeer, true);
-							} catch (InterruptedException e) {
-								throw new RuntimeException(e);
-							}
-						}
-						while (syncResult == Synchronizer.SynchronizationResult.OK);
-					} finally {
-						// We are syncing now, so can cancel the check
+					if (synced) {
+						// Sync succeeded; stop the timer
 						syncFromGenesis.cancel();
+					} else {
+						// No success this round; ask the normal sync loop to try again soon
+						Synchronizer.getInstance().requestSync();
 					}
 				}
 			}
