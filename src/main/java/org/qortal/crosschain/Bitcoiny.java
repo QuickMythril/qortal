@@ -1097,11 +1097,13 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 		}
 
 		// process more keys
-		if( needToProcessAdditionalKeys || anyTrue( executor, transactionChecks, RETRIES )) {
+		BooleanResult hasHistory = anyTrue( executor, transactionChecks, RETRIES );
+
+		if( needToProcessAdditionalKeys || hasHistory == BooleanResult.TRUE_FOUND ) {
 			keySet.addAll(processKeys(executor, generateMoreKeys(keyChain), keyChain, 0));
 		}
 		// if no additional keys were already processed and the if the gap limit held, then process additional keys
-		else if ( unusedCounter < Settings.getInstance().getGapLimit()) {
+		else if ( unusedCounter < Settings.getInstance().getGapLimit() && hasHistory == BooleanResult.ALL_FALSE) {
 
 			keySet.addAll(processKeys(executor, generateMoreKeys(keyChain), keyChain, unusedCounter + WALLET_KEY_LOOKAHEAD_INCREMENT));
 		}
@@ -1146,11 +1148,13 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 			}
 		}
 
-		if( needToProcessAdditionalKeys || anyTrue( executor, transactionChecks, RETRIES )) {
+		BooleanResult hasHistory = anyTrue( executor, transactionChecks, RETRIES );
+
+		if( needToProcessAdditionalKeys || hasHistory == BooleanResult.TRUE_FOUND ) {
 			keySet.addAll(processKeysOnly(executor, generateMoreKeys(keyChain), keyChain, 0));
 		}
 		// if no additional keys were already processed and the if the gap limit held, then process additional keys
-		else if ( unusedCounter < Settings.getInstance().getGapLimit()) {
+		else if ( unusedCounter < Settings.getInstance().getGapLimit() && hasHistory == BooleanResult.ALL_FALSE) {
 
 			keySet.addAll(processKeysOnly(executor, generateMoreKeys(keyChain), keyChain, unusedCounter + WALLET_KEY_LOOKAHEAD_INCREMENT));
 		}
@@ -1167,10 +1171,15 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 	 *
 	 * @return true if any task returns true, false if all tasks return false
 	 */
-	public static boolean anyTrue(ExecutorService executor, List<Supplier<Boolean>> suppliers, int retries) throws ForeignBlockchainException {
+	public enum BooleanResult {
+		TRUE_FOUND,
+		ALL_FALSE,
+		UNKNOWN_TIMEOUT
+	}
 
-		// return value
-		boolean anyTrueYet = false;
+	public static BooleanResult anyTrue(ExecutorService executor, List<Supplier<Boolean>> suppliers, int retries) throws ForeignBlockchainException {
+
+		BooleanResult result = BooleanResult.ALL_FALSE;
 
 		// for recursion if necessary
 		List<Supplier<Boolean>> suppliersToRetry = new ArrayList<>(suppliers.size());
@@ -1199,10 +1208,11 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 
 				try {
 					if( future.get(TIMEOUT, TimeUnit.SECONDS) ) {
-						anyTrueYet = true;
+						result = BooleanResult.TRUE_FOUND;
 						break;
 					}
 				} catch (TimeoutException e) {
+					result = BooleanResult.UNKNOWN_TIMEOUT;
 					suppliersToRetry.add(supplierMap.get(index));
 				}
 			}
@@ -1214,11 +1224,11 @@ public List<SimpleTransaction> getWalletTransactions(String key58) throws Foreig
 			throw new ForeignBlockchainException(e.getMessage());
 		}
 
-		if( retries > 0 && !anyTrueYet && !suppliersToRetry.isEmpty() ) {
+		if( retries > 0 && result == BooleanResult.UNKNOWN_TIMEOUT && !suppliersToRetry.isEmpty() ) {
 			return anyTrue(executor, suppliersToRetry, retries - 1);
 		}
 		else {
-			return anyTrueYet;
+			return result;
 		}
 	}
 
