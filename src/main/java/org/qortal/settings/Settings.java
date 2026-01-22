@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -263,6 +265,21 @@ public class Settings {
 
 	/** Wallets path - used for storing encrypted wallet caches for coins that require them */
 	private String walletsPath = "wallets";
+
+	/** Optional override for Monero wallet storage path (defaults to walletsPath) */
+	private String moneroWalletsPath = null;
+
+	/** Default restore height for Monero wallets (0 = scan from genesis) */
+	private int moneroDefaultRestoreHeight = 0;
+
+	/** Monero daemon list used by Core (mainnet only for Stage 1) */
+	private String[] moneroDaemonList = new String[] {
+		"https://xmr-node.cakewallet.com:18081",
+		"https://monero.stackwallet.com:18081",
+		"https://xmr.nadeko.net:18081",
+		"https://monero.rs:18081",
+		"http://opennode.xmr-tw.org:18089"
+	};
 
 	private int arrrDefaultBirthday = 2000000;
 
@@ -1059,6 +1076,21 @@ public class Settings {
 
 	public String getWalletsPath() {
 		return this.walletsPath;
+	}
+
+	public String getMoneroWalletsPath() {
+		return this.moneroWalletsPath != null ? this.moneroWalletsPath : this.walletsPath;
+	}
+
+	public int getMoneroDefaultRestoreHeight() {
+		return this.moneroDefaultRestoreHeight;
+	}
+
+	public List<String> getMoneroDaemonList() {
+		if (this.moneroDaemonList == null || this.moneroDaemonList.length == 0)
+			return Collections.emptyList();
+
+		return Arrays.asList(this.moneroDaemonList);
 	}
 
 	public int getArrrDefaultBirthday() {

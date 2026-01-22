@@ -18,6 +18,7 @@ import org.qortal.controller.hsqldb.HSQLDBDataCacheManager;
 import org.qortal.controller.repository.NamesDatabaseIntegrityCheck;
 import org.qortal.controller.repository.PruneManager;
 import org.qortal.controller.tradebot.TradeBot;
+import org.qortal.controller.MoneroWalletController;
 import org.qortal.data.account.AccountBalanceData;
 import org.qortal.data.account.AccountData;
 import org.qortal.data.block.BlockData;
@@ -586,6 +587,7 @@ public class Controller extends Thread {
 
 		LOGGER.info("Starting wallets");
 		PirateChainWalletController.getInstance().start();
+		MoneroWalletController.getInstance().start();
 
 		LOGGER.info(String.format("Starting API on port %d", Settings.getInstance().getApiPort()));
 		try {
@@ -1126,6 +1128,7 @@ public class Controller extends Thread {
 
 				LOGGER.info("Shutting down wallets");
 				PirateChainWalletController.getInstance().shutdown();
+				MoneroWalletController.getInstance().shutdown();
 
 				if (Settings.getInstance().isAutoUpdateEnabled()) {
 					LOGGER.info("Shutting down auto-update");
